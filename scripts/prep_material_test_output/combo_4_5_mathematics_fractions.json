@@ -1,0 +1,68 @@
+{
+  "profile_name": "combo_4 (emphasizes independent exploration+games+creativity, minimizes storytelling+real-life connections)",
+  "grade": "5",
+  "subject": "Mathematics",
+  "topic": "Fractions",
+  "profile": {
+    "language": [
+      "Telugu"
+    ],
+    "class_size": "20-40",
+    "resources": [
+      "Science Kit",
+      "Chalkboard"
+    ],
+    "roles": [
+      "Educator",
+      "Counselor"
+    ],
+    "goals": [
+      "Apply learning to real life",
+      "Communicate better",
+      "Work together"
+    ],
+    "preferred_activities": [
+      "Real-life Examples",
+      "Stories",
+      "Discussions"
+    ],
+    "comfort_zones": [
+      "Group discussions",
+      "Drawing on the board"
+    ],
+    "personalization": {
+      "stories": "never",
+      "games": "often",
+      "handsOn": "sometimes",
+      "criticalThinking": "sometimes",
+      "creativity": "always",
+      "realLife": "never",
+      "localCulture": "sometimes",
+      "reflection": "sometimes",
+      "exploration": "often"
+    }
+  },
+  "lesson": {
+    "concept": [
+      {
+        "text": "A fraction represents a part of a whole.",
+        "visualDemo": "Show a drawing on the chalkboard of a circle divided into equal parts, with some parts shaded."
+      },
+      {
+        "text": "The denominator tells us the total number of equal parts the whole is divided into.",
+        "misconception": "Students often confuse the numerator and denominator, thinking the denominator represents the shaded part."
+      },
+      {
+        "text": "The numerator tells us how many of those equal parts are being considered.",
+        "deeperExplanation": "This 'consideration' can mean shaded, eaten, selected, etc., depending on the context."
+      }
+    ],
+    "experience": "Divide the class into groups of four. Distribute a small handful of pebbles to each group (around 10-12). Instruct each group to divide their pebbles into two equal piles, then identify what fraction of their total pebbles is in one pile. Next, ask them to take a different number of pebbles from their total and represent that as a fraction of the original total.",
+    "expectedSigns": [
+      "Students in groups are actively dividing pebbles and discussing how to form piles.",
+      "Students are correctly identifying the total number of pebbles as the denominator.",
+      "Students are using Telugu to verbalize the fraction represented by their selected pebbles (e.g., 'half' or 'two-fifths')."
+    ],
+    "continuationSuggestion": "If signs aren't showing, introduce a game where students draw fractions on their slates based on verbal cues and then compare with a partner."
+  }
+}

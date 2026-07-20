@@ -1,0 +1,68 @@
+{
+  "profile_name": "combo_2 (emphasizes storytelling+local culture references+games, minimizes hands-on activities+independent exploration)",
+  "grade": "5",
+  "subject": "Mathematics",
+  "topic": "Fractions",
+  "profile": {
+    "language": [
+      "English"
+    ],
+    "class_size": ">40",
+    "resources": [
+      "Whiteboard",
+      "Worksheets"
+    ],
+    "roles": [
+      "Guide"
+    ],
+    "goals": [
+      "Think critically",
+      "Stay curious",
+      "Communicate better"
+    ],
+    "preferred_activities": [
+      "Role Play",
+      "Group Activities",
+      "Stories"
+    ],
+    "comfort_zones": [
+      "Drawing on the board",
+      "Group discussions",
+      "Moving around the classroom"
+    ],
+    "personalization": {
+      "stories": "often",
+      "games": "always",
+      "handsOn": "never",
+      "criticalThinking": "sometimes",
+      "creativity": "sometimes",
+      "realLife": "sometimes",
+      "localCulture": "often",
+      "reflection": "sometimes",
+      "exploration": "never"
+    }
+  },
+  "lesson": {
+    "concept": [
+      {
+        "text": "A fraction represents a part of a whole, where the whole is divided into equal sections.",
+        "visualDemo": "Draw a circle on the board and divide it into quarters. Shade one quarter and explain this represents 'one out of four' equal parts."
+      },
+      {
+        "text": "The numerator indicates how many parts of the whole are being considered, and the denominator indicates the total number of equal parts the whole is divided into.",
+        "misconception": "Students often confuse which number is the 'part' and which is the 'whole' or believe a larger denominator means a larger part."
+      },
+      {
+        "text": "Fractions can be used to describe portions of objects, groups of items, or measurements.",
+        "realLifeExample": "Imagine sharing a large pizza with friends, or measuring ingredients for a recipe, or seeing how much of a journey you've completed."
+      }
+    ],
+    "experience": "Gather students into 8 groups of 6. Tell a story about a village feast where the chief needs to share a giant flatbread equally among different families. Hand each group a large piece of paper (representing the flatbread) and ask them to fold and divide their 'flatbread' to represent different fractional portions (e.g., 'half for the elders,' 'a quarter for the children'). Use chalk to label the parts on the board as groups share their 'flatbread' divisions, narrating each step of the feast distribution.",
+    "expectedSigns": [
+      "Students successfully fold their paper to create equal parts, such as halves or quarters.",
+      "Groups correctly identify the number of shaded parts and total parts when asked about their 'flatbread' divisions.",
+      "Students verbally explain how their folded paper represents a given fraction (e.g., 'this is one out of two equal parts')."
+    ],
+    "continuationSuggestion": "If signs aren't showing, use another story about sharing items, but this time, guide the folding process step-by-step for the entire class."
+  }
+}

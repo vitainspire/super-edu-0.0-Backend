@@ -1,0 +1,70 @@
+{
+  "profile_name": "combo_1 (emphasizes student reflection+independent exploration, minimizes hands-on activities)",
+  "grade": "5",
+  "subject": "Mathematics",
+  "topic": "Fractions",
+  "profile": {
+    "language": [
+      "Bilingual"
+    ],
+    "class_size": "<20",
+    "resources": [
+      "Whiteboard",
+      "Science Kit",
+      "Chalkboard"
+    ],
+    "roles": [
+      "Mentor",
+      "Influencer"
+    ],
+    "goals": [
+      "Stay curious",
+      "Discover their interests"
+    ],
+    "preferred_activities": [
+      "Stories",
+      "Discussions",
+      "Role Play"
+    ],
+    "comfort_zones": [
+      "Improvising activities"
+    ],
+    "personalization": {
+      "stories": "sometimes",
+      "games": "sometimes",
+      "handsOn": "never",
+      "criticalThinking": "sometimes",
+      "creativity": "sometimes",
+      "realLife": "sometimes",
+      "localCulture": "sometimes",
+      "reflection": "often",
+      "exploration": "always"
+    }
+  },
+  "lesson": {
+    "concept": [
+      {
+        "text": "Fractions represent parts of a whole.",
+        "deeperExplanation": "A whole can be a single object or a group of objects.",
+        "visualDemo": "Draw a circle on the board and divide it into sections."
+      },
+      {
+        "text": "The denominator tells us how many equal parts the whole is divided into.",
+        "misconception": "Students often confuse the numerator and denominator, thinking the denominator represents the total number of items, not the number of *equal* parts.",
+        "realLifeExample": "If a pizza is cut into 8 equal slices, the denominator is 8."
+      },
+      {
+        "text": "The numerator tells us how many of those equal parts are being considered.",
+        "deeperExplanation": "The numerator counts the specific portions we are focusing on from the whole.",
+        "realLifeExample": "If you eat 3 slices of an 8-slice pizza, the numerator is 3."
+      }
+    ],
+    "experience": "Begin by sharing a story about a family sharing a large chocolate bar fairly amongst themselves. As the story unfolds, use the chalkboard to visually represent the chocolate bar being divided into equal pieces for each family member. Encourage students to independently sketch their own interpretations of the chocolate bar's division on their slates, focusing on how each piece represents a portion of the whole, and then share their drawings with a partner, explaining their choices.",
+    "expectedSigns": [
+      "Students draw clear, proportionally divided shapes on their slates, demonstrating an understanding of equal parts.",
+      "Students use Spanish or English to articulate how their drawn parts relate to the whole when discussing with peers.",
+      "Students identify the total number of parts and the number of selected parts in their own drawings when asked for clarification."
+    ],
+    "continuationSuggestion": "If students struggle, provide pre-cut paper shapes (circles, squares) and have them physically fold and shade parts to represent fractions."
+  }
+}
