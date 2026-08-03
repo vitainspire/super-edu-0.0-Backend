@@ -1,0 +1,7 @@
+-r requirements.txt
+
+pytest==8.4.2
+
+# Optional. scripts/extraction_cost_compare.py falls back to a structure-aware
+# heuristic without it, but token counts are closer with a real BPE tokeniser.
+tiktoken==0.8.0

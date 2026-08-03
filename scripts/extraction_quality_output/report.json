@@ -1,0 +1,186 @@
+{
+  "params": {
+    "pdf": null,
+    "pages": "1-7",
+    "chapter": 1,
+    "chapters": null,
+    "language": "auto",
+    "repeats": 2,
+    "dry_run": true,
+    "out_dir": "C:\\Users\\user\\OneDrive\\Desktop\\edu-teach\\edu_teacher-feature-portal-redesign-and-substitute-teachers\\backend\\scripts\\extraction_quality_output"
+  },
+  "blockers": [
+    "SCRIPT MISMATCH — standard transcribes in Telugu, simple in Latin. The cheap model is transliterating, not reading. Automatic disqualification.",
+    "COVERAGE LOSS — simple found 1.0 topics on average vs 2.0. It is missing content, not just describing it differently."
+  ],
+  "cost_per_chapter": {
+    "standard": 0.0095,
+    "simple": 0.0022
+  },
+  "saving_pct": 76.84210526315789,
+  "runs": [
+    {
+      "tier": "standard",
+      "repeat": 1,
+      "chapter": 2,
+      "ok": true,
+      "error": "",
+      "elapsed_s": 12.0,
+      "tokens_in": 18576,
+      "tokens_out": 1577,
+      "cost_usd": 0.0095,
+      "models_used": [
+        "google/gemini-2.5-flash"
+      ],
+      "warnings": [],
+      "coverage": {
+        "chapters": 1,
+        "topics": 2,
+        "subtopics": 2,
+        "exercises": 3,
+        "sidebars": 0
+      },
+      "scripts": {
+        "Telugu": 39,
+        "Latin": 7
+      },
+      "dominant_script": "Telugu",
+      "types": {
+        "subtopics": 2,
+        "valid_skill_types": 2,
+        "generic_skill_types": 0,
+        "exercises": 3,
+        "valid_exercise_types": 3,
+        "generic_exercise_types": 0
+      },
+      "markdown_chars": 694,
+      "warning_count": 0
+    },
+    {
+      "tier": "standard",
+      "repeat": 2,
+      "chapter": 2,
+      "ok": true,
+      "error": "",
+      "elapsed_s": 12.0,
+      "tokens_in": 18576,
+      "tokens_out": 1577,
+      "cost_usd": 0.0095,
+      "models_used": [
+        "google/gemini-2.5-flash"
+      ],
+      "warnings": [],
+      "coverage": {
+        "chapters": 1,
+        "topics": 2,
+        "subtopics": 2,
+        "exercises": 3,
+        "sidebars": 0
+      },
+      "scripts": {
+        "Telugu": 39,
+        "Latin": 7
+      },
+      "dominant_script": "Telugu",
+      "types": {
+        "subtopics": 2,
+        "valid_skill_types": 2,
+        "generic_skill_types": 0,
+        "exercises": 3,
+        "valid_exercise_types": 3,
+        "generic_exercise_types": 0
+      },
+      "markdown_chars": 694,
+      "warning_count": 0
+    },
+    {
+      "tier": "simple",
+      "repeat": 1,
+      "chapter": 2,
+      "ok": true,
+      "error": "",
+      "elapsed_s": 5.0,
+      "tokens_in": 18576,
+      "tokens_out": 780,
+      "cost_usd": 0.0022,
+      "models_used": [
+        "google/gemini-2.5-flash-lite"
+      ],
+      "warnings": [],
+      "coverage": {
+        "chapters": 1,
+        "topics": 1,
+        "subtopics": 1,
+        "exercises": 1,
+        "sidebars": 0
+      },
+      "scripts": {
+        "Latin": 40
+      },
+      "dominant_script": "Latin",
+      "types": {
+        "subtopics": 1,
+        "valid_skill_types": 1,
+        "generic_skill_types": 0,
+        "exercises": 1,
+        "valid_exercise_types": 1,
+        "generic_exercise_types": 0
+      },
+      "markdown_chars": 254,
+      "warning_count": 0
+    },
+    {
+      "tier": "simple",
+      "repeat": 2,
+      "chapter": 2,
+      "ok": true,
+      "error": "",
+      "elapsed_s": 5.0,
+      "tokens_in": 18576,
+      "tokens_out": 780,
+      "cost_usd": 0.0022,
+      "models_used": [
+        "google/gemini-2.5-flash-lite"
+      ],
+      "warnings": [],
+      "coverage": {
+        "chapters": 1,
+        "topics": 1,
+        "subtopics": 1,
+        "exercises": 1,
+        "sidebars": 0
+      },
+      "scripts": {
+        "Latin": 40
+      },
+      "dominant_script": "Latin",
+      "types": {
+        "subtopics": 1,
+        "valid_skill_types": 1,
+        "generic_skill_types": 0,
+        "exercises": 1,
+        "valid_exercise_types": 1,
+        "generic_exercise_types": 0
+      },
+      "markdown_chars": 254,
+      "warning_count": 0
+    }
+  ],
+  "alignment": {
+    "matched": [],
+    "only_in_standard": [
+      "సంఖ్యలు లెక్కించడం",
+      "ఆకారాలు"
+    ],
+    "only_in_simple": [
+      "Sankhyalu Lekkinchadam"
+    ],
+    "identical_count": 0
+  },
+  "markdown": {
+    "standard_1": "---\nchapter: 2\ntitle: సంఖ్యలు మన చుట్టూ\npages: 12-18\n---\n\n## సంఖ్యలు లెక్కించడం\n---\npages: 12-14\n---\n\nStudents count objects up to twenty and match each count to its numeral.\n\n### ఒకటి రాయడం `writing_skill` p12\nTrace the numeral while saying its name aloud.\n\n#### Exercises\n- `counting_activity` p13 — Count the mangoes in the basket and write the numeral.\n- `writing_practice` p14 — Trace each numeral three times.\n\n## ఆకారాలు\n---\npages: 15-18\nprerequisites: [సంఖ్యలు లెక్కించడం]\n---\n\nStudents identify circles and squares in everyday objects.\n\n### వృత్తం `recognition_skill` p15\nFind round objects in the classroom.\n\n#### Exercises\n- `matching_exercise` p16 — Match each object to its shape.\n",
+    "standard_2": "---\nchapter: 2\ntitle: సంఖ్యలు మన చుట్టూ\npages: 12-18\n---\n\n## సంఖ్యలు లెక్కించడం\n---\npages: 12-14\n---\n\nStudents count objects up to twenty and match each count to its numeral.\n\n### ఒకటి రాయడం `writing_skill` p12\nTrace the numeral while saying its name aloud.\n\n#### Exercises\n- `counting_activity` p13 — Count the mangoes in the basket and write the numeral.\n- `writing_practice` p14 — Trace each numeral three times.\n\n## ఆకారాలు\n---\npages: 15-18\nprerequisites: [సంఖ్యలు లెక్కించడం]\n---\n\nStudents identify circles and squares in everyday objects.\n\n### వృత్తం `recognition_skill` p15\nFind round objects in the classroom.\n\n#### Exercises\n- `matching_exercise` p16 — Match each object to its shape.\n",
+    "simple_1": "---\nchapter: 2\ntitle: Sankhyalu Mana Chuttu\npages: 12-18\n---\n\n## Sankhyalu Lekkinchadam\n---\npages: 12-15\n---\n\nStudents count objects and write numbers.\n\n### Okati Rayadam\nTrace the numeral.\n\n#### Exercises\n- p13 — Count the mangoes and write the number.\n",
+    "simple_2": "---\nchapter: 2\ntitle: Sankhyalu Mana Chuttu\npages: 12-18\n---\n\n## Sankhyalu Lekkinchadam\n---\npages: 12-15\n---\n\nStudents count objects and write numbers.\n\n### Okati Rayadam\nTrace the numeral.\n\n#### Exercises\n- p13 — Count the mangoes and write the number.\n"
+  }
+}

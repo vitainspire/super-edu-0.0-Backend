@@ -10,21 +10,26 @@ The rich ontology is mapped down to the syllabus editor's shape:
 so the existing review-and-save UI can consume it unchanged.
 """
 
-import base64
-import binascii
-import re
-import shutil
-import tempfile
 import threading
 import time
 import uuid
 from pathlib import Path
 
+from .pdf_intake import discard
+
 _JOBS: dict[str, dict] = {}
 _LOCK = threading.Lock()
 
 _JOB_TTL_SECONDS = 3600          # prune finished jobs after an hour
-_MAX_PDF_BYTES = 60 * 1024 * 1024  # 60 MB decoded ceiling
+
+# The PDF no longer arrives here as bytes. It is streamed to a temp directory by
+# app/lib/pdf_intake.py before a job is started, and this module is handed the
+# path plus ownership of that directory -- which it deletes in _run_job's
+# `finally`, whether extraction worked or not. Uploaded textbooks are never
+# stored; the durable artefact is the extracted content, not the file.
+#
+# The old 60 MB ceiling lived here because the PDF used to arrive base64-encoded
+# inside a JSON body and existed three times over in memory. See pdf_intake.
 
 
 def _now() -> float:
@@ -122,33 +127,28 @@ def _map_ontology_to_topics(ontology: dict) -> list[dict]:
     return out
 
 
-def _safe_stem(filename: str) -> str:
-    stem = Path(filename or "textbook").stem
-    stem = re.sub(r"[^A-Za-z0-9_-]+", "_", stem).strip("_")
-    return stem or "textbook"
+def start_extraction(
+    work_dir: Path,
+    pdf_path: Path,
+    filename: str,
+    language: str,
+    extraction_format: str | None = None,
+    model_tier: str | None = None,
+) -> str:
+    """Kick off a background extraction job and return its id immediately.
 
+    Takes ownership of work_dir: the worker deletes it when it finishes,
+    however it finishes. The caller must not touch it after this returns.
 
-def _decode_pdf(pdf_base64: str) -> bytes:
-    raw = pdf_base64
-    if raw.startswith("data:"):
-        comma = raw.find(",")
-        if comma != -1:
-            raw = raw[comma + 1:]
-    try:
-        data = base64.b64decode(raw, validate=False)
-    except (binascii.Error, ValueError) as e:
-        raise ValueError(f"Could not decode the uploaded PDF: {e}")
-    if not data:
-        raise ValueError("The uploaded PDF is empty.")
-    if len(data) > _MAX_PDF_BYTES:
-        raise ValueError("PDF is too large (max 60 MB).")
-    if not data[:5].startswith(b"%PDF"):
-        raise ValueError("The uploaded file is not a valid PDF.")
-    return data
+    extraction_format / model_tier are resolved here rather than in the worker
+    so the job record can report what it is actually running with from the
+    moment it is created — the poller shows it while extraction is in progress.
+    """
+    from .vision_extraction import resolve_extraction_format, resolve_model_tier, model_for_tier
 
+    fmt = resolve_extraction_format(extraction_format)
+    tier = resolve_model_tier(model_tier)
 
-def start_extraction(pdf_base64: str, filename: str, language: str) -> str:
-    """Kick off a background extraction job and return its id immediately."""
     job_id = uuid.uuid4().hex
     with _LOCK:
         _prune_locked()
@@ -158,13 +158,17 @@ def start_extraction(pdf_base64: str, filename: str, language: str) -> str:
             "message": "Queued…",
             "topics": None,
             "error": None,
+            "extractionFormat": fmt,
+            "modelTier": tier,
+            "model": model_for_tier(tier),
+            "warnings": [],
             "createdAt": _now(),
             "finishedAt": 0,
         }
 
     thread = threading.Thread(
         target=_run_job,
-        args=(job_id, pdf_base64, filename, language),
+        args=(job_id, work_dir, pdf_path, filename, language, fmt, tier),
         name=f"syllabus-pdf-{job_id[:8]}",
         daemon=True,
     )
@@ -172,16 +176,17 @@ def start_extraction(pdf_base64: str, filename: str, language: str) -> str:
     return job_id
 
 
-def _run_job(job_id: str, pdf_base64: str, filename: str, language: str):
-    work_dir: Path | None = None
+def _run_job(
+    job_id: str,
+    work_dir: Path,
+    pdf_path: Path,
+    filename: str,
+    language: str,
+    extraction_format: str | None = None,
+    model_tier: str | None = None,
+):
     try:
-        _update(job_id, status="running", progress=1, message="Preparing PDF…")
-
-        data = _decode_pdf(pdf_base64)
-
-        work_dir = Path(tempfile.mkdtemp(prefix="syllabus_pdf_"))
-        pdf_path = work_dir / f"{_safe_stem(filename)}.pdf"
-        pdf_path.write_bytes(data)
+        _update(job_id, status="running", progress=1, message="Reading PDF…")
 
         # Imported lazily so a missing OPENROUTER_API_KEY (or PyMuPDF) surfaces as a
         # job error rather than crashing server startup.
@@ -195,6 +200,8 @@ def _run_job(job_id: str, pdf_base64: str, filename: str, language: str):
             output_dir=str(work_dir / "out"),
             language=language or "auto",
             progress_cb=cb,
+            extraction_format=extraction_format,
+            model_tier=model_tier,
         )
 
         topics = _map_ontology_to_topics(ontology)
@@ -216,6 +223,9 @@ def _run_job(job_id: str, pdf_base64: str, filename: str, language: str):
             message=f"{len(topics)} topics extracted",
             topics=topics,
             ontology=ontology,  # Full ontology, kept in-memory so Save can persist everything
+            # What the extractor could not make sense of — shown on the review panel
+            # so the admin knows which parts to check rather than trusting silently.
+            warnings=ontology.get("extraction_warnings", []),
             filename=filename,
             finishedAt=_now(),
         )
@@ -229,5 +239,5 @@ def _run_job(job_id: str, pdf_base64: str, filename: str, language: str):
             finishedAt=_now(),
         )
     finally:
-        if work_dir is not None:
-            shutil.rmtree(work_dir, ignore_errors=True)
+        # The uploaded PDF is not an artefact. Whatever happened above, it goes.
+        discard(work_dir)

@@ -1,0 +1,197 @@
+{
+  "params": {
+    "topic": "Fractions",
+    "subject": "Mathematics",
+    "grade": "5",
+    "subtopic": null,
+    "class_size": null,
+    "profile": "storyteller",
+    "previous_topic": null,
+    "weak_topics": null,
+    "avoid": null,
+    "context_note": null,
+    "repeats": 1,
+    "list_profiles": false,
+    "dry_run": true,
+    "out_dir": "C:\\Users\\user\\OneDrive\\Desktop\\edu-teach\\edu_teacher-feature-portal-redesign-and-substitute-teachers\\backend\\scripts\\lesson_format_output"
+  },
+  "profile": "storyteller",
+  "cost_per_lesson": {
+    "json": 0.0014,
+    "markdown": 0.0009
+  },
+  "runs": [
+    {
+      "fmt": "json",
+      "repeat": 1,
+      "parsed_first_try": true,
+      "repair_calls": 0,
+      "initial_issues": [
+        "materialsUsed includes items not in the resource list: chalk, paper"
+      ],
+      "remaining_issues": [
+        "materialsUsed includes items not in the resource list: chalk, paper"
+      ],
+      "parser_warnings": [],
+      "missing": [],
+      "tokens_in": 0,
+      "tokens_out": 520,
+      "cost_usd": 0.0014,
+      "elapsed_s": 7.0,
+      "error": "",
+      "ok": true,
+      "raw_chars": 967,
+      "fields": {
+        "planningNote": true,
+        "concept": true,
+        "explore.scenario": true,
+        "explore.points": true,
+        "challenge.activity": true,
+        "challenge.points": true,
+        "materialsUsed": true,
+        "levelSet.points": true,
+        "levelSet.extendPrompt": true,
+        "previousTopicRefresher": true,
+        "explore.imageFocus": true
+      }
+    },
+    {
+      "fmt": "markdown",
+      "repeat": 1,
+      "parsed_first_try": true,
+      "repair_calls": 0,
+      "initial_issues": [
+        "materialsUsed includes items not in the resource list: chalk, paper"
+      ],
+      "remaining_issues": [
+        "materialsUsed includes items not in the resource list: chalk, paper"
+      ],
+      "parser_warnings": [],
+      "missing": [],
+      "tokens_in": 0,
+      "tokens_out": 330,
+      "cost_usd": 0.0009,
+      "elapsed_s": 5.0,
+      "error": "",
+      "ok": true,
+      "raw_chars": 767,
+      "fields": {
+        "planningNote": true,
+        "concept": true,
+        "explore.scenario": true,
+        "explore.points": true,
+        "challenge.activity": true,
+        "challenge.points": true,
+        "materialsUsed": true,
+        "levelSet.points": true,
+        "levelSet.extendPrompt": true,
+        "previousTopicRefresher": true,
+        "explore.imageFocus": true
+      }
+    }
+  ],
+  "lessons": {
+    "json_1": {
+      "planningNote": "This teacher leans on stories, so Explore is a market scene.",
+      "previousTopicRefresher": {
+        "previousTopic": "Whole numbers",
+        "recap": [
+          {
+            "text": "We counted whole baskets last time."
+          }
+        ]
+      },
+      "concept": [
+        {
+          "text": "A fraction names equal parts of one whole."
+        },
+        {
+          "text": "The bottom number says how many equal parts."
+        }
+      ],
+      "explore": {
+        "scenario": "Amma buys one big watermelon at the Sunday market and four children want a fair share.",
+        "points": [
+          {
+            "text": "Fold a paper watermelon into four equal parts.",
+            "detail": "Ask: is every part the same size? How do you know?"
+          }
+        ],
+        "imageFocus": "a circle folded into four equal parts"
+      },
+      "challenge": {
+        "activity": "Market stall role-play",
+        "points": [
+          {
+            "text": "Two children sell half-slices, two buy them."
+          }
+        ]
+      },
+      "materialsUsed": [
+        "chalk",
+        "paper"
+      ],
+      "levelSet": {
+        "points": [
+          {
+            "text": "Back to the watermelon — show one half with your hands."
+          }
+        ],
+        "extendPrompt": "Where else at home do you cut something into equal parts?"
+      }
+    },
+    "markdown_1": {
+      "planningNote": "This teacher leans on stories, so Explore is a market scene.",
+      "previousTopicRefresher": {
+        "previousTopic": "Whole numbers",
+        "recap": [
+          {
+            "text": "We counted whole baskets last time."
+          }
+        ]
+      },
+      "concept": [
+        {
+          "text": "A fraction names equal parts of one whole."
+        },
+        {
+          "text": "The bottom number says how many equal parts."
+        }
+      ],
+      "explore": {
+        "points": [
+          {
+            "text": "Fold a paper watermelon into four equal parts.",
+            "detail": "Ask: is every part the same size? How do you know?"
+          }
+        ],
+        "scenario": "Amma buys one big watermelon at the Sunday market and four children want a fair share.",
+        "imageFocus": "a circle folded into four equal parts"
+      },
+      "challenge": {
+        "points": [
+          {
+            "text": "Two children sell half-slices, two buy them."
+          }
+        ],
+        "activity": "Market stall role-play"
+      },
+      "materialsUsed": [
+        "chalk",
+        "paper"
+      ],
+      "levelSet": {
+        "points": [
+          {
+            "text": "Back to the watermelon — show one half with your hands."
+          }
+        ],
+        "extendPrompt": "Where else at home do you cut something into equal parts?"
+      }
+    }
+  },
+  "raw": {
+    "json_1": "{\"planningNote\": \"This teacher leans on stories, so Explore is a market scene.\", \"previousTopicRefresher\": {\"previousTopic\": \"Whole numbers\", \"recap\": [{\"text\": \"We counted whole baskets last time.\"}]}, \"concept\": [{\"text\": \"A fraction names equal parts of one whole.\"}, {\"text\": \"The bottom number says how many equal parts.\"}], \"explore\": {\"scenario\": \"Amma buys one big watermelon at the Sunday market and four children want a fair share.\", \"points\": [{\"text\": \"Fold a paper watermelon into four equal parts.\", \"detail\": \"Ask: is every part the same size? How do you know?\"}], \"imageFocus\": \"a circle folded into four equal parts\"}, \"challenge\": {\"activity\": \"Market stall role-play\", \"points\": [{\"text\": \"Two children sell half-slices, two buy them.\"}]}, \"materialsUsed\": [\"chalk\", \"paper\"], \"levelSet\": {\"points\": [{\"text\": \"Back to the watermelon — show one half with your hands.\"}], \"extendPrompt\": \"Where else at home do you cut something into equal parts?\"}}",
+    "markdown_1": "planning-note: This teacher leans on stories, so Explore is a market scene.\n\n## Refresher: Whole numbers\n- We counted whole baskets last time.\n\n## Concept\n- A fraction names equal parts of one whole.\n- The bottom number says how many equal parts.\n\n## Explore\nscenario: Amma buys one big watermelon at the Sunday market and four children want a fair share.\nsketch: a circle folded into four equal parts\n- Fold a paper watermelon into four equal parts. :: Ask: is every part the same size? How do you know?\n\n## Challenge\nactivity: Market stall role-play\n- Two children sell half-slices, two buy them.\n\n## Materials\n- chalk\n- paper\n\n## Level set\n- Back to the watermelon — show one half with your hands.\nextend: Where else at home do you cut something into equal parts?\n"
+  }
+}

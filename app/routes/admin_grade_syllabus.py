@@ -94,6 +94,76 @@ def post_grade_syllabus(schoolId: str, body: GradeSyllabusTopicBody, admin: dict
     return {"definitionId": definition_id}
 
 
+class TopicProgressionItem(BaseModel):
+    definitionId: str
+    orderIndex: int
+    weekNumber: Optional[int] = None
+
+
+class TopicProgressionBody(BaseModel):
+    grade: str
+    subject: str
+    topics: list[TopicProgressionItem]
+
+
+@router.patch("/{schoolId}/grade-syllabus/progression")
+def patch_grade_syllabus_progression(
+    schoolId: str, body: TopicProgressionBody, admin: dict = Depends(require_admin)
+):
+    """Set the teaching order, and which week each topic belongs to.
+
+    Until now order_index was only ever assigned at creation -- next_index on
+    the way in, never changed again -- so the sequence a class is taught in was
+    whatever order the topics happened to be added or extracted in. That
+    sequence is not cosmetic: the teacher portal opens each lesson on the first
+    incomplete topic of the current week, so the order here IS what teachers
+    are told to teach next.
+
+    Written against definition_id rather than row id. A topic exists once per
+    section of the grade, and a progression that applied to one section would
+    leave the others being taught in a different order.
+    """
+    subject = body.subject.strip()
+    if not body.grade or not subject:
+        raise HTTPException(status_code=400, detail="grade and subject are required")
+    if not body.topics:
+        return {"updated": 0}
+
+    ac = create_admin_client()
+
+    # Only touch topics that really belong to this grade+subject in this school:
+    # definitionId arrives from the client, and an id from elsewhere would
+    # otherwise let one grade's reorder rewrite another's.
+    #
+    # Ownership is derived through the CLASS rather than syllabus_topics'
+    # own school_id. The class is the real link; the column on the topic is a
+    # denormalised copy, and one write path used to omit it entirely, leaving
+    # 128 rows that no tenant-scoped query could see. Going through classes
+    # cannot be defeated that way.
+    sections = [c for c in fetch_school_classes(schoolId, ac) if c["grade"] == body.grade]
+    class_ids = [c["id"] for c in sections]
+    if not class_ids:
+        raise HTTPException(status_code=400, detail=f"No classes found for grade {body.grade}.")
+
+    owned = (
+        ac.table("syllabus_topics").select("definition_id")
+        .in_("class_id", class_ids).eq("subject", subject)
+        .execute().data or []
+    )
+    allowed = {r["definition_id"] for r in owned if r.get("definition_id")}
+
+    updated = 0
+    for item in body.topics:
+        if item.definitionId not in allowed:
+            continue
+        ac.table("syllabus_topics").update(
+            {"order_index": item.orderIndex, "week_number": item.weekNumber}
+        ).eq("definition_id", item.definitionId).execute()
+        updated += 1
+
+    return {"updated": updated, "skipped": len(body.topics) - updated}
+
+
 class DefinitionIdBody(BaseModel):
     definitionId: str
 

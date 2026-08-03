@@ -12,7 +12,7 @@ from .routes import (
     health, misc, admin_auth, admin_schools, admin_classes, admin_teachers,
     admin_timetable, admin_misc, admin_students, admin_grade_syllabus, admin_schedule_ai,
     admin_substitutes, teacher, student, scanner, ai_routes, ai_routes2, vision_routes, scanner_ai_routes,
-    admin_syllabus_pdf,
+    admin_syllabus_pdf, admin_textbooks,
 )
 
 app = FastAPI(title="EduTeach backend")
@@ -23,6 +23,22 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["Content-Type", "Authorization", "X-Student-Token", "X-Scanner-Token"],
 )
+
+
+@app.on_event("startup")
+def _sweep_stale_pdf_uploads():
+    """Delete staging directories left by a process that died mid-ingest.
+
+    Uploads are streamed to a temp directory and removed in a `finally`, which
+    covers every exit except the ones that skip Python entirely — a SIGKILL, an
+    OOM kill, a container stopped part-way. Those leave a whole textbook on
+    disk with nothing tracking it, so the next start clears them.
+    """
+    from .lib.pdf_intake import sweep_orphans
+
+    removed = sweep_orphans()
+    if removed:
+        print(f"[startup] removed {removed} orphaned PDF upload director(ies)")
 
 
 @app.exception_handler(RequestValidationError)
@@ -55,6 +71,7 @@ app.include_router(admin_misc.router, prefix="/api/admin/schools")
 app.include_router(admin_students.router, prefix="/api/admin/schools")
 app.include_router(admin_grade_syllabus.router, prefix="/api/admin/schools")
 app.include_router(admin_syllabus_pdf.router, prefix="/api/admin/schools")
+app.include_router(admin_textbooks.router, prefix="/api/admin/schools")
 app.include_router(admin_substitutes.router, prefix="/api/admin/schools")
 app.include_router(admin_schedule_ai.router, prefix="/api/admin")
 app.include_router(teacher.router, prefix="/api/teacher")

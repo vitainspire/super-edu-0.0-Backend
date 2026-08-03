@@ -329,6 +329,171 @@ def build_preferences_context(profile: Optional[TeachingProfile]) -> str:
             f'{resource_rule} Never suggest something outside the teacher\'s comfort zone.')
 
 
+# ── Low-resource activity bank + new "story" template ───────────────────────
+# Curated by hand for government/NGO schools with minimal supplies. Kept as
+# plain reference text (NOT a structured/queryable library) — the model picks
+# and adapts an activity using its own judgment, the code never filters it.
+
+LOW_RESOURCE_PRINCIPLES = """\
+This school has minimal resources. Every activity must work with:
+- No printers, no projectors, no smart boards, no photocopies.
+- Only chalk, blackboard, notebooks/paper, or everyday found objects: stones, sticks, bottle caps, old newspapers -- or the students' own bodies as the "material".
+- 5 to 15 minutes to run.
+- A class of 30 to 60 students.
+- Something a single teacher can set up and facilitate alone, with no prep the night before."""
+
+ACTIVITY_BANK = """\
+Pick ONE activity for "interactiveExploration" and a DIFFERENT one for "challenge" from this bank -- adapt the specifics (numbers, wording) to the actual topic, don't invent a new activity from scratch unless truly nothing here fits.
+
+MOVEMENT (best for: place value, number line, comparing numbers, fractions, geometry)
+- Human Number Machine: each student holds a digit card, the group arranges itself into a called number; swap two students and ask what changed.
+- Living Number Line: a line taped/drawn on the floor; students stand where their number card belongs.
+- Skip Counting Jump Path: numbers marked on the floor; students hop by 2s/5s/10s, or avoid a rule ("don't land on multiples of 4").
+- Human Bar Graph: students physically stand in columns by their answer to a question; the class becomes the graph.
+- Human Calculator: some students are numbers, one is an operator (+/-); they physically act out the calculation.
+- Freeze Frame: students form a math symbol or relationship with their bodies (e.g. two numbers and a student as ">" between them).
+- Human Building Blocks: students organize themselves to "build" a number the teacher calls out.
+- Four Corners: label room corners Agree/Disagree/Not Sure; students move to the corner matching their view on a statement.
+- Pattern Dance: teacher claps/steps a pattern, students continue it, then invent their own.
+- Floor Is Lava (Math version): number cards on the floor; students may only step on ones matching a rule.
+
+MYSTERY (best for: place value, number properties, estimation)
+- Secret Number Interview: one student secretly picks a number; others ask only yes/no questions to guess it.
+- Mystery Bag: students feel objects without looking and classify them (longer/shorter, more/less, shape).
+- Missing Digit Mystery: a partly-hidden number with clues ("greater than 500, even, not divisible by 3") to deduce the missing digit.
+- Error Detective: the teacher deliberately makes a mistake out loud; students catch and correct it.
+- Guess My Rule: teacher gives a sequence (2, 4, 8, 16...); students guess the rule behind it.
+- Classroom CSI: students search for planted "evidence" of an error somewhere in the room.
+
+ROLE PLAY (best for: fractions, money, reading numbers, decimals)
+- Fraction Pizza Shop: paper "pizzas"; the teacher orders a fraction amount, students cut and serve it correctly.
+- Fraction Chef: students follow a recipe with fraction amounts; teacher gives an intentionally wrong measurement for them to catch.
+- Math Restaurant: a menu with prices; students rotate through customer/waiter/cashier roles totalling bills and change.
+- Decimal Money Market: a pretend market with decimal prices; students calculate change with play money.
+- Become the Teacher: a student teaches the class for two minutes.
+- Character Roleplay: a student becomes a themed character (e.g. "Captain Decimal") to narrate a concept.
+
+BUILD & CREATE (best for: shapes, geometry, revision)
+- Geometry Architects: using sticks/straws, groups build the strongest triangle or tallest structure, then discuss why it holds.
+- Build the Tallest Tower: each correct answer earns a "block" (stone/bottle cap); groups race to build the tallest tower.
+- Math Art Gallery: students create art from only basic shapes, then label every shape used.
+- Build From Waste: build shapes or models from bottle caps, sticks, or scrap paper.
+
+GAMES (best for: revision and quick assessment)
+- Number Auction: students "bid" with play points on mystery number clue cards, then decide if it was worth it.
+- Lucky Ticket: a few random students get a bonus challenge question.
+- Spin a hand-drawn wheel: it decides HOW to answer (explain out loud / draw it / act it out / solve it).
+- Giant Dice Adventure: roll a die, move that many steps on a chalk-drawn floor board; each square is a mini-challenge.
+
+THINKING (best for: reflection and conceptual understanding -- use sparingly if this teacher's profile says to minimize reflection)
+- Teach the Teddy: a student explains the idea to a puppet/toy; if it "doesn't understand," they explain differently.
+- Hot Seat: one student faces away from the board; the class gives clues about a written number/word for them to guess.
+- Whisper Relay: a math statement is whispered student-to-student down a line; compare what arrives at the end.
+- Comic Strip: students sketch the day's idea as a 3-4 panel comic on paper."""
+
+
+def build_story_prompts(
+    topic: str, subject: str, grade: str, subtopic: Optional[str] = None,
+    class_size: Optional[int] = None, profile: Optional[TeachingProfile] = None,
+    weak_topics: Optional[list] = None, context_note: Optional[str] = None,
+) -> tuple[str, str]:
+    """New 5-part template: Concept -> Real-Life Connection -> Interactive
+    Exploration -> Challenge -> Level Set. Activities are picked (not invented)
+    from ACTIVITY_BANK; materials default to LOW_RESOURCE_PRINCIPLES unless the
+    teacher's own profile lists richer resources (build_preferences_context
+    already carries that constraint over from the classic prompt)."""
+    preferences_context = build_preferences_context(profile)
+    weak_topics_context = (
+        f"This class is weak on: {', '.join(weak_topics)}. If it fits naturally, let the real-life "
+        f"connection or challenge also reinforce one of these -- but never mention them explicitly or call it review."
+        if weak_topics else ""
+    )
+    context_note_line = f"Teacher's note for today: {context_note.strip()}" if context_note and context_note.strip() else ""
+    materials_rule = (
+        "the teacher's listed classroom resources above"
+        if (profile and profile.resources)
+        else "chalk, blackboard, notebooks, or everyday found objects -- nothing else"
+    )
+
+    system_prompt = (
+        'You are an expert teacher-trainer designing a classroom-ready lesson for a resource-constrained '
+        'school (government or NGO-run, India). A teacher opens this five minutes before class and follows '
+        'it directly -- every field must be concrete and short enough to scan in seconds, never an essay.\n\n'
+        f'{LOW_RESOURCE_PRINCIPLES}\n\n'
+        f'{ACTIVITY_BANK}\n\n'
+        'Pedagogy: never explain the concept and then test it. Instead, let understanding emerge through '
+        'the activity and a few open questions -- the teacher guides, the students discover. Questions inside '
+        'an activity are wondered aloud WITH the class ("What changed?", "Is it still worth the same?"), never '
+        'a stop-and-answer quiz. The lesson must open with a real-life scenario the class recognizes (not '
+        '"today we will learn X"), move through ONE chosen activity to explore the idea, apply it again with a '
+        'second, different chosen activity as a playful challenge, then return to the SAME opening scenario so '
+        'students can now solve it -- math must feel connected back to life, not abandoned once the activity ends.'
+    )
+
+    materials_example = (
+        "Example of the materials boundary (illustration only, not this teacher's actual list):\n"
+        '  BAD: a step says "project the diagram" or "look it up online" -- invents equipment not on the list.\n'
+        '  GOOD: a step says "draw the diagram on the chalkboard" or "students sketch it in their notebooks."'
+    )
+    reminder_block = (
+        "REMINDER before you write the JSON -- the rules most likely to get dropped:\n"
+        f"- materialsUsed must contain nothing beyond {materials_rule}. Do not invent a projector, printer, internet, "
+        "or any item not on that list, even implicitly inside a step's wording.\n"
+        '- Never use the words "quiz", "test", "evaluate", "assess", "review", "recall", "prerequisite" anywhere in the output.\n'
+        "- concept is EXACTLY 2 or 3 bullets -- not 1, not 4."
+    )
+
+    subtopic_line = f"\nSubtopic (focus specifically on this): {subtopic}" if subtopic else ""
+    user_prompt = f"""Write a Prep Sheet for:
+
+Topic: {topic}{subtopic_line}
+Subject: {subject}
+Grade: {grade}
+Class size: {class_size if class_size else 'unknown'}
+
+{preferences_context}
+{weak_topics_context}
+{context_note_line}
+
+{materials_example}
+
+{reminder_block}
+
+Return ONLY valid JSON (no markdown, no extra text), matching this exact shape:
+{{
+  "planningNote": "1-2 sentences of YOUR OWN reasoning, written first, before anything else: given this profile, what angle/shape should this lesson take, and which two activities fit best and why? Internal use only -- never shown to the teacher.",
+  "concept": ["2 to 3 short bullets introducing the idea in the simplest possible way -- no paragraphs"],
+  "realLifeConnection": "A short (2-3 sentence) scenario from the child's world that makes them curious about this topic BEFORE any teaching happens -- a specific, concrete situation, not an abstract prompt like 'today we will learn...'.",
+  "interactiveExploration": {{
+    "activity": "the exact name of ONE activity chosen from the bank above",
+    "steps": ["2 to 4 short steps describing exactly how this activity plays out for THIS topic -- adapt the numbers/wording, don't just restate the generic activity"],
+    "guidingQuestions": ["1 to 3 questions the teacher asks mid-activity so the concept emerges from discussion, e.g. 'What changed?', 'Is it still worth the same?'"]
+  }},
+  "challenge": {{
+    "activity": "the exact name of a DIFFERENT activity chosen from the bank above, used to apply/stretch the idea",
+    "steps": ["2 to 3 short steps for how this plays out for THIS topic"]
+  }},
+  "materialsUsed": ["every item actually referenced across interactiveExploration/challenge steps -- nothing invented, nothing unused"],
+  "levelSet": {{
+    "returnToScenario": "One line bringing back the exact opening real-life scenario",
+    "questions": ["2 to 3 short questions that let students show they can now read/write/compare/explain the idea, tied to that scenario"],
+    "extendPrompt": "One open-ended line inviting students to think of another place this idea shows up in their own life"
+  }}
+}}
+
+Rules:
+- planningNote is written FIRST, before concept -- think it through, then commit.
+- concept: exactly 2 or 3 bullets, one short sentence each.
+- realLifeConnection must be something a child in this context would actually recognize (a market, a bus, a cricket match, a school event) -- not a generic word problem.
+- interactiveExploration and challenge MUST use two DIFFERENT named activities from the bank, each adapted with topic-specific details (real numbers/words for this topic, not placeholders).
+- Every step in interactiveExploration/challenge must only need {materials_rule}. materialsUsed must list exactly what was actually used -- nothing more.
+- levelSet must reference the SAME scenario from realLifeConnection, not a new one.
+- Never use the words "quiz", "test", "evaluate", "assess", "review", "recall", "prerequisite".
+- Everything must be scannable in under 2 minutes total."""
+
+    return system_prompt, user_prompt
+
+
 def build_prompts(
     topic: str, subject: str, grade: str, subtopic: Optional[str] = None,
     class_size: Optional[int] = None, profile: Optional[TeachingProfile] = None,
@@ -458,6 +623,27 @@ def call_openrouter_text(system_prompt: str, user_prompt: str) -> str:
     return resp.json()["choices"][0]["message"]["content"]
 
 
+def call_openrouter_messages(messages: list) -> str:
+    """Same as call_openrouter_text but takes a full message list — used by the
+    hierarchical pipeline, where each stage's user turn is appended to a growing
+    conversation so the model has native, verbatim access to what it said in
+    earlier stages instead of us re-summarizing between calls."""
+    if not OPENROUTER_API_KEY:
+        raise RuntimeError("OPENROUTER_API_KEY not set — check frontend/.env.local or backend/.env")
+    resp = requests.post(
+        _OPENROUTER_URL,
+        headers={
+            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+            "Content-Type": "application/json",
+            "X-Title": "EduTeach Prep Material (test harness)",
+        },
+        json={"model": OPENROUTER_MODEL, "messages": messages, "temperature": 0.75, "max_tokens": 1200},
+        timeout=90,
+    )
+    resp.raise_for_status()
+    return resp.json()["choices"][0]["message"]["content"]
+
+
 def generate_illustration(prompt: str, timeout_s: int = 25) -> Optional[str]:
     """Mirrors frontend/lib/ai.ts's generateIllustration() — returns an image URL or None."""
     if not OPENROUTER_API_KEY:
@@ -520,6 +706,465 @@ def generate_lesson(
             bullet["image"] = {"url": url} if url else None
 
     return lesson
+
+
+BANNED_WORDS = ["quiz", "test", "evaluate", "assess", "review", "recall", "prerequisite"]
+
+
+def sanitize_lesson(lesson: dict, resources: list) -> dict:
+    """Tier 2, silent fix — purely mechanical, no LLM call. Drops any
+    materialsUsed entry that isn't actually in the profile's resource list,
+    rather than failing or leaving an invented item in place."""
+    if resources and isinstance(lesson.get("materialsUsed"), list):
+        allowed = {r.strip().lower() for r in resources}
+        lesson = {**lesson, "materialsUsed": [m for m in lesson["materialsUsed"] if m.strip().lower() in allowed]}
+    return lesson
+
+
+def validate_lesson(lesson: dict, resources: list) -> list:
+    """Tier 2 — deterministic checks for the rules a fast model is most likely
+    to quietly drop under instruction competition. No LLM involved; returns a
+    list of human-readable violations (empty = everything passed)."""
+    issues = []
+
+    concept = lesson.get("concept")
+    if not isinstance(concept, list) or not (2 <= len(concept) <= 3):
+        issues.append(f"concept must have 2-3 bullets, got {len(concept) if isinstance(concept, list) else 'missing'}")
+
+    exp = lesson.get("interactiveExploration") or {}
+    steps = exp.get("steps")
+    if not isinstance(steps, list) or not (2 <= len(steps) <= 4):
+        issues.append(f"interactiveExploration.steps must have 2-4 items, got {len(steps) if isinstance(steps, list) else 'missing'}")
+    guiding_qs = exp.get("guidingQuestions")
+    if not isinstance(guiding_qs, list) or not (1 <= len(guiding_qs) <= 3):
+        issues.append(f"interactiveExploration.guidingQuestions must have 1-3 items, got {len(guiding_qs) if isinstance(guiding_qs, list) else 'missing'}")
+
+    chal = lesson.get("challenge") or {}
+    chal_steps = chal.get("steps")
+    if not isinstance(chal_steps, list) or not (2 <= len(chal_steps) <= 3):
+        issues.append(f"challenge.steps must have 2-3 items, got {len(chal_steps) if isinstance(chal_steps, list) else 'missing'}")
+
+    if exp.get("activity") and chal.get("activity") and str(exp["activity"]).strip().lower() == str(chal["activity"]).strip().lower():
+        issues.append("interactiveExploration.activity and challenge.activity must be different activities")
+
+    level = lesson.get("levelSet") or {}
+    level_qs = level.get("questions")
+    if not isinstance(level_qs, list) or not (2 <= len(level_qs) <= 3):
+        issues.append(f"levelSet.questions must have 2-3 items, got {len(level_qs) if isinstance(level_qs, list) else 'missing'}")
+
+    text_blob = " ".join(str(x) for x in [
+        *(concept if isinstance(concept, list) else []),
+        lesson.get("realLifeConnection", ""),
+        exp.get("activity", ""), *(steps if isinstance(steps, list) else []), *(guiding_qs if isinstance(guiding_qs, list) else []),
+        chal.get("activity", ""), *(chal_steps if isinstance(chal_steps, list) else []),
+        level.get("returnToScenario", ""), *(level_qs if isinstance(level_qs, list) else []), level.get("extendPrompt", ""),
+    ]).lower()
+    for w in BANNED_WORDS:
+        if re.search(rf"\b{w}\b", text_blob):
+            issues.append(f'contains banned word "{w}"')
+
+    materials_used = lesson.get("materialsUsed")
+    if resources and isinstance(materials_used, list):
+        allowed = {r.strip().lower() for r in resources}
+        invented = [m for m in materials_used if m.strip().lower() not in allowed]
+        if invented:
+            issues.append(f"materialsUsed includes items not in the resource list: {', '.join(invented)}")
+
+    return issues
+
+
+def repair_lesson(lesson: dict, issues: list) -> dict:
+    """Tier 2 escalation — only reached when validate_lesson() still finds real
+    violations after sanitize_lesson()'s silent fixes. One small, targeted call:
+    hands the same lesson back with the specific violations, asking for the
+    minimal edits needed to fix them — not a full regeneration."""
+    system_prompt = (
+        "You are given a lesson JSON and a list of specific rule violations found in it. Return the SAME "
+        "JSON with ONLY the minimal edits needed to fix each listed violation — do not rewrite fields that "
+        "weren't flagged, do not change the chosen activities' names, do not add commentary."
+    )
+    user_prompt = (
+        f"Lesson JSON:\n{json.dumps(lesson, ensure_ascii=False)}\n\n"
+        f"Violations to fix:\n" + "\n".join(f"- {i}" for i in issues) +
+        "\n\nReturn ONLY the corrected JSON, same shape, no markdown."
+    )
+    try:
+        raw = call_openrouter_text(system_prompt, user_prompt)
+        return _extract_json(raw)
+    except Exception:
+        return lesson   # repair call failed/malformed — fall back to the original rather than crash
+
+
+def generate_story_lesson(
+    topic: str, subject: str, grade: str, subtopic: Optional[str] = None,
+    class_size: Optional[int] = None, profile: Optional[TeachingProfile] = None,
+    weak_topics: Optional[list] = None, context_note: Optional[str] = None,
+) -> dict:
+    """Same idea as generate_lesson(), but for the new low-resource / activity-bank
+    / 5-part story template (build_story_prompts), plus Tier 2 validation/repair.
+    No image generation — the new schema has no per-bullet visualDemo field to
+    hang a sketch off of. Returns {"lesson": ..., "validation": {...}}."""
+    system_prompt, user_prompt = build_story_prompts(
+        topic, subject, grade, subtopic, class_size, profile, weak_topics, context_note,
+    )
+    raw = call_openrouter_text(system_prompt, user_prompt)
+    lesson = _extract_json(raw)
+
+    resources = profile.resources if profile else []
+    lesson = sanitize_lesson(lesson, resources)
+    initial_issues = validate_lesson(lesson, resources)
+    remaining_issues = initial_issues
+    if initial_issues:
+        lesson = sanitize_lesson(repair_lesson(lesson, initial_issues), resources)
+        remaining_issues = validate_lesson(lesson, resources)
+
+    return {"lesson": lesson, "validation": {"initial_issues": initial_issues, "remaining_issues": remaining_issues}}
+
+
+# ── v2 template: Refresher -> Concept -> Explore (creative + image) -> Challenge ──
+# (rotated official activity) -> Level Set. Every section is <=3 short bullets,
+# each an {"text", "detail"?} pair -- the detail is only ever populated when it's
+# genuinely useful (an expand-on-tap "+" in the UI), never padding to hit a count.
+
+V2_BULLET_SHAPE = '{"text": "one short sentence", "detail": "optional -- a deeper explanation, a misconception to watch for, or a vivid example; omit entirely if it would just be padding"}'
+
+
+def build_v2_prompts(
+    topic: str, subject: str, grade: str, subtopic: Optional[str] = None,
+    class_size: Optional[int] = None, profile: Optional[TeachingProfile] = None,
+    weak_topics: Optional[list] = None, context_note: Optional[str] = None,
+    previous_topic: Optional[str] = None, avoid_activities: Optional[list] = None,
+) -> tuple[str, str]:
+    preferences_context = build_preferences_context(profile)
+    weak_topics_context = (
+        f"This class is weak on: {', '.join(weak_topics)}. If it fits naturally, let Explore or Challenge "
+        f"also reinforce one of these -- but never mention them explicitly or call it review."
+        if weak_topics else ""
+    )
+    context_note_line = f"Teacher's note for today: {context_note.strip()}" if context_note and context_note.strip() else ""
+    materials_rule = (
+        "the teacher's listed classroom resources above"
+        if (profile and profile.resources)
+        else "chalk, blackboard, notebooks, or everyday found objects -- nothing else"
+    )
+    previous_topic_line = (
+        f'The topic studied immediately before this one was: "{previous_topic}". Build previousTopicRefresher '
+        f'around this exact topic -- a short, warm reminder of it, ending with a one-line bridge into today\'s topic.'
+        if previous_topic else
+        'This is the first topic in this syllabus -- there is no previous topic. Set "previousTopicRefresher" to null.'
+    )
+    avoid_line = (
+        f'Do NOT pick any of these activities for the Challenge -- they were used recently for this class '
+        f'and must not repeat: {", ".join(avoid_activities)}. Pick a genuinely DIFFERENT one from the bank below.'
+        if avoid_activities else ''
+    )
+
+    system_prompt = (
+        'You are an expert teacher-trainer designing a classroom-ready lesson for a resource-constrained school '
+        '(government or NGO-run, India). A teacher opens this five minutes before class and follows it directly.\n\n'
+        f'{LOW_RESOURCE_PRINCIPLES}\n\n'
+        f'{ACTIVITY_BANK}\n\n'
+        'IMPORTANT -- the bank above is used differently in this template than its own header text says:\n'
+        '- "explore" is NOT limited to the bank. Invent a vivid, highly creative real-life scenario and activity '
+        'that fits this specific topic and teacher profile -- it should feel like a mini-story the class steps '
+        'into, not a generic exercise. Still respect the low-resource rules and the profile\'s comfort zones.\n'
+        '- "challenge" MUST pick exactly one activity, by its exact name, from the bank above -- this is the one '
+        'structured, rotated part of the lesson. Never reuse Explore\'s activity for the Challenge.\n\n'
+        'Pedagogy: never explain the concept and then test it -- understanding emerges through Explore and '
+        'Challenge, the teacher guides and the students discover. Every section is at most 3 short bullets '
+        f'({V2_BULLET_SHAPE}) -- never more, never padded just to reach 3.'
+    )
+
+    subtopic_line = f"\nSubtopic (focus specifically on this): {subtopic}" if subtopic else ""
+    user_prompt = f"""Write a Prep Sheet for:
+
+Topic: {topic}{subtopic_line}
+Subject: {subject}
+Grade: {grade}
+Class size: {class_size if class_size else 'unknown'}
+
+{previous_topic_line}
+
+{preferences_context}
+{weak_topics_context}
+{context_note_line}
+{avoid_line}
+
+Return ONLY valid JSON (no markdown, no extra text), matching this exact shape:
+{{
+  "planningNote": "1-2 sentences of YOUR OWN reasoning, written first: given this profile and the previous topic, what should this lesson's Explore scenario be, and which Challenge activity fits (and isn't in the avoid-list)?",
+  "previousTopicRefresher": {{
+    "previousTopic": "the exact previous topic name given above, or null if none",
+    "recap": [{V2_BULLET_SHAPE}, "... up to 3"]
+  }},
+  "concept": [{V2_BULLET_SHAPE}, "... up to 3 total"],
+  "explore": {{
+    "scenario": "2-3 sentences: a vivid, specific real-life scene the class recognizes, that this creative activity happens inside of -- not an abstract 'today we will learn X'.",
+    "points": [{V2_BULLET_SHAPE}, "... up to 3 total -- the creative activity itself, how it plays out"],
+    "imageFocus": "one short phrase describing the single most useful thing to sketch on the board for this Explore activity"
+  }},
+  "challenge": {{
+    "activity": "the exact name of ONE activity from the bank above, not Explore's activity, not in the avoid-list",
+    "points": [{V2_BULLET_SHAPE}, "... up to 3 total -- how it plays out for this topic"]
+  }},
+  "materialsUsed": ["every item actually referenced across explore/challenge -- nothing invented, nothing unused"],
+  "levelSet": {{
+    "points": [{V2_BULLET_SHAPE}, "... up to 3 total -- recap tied back to the Explore scenario"],
+    "extendPrompt": "one open-ended line inviting another real-life connection"
+  }}
+}}
+
+Rules:
+- Every bullet list (recap, concept, explore.points, challenge.points, levelSet.points) has AT MOST 3 items.
+- "detail" is only included on a bullet when it's genuinely useful -- never on every bullet just to fill space.
+- explore.scenario and levelSet must connect to the SAME real-life idea -- levelSet returns to it, doesn't introduce a new one.
+- Every step in explore/challenge must only need {materials_rule}.
+- Never use the words "quiz", "test", "evaluate", "assess", "review", "recall", "prerequisite".
+- Everything must be scannable in under 2 minutes total."""
+
+    return system_prompt, user_prompt
+
+
+def generate_v2_lesson(
+    topic: str, subject: str, grade: str, subtopic: Optional[str] = None,
+    class_size: Optional[int] = None, profile: Optional[TeachingProfile] = None,
+    weak_topics: Optional[list] = None, context_note: Optional[str] = None,
+    previous_topic: Optional[str] = None, avoid_activities: Optional[list] = None,
+    with_images: bool = False,
+) -> dict:
+    system_prompt, user_prompt = build_v2_prompts(
+        topic, subject, grade, subtopic, class_size, profile, weak_topics, context_note,
+        previous_topic, avoid_activities,
+    )
+    raw = call_openrouter_text(system_prompt, user_prompt)
+    lesson = _extract_json(raw)
+
+    resources = profile.resources if profile else []
+    lesson = sanitize_lesson(lesson, resources)
+    initial_issues = validate_v2_lesson(lesson, resources, avoid_activities)
+    remaining_issues = initial_issues
+    if initial_issues:
+        lesson = sanitize_lesson(repair_lesson(lesson, initial_issues), resources)
+        remaining_issues = validate_v2_lesson(lesson, resources, avoid_activities)
+
+    if with_images:
+        focus = (lesson.get("explore") or {}).get("imageFocus") or (lesson.get("explore") or {}).get("scenario", "")
+        if focus:
+            lesson_context = f"{topic}{f' — {subtopic}' if subtopic else ''} (Grade {grade} {subject})"
+            img_prompt = (
+                f"A simple black-and-white line diagram, sketch-style, that a teacher could redraw by hand on a "
+                f"classroom blackboard with chalk. Depicts: {focus}. Context: {lesson_context}. Bold clean outlines "
+                f"only, no shading, no color, no gradients, minimal or no text -- simple enough to copy by hand "
+                f"in under a minute."
+            )
+            url = generate_illustration(img_prompt)
+            if lesson.get("explore") is not None:
+                lesson["explore"]["image"] = {"url": url} if url else None
+
+    return {"lesson": lesson, "validation": {"initial_issues": initial_issues, "remaining_issues": remaining_issues}}
+
+
+def _v2_bullets_ok(bullets) -> bool:
+    return isinstance(bullets, list) and 1 <= len(bullets) <= 3 and all(isinstance(b, dict) and b.get("text") for b in bullets)
+
+
+def validate_v2_lesson(lesson: dict, resources: list, avoid_activities: Optional[list] = None) -> list:
+    issues = []
+
+    refresher = lesson.get("previousTopicRefresher")
+    if refresher is not None:
+        if not isinstance(refresher, dict) or not _v2_bullets_ok(refresher.get("recap")):
+            issues.append("previousTopicRefresher.recap must be 1-3 {text, detail?} bullets (or the whole field null)")
+
+    if not _v2_bullets_ok(lesson.get("concept")):
+        issues.append(f"concept must be 1-3 {{text, detail?}} bullets, got {lesson.get('concept')!r}")
+
+    explore = lesson.get("explore") or {}
+    if not _v2_bullets_ok(explore.get("points")):
+        issues.append("explore.points must be 1-3 {text, detail?} bullets")
+    if not explore.get("scenario"):
+        issues.append("explore.scenario is missing")
+
+    challenge = lesson.get("challenge") or {}
+    if not _v2_bullets_ok(challenge.get("points")):
+        issues.append("challenge.points must be 1-3 {text, detail?} bullets")
+    if not challenge.get("activity"):
+        issues.append("challenge.activity is missing")
+    elif explore.get("activity") and challenge["activity"].strip().lower() == str(explore.get("activity", "")).strip().lower():
+        issues.append("challenge.activity must not be the same as explore's activity")
+    elif avoid_activities and challenge["activity"].strip().lower() in {a.strip().lower() for a in avoid_activities}:
+        issues.append(f"challenge.activity \"{challenge['activity']}\" is in the avoid-list (used recently) and must be different")
+
+    level = lesson.get("levelSet") or {}
+    if not _v2_bullets_ok(level.get("points")):
+        issues.append("levelSet.points must be 1-3 {text, detail?} bullets")
+
+    text_blob = json.dumps(lesson, ensure_ascii=False).lower()
+    for w in BANNED_WORDS:
+        if re.search(rf"\b{w}\b", text_blob):
+            issues.append(f'contains banned word "{w}"')
+
+    materials_used = lesson.get("materialsUsed")
+    if resources and isinstance(materials_used, list):
+        allowed = {r.strip().lower() for r in resources}
+        invented = [m for m in materials_used if m.strip().lower() not in allowed]
+        if invented:
+            issues.append(f"materialsUsed includes items not in the resource list: {', '.join(invented)}")
+
+    return issues
+
+
+# ── Hierarchical pipeline ────────────────────────────────────────────────────
+# Instead of one prompt carrying every preference at once (roles + goals +
+# activities + comfort zones + resources + personalization + language, all
+# competing for attention), this runs the SAME conversation across 4 turns:
+#   1. ROLE        -- how this teacher's self-identity shapes the angle
+#   2. GOALS        -- what they want students to walk away with (+ opening scenario)
+#   3. OTHER PREFS  -- activities/comfort/resources/personalization/language -> 2 concrete activity picks
+#   4. MERGE        -- finalize everything above into the exact SmartLesson JSON
+# Each stage's assistant reply is appended to the message list before the next
+# stage's user turn, so the model has native, verbatim access to what it
+# already committed to -- no lossy re-summarization by our code in between.
+
+def _hier_system_prompt() -> str:
+    return (
+        'You are an expert teacher-trainer designing a classroom-ready lesson for a resource-constrained '
+        'school (government or NGO-run, India), working through this DELIBERATELY IN STAGES across this '
+        'conversation so nothing gets lost: first the teacher\'s ROLE identity, then their GOALS for '
+        'students, then their remaining preferences and constraints, and finally a single merged prep sheet. '
+        'Build on what you said in each earlier turn -- do not contradict or restart from scratch.\n\n'
+        f'{LOW_RESOURCE_PRINCIPLES}\n\n{ACTIVITY_BANK}'
+    )
+
+
+def _hier_role_turn(topic: str, subject: str, grade: str, profile: Optional[TeachingProfile]) -> str:
+    roles = ', '.join(profile.roles) if profile and profile.roles else '(no specific role set -- assume a generic, well-rounded classroom teacher)'
+    return (
+        f"STAGE 1 of 4 -- ROLE.\n"
+        f"Topic: {topic} ({subject}, Grade {grade}).\n"
+        f"This teacher sees themselves as: {roles}.\n\n"
+        f"In 3-4 sentences, describe the TEACHING ANGLE this specific role identity brings to THIS topic -- "
+        f"what kind of experience they'd create, their tone/energy, what pedagogical move feels natural to "
+        f"them (e.g. a Mentor might build trust before content; a Guide might set up a puzzle and let "
+        f"students find their way; an Influencer might connect it to something socially relevant students "
+        f"already care about). Do NOT describe specific activities or lesson content yet -- only the angle."
+    )
+
+
+def _hier_goal_turn(profile: Optional[TeachingProfile]) -> str:
+    goals = ', '.join(profile.goals) if profile and profile.goals else '(no specific goals set -- assume "understand deeply" and "stay curious")'
+    return (
+        f"STAGE 2 of 4 -- GOALS.\n"
+        f"This teacher wants students to: {goals}.\n\n"
+        f"Building on the teaching angle above, write:\n"
+        f"1. One sentence refining how the lesson should FEEL so it concretely serves these goals (not just "
+        f"decorated with them).\n"
+        f"2. A real-life scenario (2-3 sentences) from a child's world that opens the lesson with curiosity "
+        f"and sets up achieving these goals -- specific and concrete (a market, a bus, a cricket match, a "
+        f"school event), never an abstract 'today we will learn...'.\n"
+        f"Do NOT describe specific activities yet -- only the framing and opening scenario."
+    )
+
+
+def _hier_other_prefs_turn(profile: Optional[TeachingProfile]) -> str:
+    prefs = build_preferences_context(profile)
+    return (
+        f"STAGE 3 of 4 -- REMAINING PREFERENCES & CONSTRAINTS.\n"
+        f"{prefs}\n\n"
+        f"Building on everything above (the angle, the goals, the opening scenario), pick TWO DIFFERENT "
+        f"activities from the bank given at the start of this conversation -- one to be the main interactive "
+        f"exploration, a different one to be a later challenge. For each: name it exactly as it appears in "
+        f"the bank, justify the pick in one sentence against this teacher's preferences/constraints above, "
+        f"and sketch (2-3 sentences) how you'd adapt it to THIS specific topic. Respect the low-resource "
+        f"rules and this teacher's comfort zones and available resources. Do not write final step-by-step "
+        f"instructions yet -- just the two picks and how each would work."
+    )
+
+
+def _hier_merge_turn(
+    topic: str, subject: str, grade: str, subtopic: Optional[str], class_size: Optional[int],
+    weak_topics: Optional[list], context_note: Optional[str], grounding: Optional[Grounding],
+) -> str:
+    grounding_context = build_grounding_context(grounding)
+    weak_topics_context = (
+        f"This class is weak on: {', '.join(weak_topics)}. If it fits naturally, let the real-life "
+        f"connection or challenge also reinforce one of these -- but never mention them explicitly or call it review."
+        if weak_topics else ""
+    )
+    context_note_line = f"Teacher's note for today: {context_note.strip()}" if context_note and context_note.strip() else ""
+    subtopic_line = f"\nSubtopic (focus specifically on this): {subtopic}" if subtopic else ""
+
+    return f"""STAGE 4 of 4 -- MERGE & FINALIZE.
+
+Topic: {topic}{subtopic_line}
+Subject: {subject}
+Grade: {grade}
+Class size: {class_size if class_size else 'unknown'}
+
+{grounding_context}
+{weak_topics_context}
+{context_note_line}
+
+Now merge everything from this conversation -- the role angle, the goals framing + opening scenario, and the two chosen activities -- into ONE final Prep Sheet. Stay faithful to every earlier stage; do not introduce a new angle, new scenario, or new activities not already discussed above.
+
+Return ONLY valid JSON (no markdown, no extra text), matching this exact shape:
+{{
+  "concept": ["2 to 3 short bullets introducing the idea in the simplest possible way -- no paragraphs"],
+  "realLifeConnection": "The SAME opening scenario established in stage 2 -- do not change it now.",
+  "interactiveExploration": {{
+    "activity": "the FIRST activity chosen in stage 3, named exactly as in the bank",
+    "steps": ["2 to 4 short steps describing exactly how this activity plays out for THIS topic -- adapt the numbers/wording"],
+    "guidingQuestions": ["1 to 3 questions the teacher asks mid-activity so the concept emerges from discussion"]
+  }},
+  "challenge": {{
+    "activity": "the SECOND (different) activity chosen in stage 3, named exactly as in the bank",
+    "steps": ["2 to 3 short steps for how this plays out for THIS topic"]
+  }},
+  "levelSet": {{
+    "returnToScenario": "One line bringing back the exact opening real-life scenario",
+    "questions": ["2 to 3 short questions that let students show they can now read/write/compare/explain the idea, tied to that scenario"],
+    "extendPrompt": "One open-ended line inviting students to think of another place this idea shows up in their own life"
+  }}
+}}
+
+Rules:
+- concept: exactly 2 or 3 bullets, one short sentence each.
+- interactiveExploration and challenge MUST use the two DIFFERENT activities already chosen in stage 3 above, now with full step-by-step detail and topic-specific numbers/wording -- do not swap or invent new ones.
+- levelSet must reference the SAME scenario from realLifeConnection, not a new one.
+- Never use the words "quiz", "test", "evaluate", "assess", "review", "recall", "prerequisite".
+- Everything must be scannable in under 2 minutes total."""
+
+
+def generate_hierarchical_lesson(
+    topic: str, subject: str, grade: str, subtopic: Optional[str] = None,
+    class_size: Optional[int] = None, profile: Optional[TeachingProfile] = None,
+    weak_topics: Optional[list] = None, context_note: Optional[str] = None,
+    grounding: Optional[Grounding] = None,
+) -> dict:
+    """Drives the 4-turn conversation and returns {"stages": {...}, "lesson": {...}}
+    so both the intermediate reasoning and the final JSON can be inspected."""
+    messages = [{"role": "system", "content": _hier_system_prompt()}]
+    stages = {}
+
+    messages.append({"role": "user", "content": _hier_role_turn(topic, subject, grade, profile)})
+    stages["role"] = call_openrouter_messages(messages)
+    messages.append({"role": "assistant", "content": stages["role"]})
+
+    messages.append({"role": "user", "content": _hier_goal_turn(profile)})
+    stages["goals"] = call_openrouter_messages(messages)
+    messages.append({"role": "assistant", "content": stages["goals"]})
+
+    messages.append({"role": "user", "content": _hier_other_prefs_turn(profile)})
+    stages["other"] = call_openrouter_messages(messages)
+    messages.append({"role": "assistant", "content": stages["other"]})
+
+    messages.append({"role": "user", "content": _hier_merge_turn(
+        topic, subject, grade, subtopic, class_size, weak_topics, context_note, grounding,
+    )})
+    final_raw = call_openrouter_messages(messages)
+    lesson = _extract_json(final_raw)
+
+    return {"stages": stages, "lesson": lesson}
 
 
 # ── Pretty-printing ──────────────────────────────────────────────────────────
@@ -628,6 +1273,178 @@ def format_lesson(lesson: dict, header: str) -> str:
     return "\n".join(lines)
 
 
+def format_story_lesson(lesson: dict, header: str, validation: Optional[dict] = None) -> str:
+    lines = ["=" * 78, header, "=" * 78, ""]
+
+    if lesson.get("planningNote"):
+        lines.append("PLANNING NOTE (internal only — never shown to the teacher)")
+        lines.append("-" * 40)
+        lines.append(f"  {lesson['planningNote']}")
+        lines.append("")
+
+    lines.append("CONCEPT")
+    lines.append("-" * 40)
+    for i, c in enumerate(lesson.get("concept", []), 1):
+        lines.append(f"  {i}. {c}")
+    lines.append("")
+
+    lines.append("LET'S IMAGINE... (real-life connection)")
+    lines.append("-" * 40)
+    lines.append(f"  {lesson.get('realLifeConnection', '')}")
+    lines.append("")
+
+    exp = lesson.get("interactiveExploration") or {}
+    lines.append(f"INTERACTIVE EXPLORATION -- Activity: {exp.get('activity', '')}")
+    lines.append("-" * 40)
+    for i, s in enumerate(exp.get("steps", []), 1):
+        lines.append(f"  {i}. {s}")
+    for q in exp.get("guidingQuestions", []):
+        lines.append(f"       [Ask] {q}")
+    lines.append("")
+
+    chal = lesson.get("challenge") or {}
+    lines.append(f"CHALLENGE -- Activity: {chal.get('activity', '')}")
+    lines.append("-" * 40)
+    for i, s in enumerate(chal.get("steps", []), 1):
+        lines.append(f"  {i}. {s}")
+    lines.append("")
+
+    if lesson.get("materialsUsed"):
+        lines.append("MATERIALS USED")
+        lines.append("-" * 40)
+        for m in lesson["materialsUsed"]:
+            lines.append(f"  [x] {m}")
+        lines.append("")
+
+    level = lesson.get("levelSet") or {}
+    lines.append("LEVEL SET (recap)")
+    lines.append("-" * 40)
+    lines.append(f"  {level.get('returnToScenario', '')}")
+    for q in level.get("questions", []):
+        lines.append(f"       - {q}")
+    if level.get("extendPrompt"):
+        lines.append(f"       [Extend] {level['extendPrompt']}")
+    lines.append("")
+
+    if validation is not None:
+        lines.append("TIER 2 VALIDATION")
+        lines.append("-" * 40)
+        if validation["initial_issues"]:
+            lines.append(f"  Initial violations found ({len(validation['initial_issues'])}):")
+            for i in validation["initial_issues"]:
+                lines.append(f"    - {i}")
+            if validation["remaining_issues"]:
+                lines.append(f"  After repair call, still remaining ({len(validation['remaining_issues'])}):")
+                for i in validation["remaining_issues"]:
+                    lines.append(f"    - {i}")
+            else:
+                lines.append("  All fixed by the repair call.")
+        else:
+            lines.append("  Clean on first pass — no violations, no repair call needed.")
+        lines.append("")
+
+    return "\n".join(lines)
+
+
+def format_hierarchical_stages(stages: dict) -> str:
+    """Shows the intermediate reasoning from each of the 3 preference stages,
+    before the final merged lesson (printed separately via format_story_lesson)
+    -- so it's possible to see exactly what each stage contributed."""
+    lines = ["", "HIERARCHICAL PIPELINE -- INTERMEDIATE STAGES", "=" * 78, ""]
+    for key, title in (("role", "STAGE 1 -- ROLE"), ("goals", "STAGE 2 -- GOALS"), ("other", "STAGE 3 -- OTHER PREFERENCES -> ACTIVITY PICKS")):
+        lines.append(title)
+        lines.append("-" * 40)
+        for wrapped in _wrap(stages.get(key, ""), 74):
+            lines.append(f"  {wrapped}")
+        lines.append("")
+    return "\n".join(lines)
+
+
+def _format_bullets(bullets, indent="  ") -> list:
+    lines = []
+    for b in bullets or []:
+        lines.append(f"{indent}- {b.get('text', '')}")
+        if b.get("detail"):
+            lines.append(f"{indent}    [+] {b['detail']}")
+    return lines
+
+
+def format_v2_lesson(lesson: dict, header: str, validation: Optional[dict] = None) -> str:
+    lines = ["=" * 78, header, "=" * 78, ""]
+
+    if lesson.get("planningNote"):
+        lines.append("PLANNING NOTE (internal only)")
+        lines.append("-" * 40)
+        lines.append(f"  {lesson['planningNote']}")
+        lines.append("")
+
+    refresher = lesson.get("previousTopicRefresher")
+    lines.append("PREVIOUS TOPIC REFRESHER")
+    lines.append("-" * 40)
+    if refresher:
+        lines.append(f"  Previous topic: {refresher.get('previousTopic', '')}")
+        lines.extend(_format_bullets(refresher.get("recap")))
+    else:
+        lines.append("  (none -- first topic in the syllabus)")
+    lines.append("")
+
+    lines.append("CONCEPT")
+    lines.append("-" * 40)
+    lines.extend(_format_bullets(lesson.get("concept")))
+    lines.append("")
+
+    explore = lesson.get("explore") or {}
+    lines.append("EXPLORE (creative + real-life connection)")
+    lines.append("-" * 40)
+    lines.append(f"  Scenario: {explore.get('scenario', '')}")
+    lines.extend(_format_bullets(explore.get("points")))
+    if explore.get("imageFocus"):
+        lines.append(f"  [Image focus] {explore['imageFocus']}")
+    if explore.get("image") and explore["image"].get("url"):
+        lines.append(f"  [Image] {explore['image']['url']}")
+    lines.append("")
+
+    challenge = lesson.get("challenge") or {}
+    lines.append(f"CHALLENGE -- Activity: {challenge.get('activity', '')} (from official bank, rotated)")
+    lines.append("-" * 40)
+    lines.extend(_format_bullets(challenge.get("points")))
+    lines.append("")
+
+    if lesson.get("materialsUsed"):
+        lines.append("MATERIALS USED")
+        lines.append("-" * 40)
+        for m in lesson["materialsUsed"]:
+            lines.append(f"  [x] {m}")
+        lines.append("")
+
+    level = lesson.get("levelSet") or {}
+    lines.append("LEVEL SET")
+    lines.append("-" * 40)
+    lines.extend(_format_bullets(level.get("points")))
+    if level.get("extendPrompt"):
+        lines.append(f"  [Extend] {level['extendPrompt']}")
+    lines.append("")
+
+    if validation is not None:
+        lines.append("TIER 2 VALIDATION")
+        lines.append("-" * 40)
+        if validation["initial_issues"]:
+            lines.append(f"  Initial violations found ({len(validation['initial_issues'])}):")
+            for i in validation["initial_issues"]:
+                lines.append(f"    - {i}")
+            if validation["remaining_issues"]:
+                lines.append(f"  After repair call, still remaining ({len(validation['remaining_issues'])}):")
+                for i in validation["remaining_issues"]:
+                    lines.append(f"    - {i}")
+            else:
+                lines.append("  All fixed by the repair call.")
+        else:
+            lines.append("  Clean on first pass — no violations, no repair call needed.")
+        lines.append("")
+
+    return "\n".join(lines)
+
+
 # ── Custom profile from CLI flags ────────────────────────────────────────────
 
 def _split(val: Optional[str]) -> list:
@@ -675,7 +1492,17 @@ def main():
     parser.add_argument("--class-size", type=int, help="Numeric class size passed to the prompt (e.g. 32)")
     parser.add_argument("--context-note", help="Optional ephemeral 'anything for today?' note")
     parser.add_argument("--weak-topics", help="Comma-separated prior topics to mark as weak (silent gap-awareness test)")
-    parser.add_argument("--images", action="store_true", help="Also generate the per-bullet board-sketch (slower, costs more)")
+    parser.add_argument("--images", action="store_true", help="Also generate images (per-bullet board-sketch for classic; one Explore sketch for v2)")
+    parser.add_argument("--format", choices=["classic", "story", "hierarchical", "v2"], default="v2",
+                         help="'v2' (default): Previous Topic Refresher -> Concept -> Explore (creative, free-form, "
+                              "with an AI image) -> Challenge (official activity bank, rotated against --avoid-activities) "
+                              "-> Level Set. Every section capped at 3 expandable {text, detail?} bullets. "
+                              "'story': the prior single-prompt 5-part template (Concept -> Real-Life Connection -> "
+                              "Interactive Exploration -> Challenge -> Level Set), currently still live in production. "
+                              "'hierarchical': the 4-turn conversation experiment (role -> goals -> other prefs -> merge). "
+                              "'classic': the original goal/materials/concept/flow/talkingPoints/differentiation/watchFor shape.")
+    parser.add_argument("--previous-topic", help="v2 only: name of the topic studied immediately before this one (omit to simulate 'first topic in syllabus')")
+    parser.add_argument("--avoid-activities", help="v2 only: comma-separated activity names to exclude from the Challenge pick (simulates rotation against recent generations)")
     parser.add_argument("--out-dir", default=str(_HERE / "prep_material_test_output"), help="Where to save .json/.md output")
     parser.add_argument("--list-profiles", action="store_true", help="List built-in profile presets and exit")
 
@@ -731,32 +1558,65 @@ def main():
         print(f"--> Generating: {header}")
 
         class_size = args.class_size or (_CLASS_SIZE_TO_NUMBER.get(profile.class_size) if profile else None)
+        stages = None
+        validation = None
         try:
-            lesson = generate_lesson(
-                topic=topic, subject=subject, grade=grade, subtopic=args.subtopic,
-                class_size=class_size, profile=profile, weak_topics=weak_topics or None,
-                context_note=args.context_note, with_images=args.images,
-            )
+            if args.format == "v2":
+                result = generate_v2_lesson(
+                    topic=topic, subject=subject, grade=grade, subtopic=args.subtopic,
+                    class_size=class_size, profile=profile, weak_topics=weak_topics or None,
+                    context_note=args.context_note, previous_topic=args.previous_topic,
+                    avoid_activities=_split(args.avoid_activities) or None, with_images=args.images,
+                )
+                lesson, validation = result["lesson"], result["validation"]
+            elif args.format == "hierarchical":
+                result = generate_hierarchical_lesson(
+                    topic=topic, subject=subject, grade=grade, subtopic=args.subtopic,
+                    class_size=class_size, profile=profile, weak_topics=weak_topics or None,
+                    context_note=args.context_note,
+                )
+                stages, lesson = result["stages"], result["lesson"]
+            elif args.format == "story":
+                result = generate_story_lesson(
+                    topic=topic, subject=subject, grade=grade, subtopic=args.subtopic,
+                    class_size=class_size, profile=profile, weak_topics=weak_topics or None,
+                    context_note=args.context_note,
+                )
+                lesson, validation = result["lesson"], result["validation"]
+            else:
+                lesson = generate_lesson(
+                    topic=topic, subject=subject, grade=grade, subtopic=args.subtopic,
+                    class_size=class_size, profile=profile, weak_topics=weak_topics or None,
+                    context_note=args.context_note, with_images=args.images,
+                )
         except Exception as e:
             print(f"    [ERROR] {e}\n")
             continue
 
         profile_block = format_profile_inputs(profile)
-        rendered = profile_block + format_lesson(lesson, header)
+        if args.format == "classic":
+            rendered = profile_block + format_lesson(lesson, header)
+        elif args.format == "hierarchical":
+            rendered = profile_block + format_hierarchical_stages(stages) + format_story_lesson(lesson, header)
+        elif args.format == "v2":
+            rendered = profile_block + format_v2_lesson(lesson, header, validation)
+        else:
+            rendered = profile_block + format_story_lesson(lesson, header, validation)
         print(rendered)
 
         short_profile_name = profile_name.split(" (")[0]  # drop the descriptive tag — keep filenames short on Windows
         slug = re.sub(r"[^a-z0-9]+", "_", f"{short_profile_name}_{grade}_{subject}_{topic}".lower()).strip("_")
         (out_dir / f"{slug}.json").write_text(
             json.dumps({"profile_name": profile_name, "grade": grade, "subject": subject, "topic": topic,
-                        "profile": profile.__dict__ if profile else None, "lesson": lesson},
+                        "profile": profile.__dict__ if profile else None, "stages": stages,
+                        "validation": validation, "lesson": lesson},
                        indent=2, ensure_ascii=False),
             encoding="utf-8",
         )
         (out_dir / f"{slug}.md").write_text(rendered, encoding="utf-8")
         comparison_rows.append((profile_name, grade, subject, topic, profile, lesson))
 
-    if comparison_rows:
+    if comparison_rows and args.format == "classic":
         write_comparison_file(comparison_rows, out_dir)
 
     print(f"\nSaved {len(combos)} result(s) to: {out_dir}")

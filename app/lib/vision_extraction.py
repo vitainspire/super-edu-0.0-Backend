@@ -40,11 +40,70 @@ except ImportError:
 OPENROUTER_MODEL = os.environ.get("OPENROUTER_MODEL", "google/gemini-2.5-flash")
 _OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 
+# ── Model routing ─────────────────────────────────────────────────────────────
+# Not every call in this pipeline is a hard task. Language detection returns one
+# word; chapter content extraction transcribes a whole chapter in its original
+# script. Routing them to the same model overpays for the easy ones.
+#
+# The cheap tier is deliberately the SAME FAMILY as the standard tier
+# (gemini-2.5-flash-lite: $0.10/$0.40 per 1M vs $0.30/$2.50 — 3x cheaper in,
+# 6.25x out). Same image tiling, same prompt-following, and critically the same
+# non-Latin script handling: these are Telugu and Hindi textbooks, and small
+# third-party vision models are markedly worse at Devanagari and Telugu OCR.
+# Saving a fraction of a cent is not worth mis-transcribing a topic name.
+OPENROUTER_MODEL_SIMPLE = os.environ.get(
+    "OPENROUTER_MODEL_SIMPLE", "google/gemini-2.5-flash-lite"
+)
+
+# Which tier the expensive call — per-chapter content extraction — runs on.
+# Defaults to "standard" because that is the call whose output quality decides
+# whether the whole extraction is usable. Set to "simple" to A/B the cheap model
+# on the real cost driver once you have a way to judge the result.
+EXTRACTION_MODEL_TIER = os.environ.get("EXTRACTION_MODEL_TIER", "standard").strip().lower()
+
+# A tier that fails escalates instead of giving up: worst case you pay the old
+# price, you never get a worse answer than before routing existed.
+_TIER_ESCALATION = {"simple": "standard", "standard": None}
+
 PAGE_DPI = 150            # render DPI — 150 balances quality vs cost
 PAGE_BATCH_SIZE = 7       # max pages per OpenRouter call; larger chapters are batched
 MAX_OUTPUT_TOKENS = 65536  # allow full extraction without truncation
 INTER_CALL_DELAY = 4      # seconds between successive API calls
 CHAPTER_WORKERS = 3       # chapters processed in parallel
+
+# Output format for per-chapter content extraction: "markdown" (default) or "json".
+#
+# "markdown" asks the model for Markdown and turns it into the ontology with
+# markdown_ontology.parse_markdown_ontology — a deterministic, unit-tested parser
+# that also assigns every id. That removes the two jobs the model was worst at
+# (valid JSON syntax, consistent ids), so partial output still parses and the
+# retry ladder shrinks from three tiers to two.
+#
+# "json" is the original path, kept so a rollback is an env change rather than a
+# revert. TOC and language detection stay on JSON either way — they return tiny
+# payloads and never showed the failure profile this switch is meant to fix.
+EXTRACTION_FORMAT = os.environ.get("EXTRACTION_FORMAT", "markdown").strip().lower()
+
+# Valid values, used to sanitise anything that arrives from a request. An admin
+# picking the format in the UI must not be able to make the pipeline post an
+# arbitrary string as a model tier or a response format.
+VALID_EXTRACTION_FORMATS = ("markdown", "json")
+VALID_MODEL_TIERS = ("standard", "simple")
+
+
+def resolve_extraction_format(value: Optional[str]) -> str:
+    """Coerce a caller-supplied format to a supported one, falling back to the
+    configured default rather than raising — an unknown value should degrade to
+    the safe path, not fail an admin's upload."""
+    if value and value.strip().lower() in VALID_EXTRACTION_FORMATS:
+        return value.strip().lower()
+    return EXTRACTION_FORMAT if EXTRACTION_FORMAT in VALID_EXTRACTION_FORMATS else "markdown"
+
+
+def resolve_model_tier(value: Optional[str]) -> str:
+    if value and value.strip().lower() in VALID_MODEL_TIERS:
+        return value.strip().lower()
+    return EXTRACTION_MODEL_TIER if EXTRACTION_MODEL_TIER in VALID_MODEL_TIERS else "standard"
 
 ProgressCb = Optional[Callable[[int, str], None]]
 
@@ -126,8 +185,39 @@ def _pil_to_b64_url(img: PIL.Image.Image) -> str:
     return "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode()
 
 
-def call_gemini(contents: list, max_retries: int = 6, base_delay: int = 5) -> str:
-    """Send a list of PIL images and/or strings to OpenRouter and return the text response."""
+_SYSTEM_PROMPTS = {
+    "json": "You must respond with valid JSON only. No markdown fences, no preamble.",
+    "markdown": (
+        "You must respond with Markdown only. No preamble, no explanation, and do not "
+        "wrap the whole document in a code fence."
+    ),
+}
+
+
+def model_for_tier(tier: str) -> str:
+    """Resolve a routing tier to a concrete model id."""
+    return OPENROUTER_MODEL_SIMPLE if tier == "simple" else OPENROUTER_MODEL
+
+
+def call_gemini(
+    contents: list,
+    max_retries: int = 6,
+    base_delay: int = 5,
+    response_format: str = "json",
+    tier: str = "standard",
+) -> str:
+    """Send a list of PIL images and/or strings to OpenRouter and return the text response.
+
+    response_format picks the system prompt. Telling a model "valid JSON only" while
+    asking it for Markdown produces JSON-wrapped Markdown, so this has to track the
+    prompt being sent.
+
+    tier picks the model: "simple" for calls whose answer is a word or a small list,
+    "standard" for real extraction work. A tier that exhausts its retries escalates
+    to the next one up rather than raising, so routing can only cost money, never
+    quality. Rate limits are retried within a tier before escalating — a 429 means
+    "wait", not "this model can't do it".
+    """
     parts = []
     for item in contents:
         if isinstance(item, str):
@@ -135,36 +225,61 @@ def call_gemini(contents: list, max_retries: int = 6, base_delay: int = 5) -> st
         else:
             parts.append({"type": "image_url", "image_url": {"url": _pil_to_b64_url(item)}})
 
+    system = _SYSTEM_PROMPTS.get(response_format, _SYSTEM_PROMPTS["json"])
     messages = [
-        {"role": "system", "content": "You must respond with valid JSON only. No markdown fences, no preamble."},
+        {"role": "system", "content": system},
         {"role": "user", "content": parts if len(parts) > 1 or any(p["type"] == "image_url" for p in parts) else parts[0]["text"]},
     ]
 
-    payload = {
-        "model": OPENROUTER_MODEL,
-        "messages": messages,
-        "max_tokens": MAX_OUTPUT_TOKENS,
-        "temperature": 0.15,
-    }
+    # Build the tier chain: the requested tier, then whatever it escalates to.
+    chain: list = []
+    seen: set = set()
+    current: Optional[str] = tier
+    while current and current not in seen:
+        seen.add(current)
+        chain.append(current)
+        current = _TIER_ESCALATION.get(current)
 
-    for attempt in range(max_retries):
-        try:
-            resp = requests.post(
-                _OPENROUTER_URL,
-                headers={"Authorization": f"Bearer {_api_key()}", "Content-Type": "application/json"},
-                json=payload,
-                timeout=180,
-            )
-            resp.raise_for_status()
-            return resp.json()["choices"][0]["message"]["content"]
-        except Exception as e:
-            err = str(e)
-            if ("429" in err or "quota" in err.lower() or "resource_exhausted" in err.lower()) and attempt < max_retries - 1:
-                delay = base_delay * (2 ** attempt)
-                print(f"  [RETRY] Rate limited. Waiting {delay}s (attempt {attempt+1}/{max_retries})...")
-                time.sleep(delay)
-            else:
-                raise
+    last_error: Optional[Exception] = None
+    for chain_idx, chain_tier in enumerate(chain):
+        model = model_for_tier(chain_tier)
+        if chain_idx > 0:
+            print(f"  [ESCALATE] {chain[chain_idx-1]} tier failed — retrying on {model}")
+
+        payload = {
+            "model": model,
+            "messages": messages,
+            "max_tokens": MAX_OUTPUT_TOKENS,
+            "temperature": 0.15,
+        }
+
+        for attempt in range(max_retries):
+            try:
+                resp = requests.post(
+                    _OPENROUTER_URL,
+                    headers={"Authorization": f"Bearer {_api_key()}", "Content-Type": "application/json"},
+                    json=payload,
+                    timeout=180,
+                )
+                resp.raise_for_status()
+                return resp.json()["choices"][0]["message"]["content"]
+            except Exception as e:
+                last_error = e
+                err = str(e)
+                rate_limited = (
+                    "429" in err or "quota" in err.lower() or "resource_exhausted" in err.lower()
+                )
+                if rate_limited and attempt < max_retries - 1:
+                    delay = base_delay * (2 ** attempt)
+                    print(f"  [RETRY] Rate limited on {model}. "
+                          f"Waiting {delay}s (attempt {attempt+1}/{max_retries})...")
+                    time.sleep(delay)
+                else:
+                    # Out of retries, or a non-transient error — try the next tier.
+                    print(f"  [MODEL FAIL] {model}: {err}")
+                    break
+
+    raise last_error if last_error else RuntimeError("call_gemini exhausted every tier")
 
 
 # ── Language Detection ─────────────────────────────────────────────────────
@@ -185,7 +300,7 @@ def detect_language_vision(pdf_path: str) -> str:
     doc = fitz.open(pdf_path)
     images = [render_page(doc, i) for i in range(min(4, len(doc)))]
     try:
-        raw = call_gemini([_LANGUAGE_DETECT_PROMPT] + images)
+        raw = call_gemini([_LANGUAGE_DETECT_PROMPT] + images, tier="simple")
         data = robust_json_parse(raw)
         lang = data.get("language", "Hindi")
         print(f"[VISION] Auto-detected language: {lang}")
@@ -273,7 +388,7 @@ def detect_content_start(doc) -> dict:
 
     try:
         time.sleep(INTER_CALL_DELAY)
-        raw = call_gemini([_CONTENT_START_PROMPT] + images)
+        raw = call_gemini([_CONTENT_START_PROMPT] + images, tier="simple")
         data = robust_json_parse(raw)
 
         first_idx = data.get("first_lesson_pdf_index", 0)
@@ -334,7 +449,7 @@ def _calibrate_offset_vision(doc, chapters_raw: list) -> int:
     )
     try:
         time.sleep(INTER_CALL_DELAY)
-        raw = call_gemini([prompt] + images)
+        raw = call_gemini([prompt] + images, tier="simple")
         entries = robust_json_parse(raw).get("page_numbers", [])
         if entries:
             e = entries[0]
@@ -365,6 +480,11 @@ def detect_chapters_vision(pdf_path: str) -> list:
 
     images = [render_page(doc, i) for i in range(n)]
     time.sleep(INTER_CALL_DELAY)
+    # Deliberately NOT routed to the cheap tier despite looking like a simple
+    # "read the contents page" task. This is the highest-blast-radius call in the
+    # pipeline: the chapter list sets the page range every chapter is extracted
+    # from, so one wrong number silently extracts the wrong pages for a whole
+    # chapter. It runs once per book — there is nothing to save here worth that.
     raw = call_gemini([TOC_PROMPT] + images)
 
     try:
@@ -545,6 +665,41 @@ Return ONLY strict JSON:
 """
 
 
+def _simplified_markdown_prompt(chap_num: int, language: str, context: str) -> str:
+    """Markdown counterpart to _simplified_prompt — the single fallback tier.
+
+    There is no Markdown equivalent of _minimal_prompt. That tier existed only to
+    coax *syntactically valid* JSON out of the model as a last resort; the Markdown
+    parser has no syntax to fail on, so anything the model returns is already
+    salvaged. This tier is for the different problem it also addressed: a sparse,
+    image-only chapter the model reads as having no content worth reporting.
+    """
+    return f"""
+You are analyzing textbook pages. Language: {language}.
+CONTEXT: {context}
+
+This chapter may be short, mostly image-based, or have minimal text. That is fine.
+Describe AT LEAST ONE topic for any visible learning content — even a single activity page.
+Describe image-based activities (colouring, tracing, matching) in the exercise text.
+Summarize ALL content in English.
+
+Return ONLY Markdown:
+
+## <topic name>
+---
+pages: <first>-<last>
+---
+
+<English summary of the learning content>
+
+### <subtopic name> `general_skill` p<page>
+<English summary>
+
+#### Exercises
+- `general_activity` p<page> — <describe the activity>
+"""
+
+
 def _minimal_prompt(chap_num: int, language: str, context: str) -> str:
     n = chap_num
     return f"""
@@ -588,13 +743,70 @@ def extract_chapter_vision(
     exercise_start: int = 1,
     subtopic_start: int = 1,
     prior_topics_summary: str = "",
+    warnings_sink: Optional[list] = None,
+    markdown_sink: Optional[list] = None,
+    extraction_format: Optional[str] = None,
+    model_tier: Optional[str] = None,
 ) -> dict:
-    """Extract ontology from a single batch of pages for one chapter."""
+    """Extract ontology from a single batch of pages for one chapter.
+
+    extraction_format and model_tier are per-call so an admin can choose them per
+    upload; both fall back to the module defaults (which come from env) when not
+    given, so existing callers keep their behaviour.
+
+    On the Markdown path the id offsets go to the *parser* rather than into the
+    prompt — the model is no longer asked to continue an id sequence across page
+    batches, which is bookkeeping it had no reliable way to do.
+
+    warnings_sink collects parser warnings so the job can show the admin what
+    the model got wrong. markdown_sink collects the raw Markdown so it can be
+    stored for later re-enrichment without re-reading the pages.
+    """
     images = [render_page(doc, p) for p in pages if p < len(doc)]
     context = (
         f"Chapter {chap_num}: '{chap_title}' | "
         f"PDF pages {pages[0]+1}-{pages[-1]+1}"
     )
+
+    fmt = resolve_extraction_format(extraction_format)
+    tier = resolve_model_tier(model_tier)
+
+    if fmt == "markdown":
+        from .markdown_ontology import markdown_chapter_prompt, parse_markdown_ontology
+
+        prompt = markdown_chapter_prompt(
+            chap_num, language, context, global_chapter_list,
+            prior_topics_summary=prior_topics_summary,
+        )
+        raw = call_gemini(
+            [prompt] + images, response_format="markdown", tier=tier,
+        )
+        if markdown_sink is not None:
+            markdown_sink.append(raw)
+
+        result = parse_markdown_ontology(
+            raw,
+            chapter_number=chap_num,
+            chapter_title=chap_title,
+            topic_start=topic_start,
+            exercise_start=exercise_start,
+            subtopic_start=subtopic_start,
+        )
+        if result.warnings:
+            for warning in result.warnings:
+                print(f"  [MD WARN] Chapter {chap_num}: {warning}")
+            if warnings_sink is not None:
+                warnings_sink.extend(f"Chapter {chap_num}: {w}" for w in result.warnings)
+
+        if not result.ok:
+            # Nothing recoverable. Raising lets _process_chunk fall to the
+            # simplified tier, same as a JSON parse failure would have.
+            raise ValueError(
+                f"Markdown extraction yielded no topics for chapter {chap_num} "
+                f"({len(raw or '')} chars returned)"
+            )
+        return result.ontology
+
     prompt = _chapter_prompt(
         chap_num, language, context, global_chapter_list,
         topic_start=topic_start,
@@ -602,7 +814,9 @@ def extract_chapter_vision(
         subtopic_start=subtopic_start,
         prior_topics_summary=prior_topics_summary,
     )
-    raw = call_gemini([prompt] + images)
+    raw = call_gemini(
+        [prompt] + images, response_format="json", tier=tier,
+    )
     return robust_json_parse(raw)
 
 
@@ -613,17 +827,24 @@ def extract_chapter_batched(
     chap_title: str,
     language: str,
     global_chapter_list: str,
+    warnings_sink: Optional[list] = None,
+    markdown_sink: Optional[list] = None,
+    extraction_format: Optional[str] = None,
+    model_tier: Optional[str] = None,
 ) -> dict:
     """
     Extract a chapter's ontology, splitting large chapters into page batches.
     Subsequent batches receive a summary of previously extracted topics so the
-    model continues numbering correctly and avoids repeating content.
+    model avoids repeating content. On the Markdown path the id continuation is
+    handled by the parser, so the summary is purely about avoiding duplication.
     """
     chap_id = f"C_{chap_num}"
 
     if len(pages) <= PAGE_BATCH_SIZE:
         return extract_chapter_vision(
-            doc, pages, chap_num, chap_title, language, global_chapter_list
+            doc, pages, chap_num, chap_title, language, global_chapter_list,
+            warnings_sink=warnings_sink, markdown_sink=markdown_sink,
+            extraction_format=extraction_format, model_tier=model_tier,
         )
 
     batches = [pages[i:i + PAGE_BATCH_SIZE] for i in range(0, len(pages), PAGE_BATCH_SIZE)]
@@ -649,6 +870,10 @@ def extract_chapter_batched(
                 exercise_start=exercise_start,
                 subtopic_start=subtopic_start,
                 prior_topics_summary=prior_summary,
+                warnings_sink=warnings_sink,
+                markdown_sink=markdown_sink,
+                extraction_format=extraction_format,
+                model_tier=model_tier,
             )
             _merge(merged, batch_data)
         except Exception as e:
@@ -765,7 +990,7 @@ def _infer_cross_chapter_deps(ontology: dict) -> list:
 
     print("[AI] Inferring cross-chapter semantic dependencies...")
     try:
-        raw = call_gemini([_CROSS_DEP_PROMPT.format(topics_summary=summary)])
+        raw = call_gemini([_CROSS_DEP_PROMPT.format(topics_summary=summary)], tier="simple")
         data = robust_json_parse(raw)
         deps = data.get("cross_chapter_deps", [])
         print(f"[AI] Found {len(deps)} cross-chapter dependencies.")
@@ -773,6 +998,56 @@ def _infer_cross_chapter_deps(ontology: dict) -> list:
     except Exception as e:
         print(f"[WARNING] Cross-chapter dep inference failed: {e}")
         return []
+
+
+# ── Markdown archive ─────────────────────────────────────────────────────────
+
+def _persist_chapter_markdown(job_dir: Path, chap_num: int, chap_title: str, chunks: list) -> None:
+    """Store the raw Markdown a chapter produced, one file per chapter.
+
+    This is what makes a later schema change cheap: adding a field becomes a
+    text-in/text-out pass over these files instead of re-rendering the PDF and
+    re-reading every page. It also means the extraction is never re-transcribed,
+    so syllabus text an admin already reviewed cannot change underneath them.
+
+    Best-effort — a failure here must not lose an otherwise good extraction.
+    """
+    if not chunks:
+        return
+    try:
+        md_dir = job_dir / "markdown"
+        md_dir.mkdir(parents=True, exist_ok=True)
+        body = f"<!-- chapter {chap_num}: {chap_title} -->\n\n" + "\n\n".join(
+            c for c in chunks if c and c.strip()
+        )
+        (md_dir / f"chapter_{chap_num:02d}.md").write_text(body, encoding="utf-8")
+    except Exception as exc:
+        print(f"  [MD ARCHIVE] Could not store Markdown for chapter {chap_num}: {exc}")
+
+
+def _collect_chapter_markdown(job_dir: Path) -> dict:
+    """Read the per-chapter Markdown archive back off disk, keyed by chapter number.
+
+    Called at the end of extraction so the text can ride out on the ontology and
+    survive the caller deleting the work directory.
+    """
+    out: dict = {}
+    try:
+        md_dir = job_dir / "markdown"
+        if not md_dir.is_dir():
+            return out
+        for path in sorted(md_dir.glob("chapter_*.md")):
+            try:
+                num = int(path.stem.split("_")[1])
+            except (IndexError, ValueError):
+                continue
+            try:
+                out[str(num)] = path.read_text(encoding="utf-8")
+            except Exception:
+                continue
+    except Exception as exc:
+        print(f"  [MD ARCHIVE] Could not collect Markdown: {exc}")
+    return out
 
 
 # ── Checkpoint ───────────────────────────────────────────────────────────────
@@ -1256,6 +1531,8 @@ def generate_ontology_vision(
     output_dir: str = "output",
     language: str = "auto",
     progress_cb: ProgressCb = None,
+    extraction_format: Optional[str] = None,
+    model_tier: Optional[str] = None,
 ) -> tuple:
     """
     Vision-based ontology generation for textbooks.
@@ -1265,6 +1542,11 @@ def generate_ontology_vision(
         output_dir:  Root output directory (checkpoint + ontology.json land here).
         language:    Language name ("Hindi", "Telugu", ...) or "auto" to detect.
         progress_cb: Optional callback (pct: int, message: str) for progress updates.
+        extraction_format: "markdown" (default) or "json" — chosen per upload by the
+                     admin, falling back to the EXTRACTION_FORMAT env default.
+        model_tier:  "standard" (default) or "simple" for the per-chapter content
+                     call. Only affects that call; the TOC read and the retry tiers
+                     stay on the standard model regardless (see their call sites).
 
     Returns:
         (ontology dict, job_dir Path)
@@ -1276,6 +1558,10 @@ def generate_ontology_vision(
                 progress_cb(pct, msg)
             except Exception:
                 pass
+
+    fmt = resolve_extraction_format(extraction_format)
+    tier = resolve_model_tier(model_tier)
+    print(f"[VISION] format={fmt} tier={tier} ({model_for_tier(tier)})")
 
     pdf_name = Path(pdf_path).stem
     job_dir = Path(output_dir) / pdf_name
@@ -1336,19 +1622,39 @@ def generate_ontology_vision(
 
     merge_lock = threading.Lock()
 
+    # Parser warnings from every chapter, surfaced on the finished ontology so the
+    # admin review panel can show what the model got wrong instead of it only
+    # existing in server logs.
+    extraction_warnings: list = []
+
     def _process_chunk(idx: int, chunk: dict):
         if not chunk["pages"]:
-            return idx, {}, "empty"
+            return idx, {}, "empty", []
 
         thread_doc = fitz.open(pdf_path)
         context = f"Chapter {idx+1}: '{chunk['title']}'"
-        prompt_levels = [
-            ("full",       lambda: None),
-            ("simplified", lambda: _simplified_prompt(idx + 1, language, context)),
-            ("minimal",    lambda: _minimal_prompt(idx + 1, language, context)),
-        ]
+        chap_num = idx + 1
 
-        print(f"\n[VISION] Chapter {idx+1}/{len(chunks)}: {chunk['title']} ({len(chunk['pages'])} pages)")
+        # Markdown needs two tiers, not three. The "minimal" tier existed to coax
+        # syntactically valid JSON out of the model as a last resort, and the
+        # Markdown parser has no syntax to fail on.
+        if fmt == "markdown":
+            prompt_levels = [
+                ("full",       None),
+                ("simplified", lambda: _simplified_markdown_prompt(chap_num, language, context)),
+            ]
+        else:
+            prompt_levels = [
+                ("full",       None),
+                ("simplified", lambda: _simplified_prompt(chap_num, language, context)),
+                ("minimal",    lambda: _minimal_prompt(chap_num, language, context)),
+            ]
+        last_label = prompt_levels[-1][0]
+
+        chunk_warnings: list = []
+        chunk_markdown: list = []
+
+        print(f"\n[VISION] Chapter {chap_num}/{len(chunks)}: {chunk['title']} ({len(chunk['pages'])} pages)")
 
         try:
             for level_idx, (label, simple_prompt_fn) in enumerate(prompt_levels):
@@ -1357,26 +1663,56 @@ def generate_ontology_vision(
                         data = extract_chapter_batched(
                             thread_doc,
                             pages=chunk["pages"],
-                            chap_num=idx + 1,
+                            chap_num=chap_num,
                             chap_title=chunk["title"],
                             language=language,
                             global_chapter_list=global_chapter_list,
+                            warnings_sink=chunk_warnings,
+                            markdown_sink=chunk_markdown,
+                            extraction_format=fmt,
+                            model_tier=tier,
                         )
                     else:
+                        # Fallback tiers stay on the standard model regardless of
+                        # EXTRACTION_MODEL_TIER. They only run because the previous
+                        # attempt already failed, so routing a retry to a weaker
+                        # model is backwards — it makes a bad outcome likelier at
+                        # the exact moment quality matters most.
                         images = [render_page(thread_doc, p) for p in chunk["pages"] if p < len(thread_doc)]
-                        raw = call_gemini([simple_prompt_fn()] + images)
-                        data = robust_json_parse(raw)
+                        if fmt == "markdown":
+                            from .markdown_ontology import parse_markdown_ontology
 
-                    return idx, data, label
+                            raw = call_gemini(
+                                [simple_prompt_fn()] + images, response_format="markdown"
+                            )
+                            chunk_markdown.append(raw)
+                            parsed = parse_markdown_ontology(
+                                raw, chapter_number=chap_num, chapter_title=chunk["title"],
+                            )
+                            chunk_warnings.extend(
+                                f"Chapter {chap_num} (simplified): {w}" for w in parsed.warnings
+                            )
+                            if not parsed.ok:
+                                raise ValueError("simplified Markdown yielded no topics")
+                            data = parsed.ontology
+                        else:
+                            raw = call_gemini([simple_prompt_fn()] + images, response_format="json")
+                            data = robust_json_parse(raw)
+
+                    _persist_chapter_markdown(job_dir, chap_num, chunk["title"], chunk_markdown)
+                    return idx, data, label, chunk_warnings
 
                 except Exception as exc:
-                    print(f"  [FAIL:{label}] Chapter {idx+1}: {exc}")
-                    if label == "minimal":
-                        (job_dir / f"error_chunk_{idx+1}.txt").write_text(str(exc), encoding="utf-8")
+                    print(f"  [FAIL:{label}] Chapter {chap_num}: {exc}")
+                    if label == last_label:
+                        (job_dir / f"error_chunk_{chap_num}.txt").write_text(str(exc), encoding="utf-8")
                     if level_idx < len(prompt_levels) - 1:
                         time.sleep(INTER_CALL_DELAY)
 
-            return idx, None, "failed"
+            # Store whatever Markdown came back even on total failure — it is the
+            # only record of what the model saw, and it is re-parseable offline.
+            _persist_chapter_markdown(job_dir, chap_num, chunk["title"], chunk_markdown)
+            return idx, None, "failed", chunk_warnings
         finally:
             thread_doc.close()
 
@@ -1406,7 +1742,11 @@ def generate_ontology_vision(
         }
 
         for future in as_completed(futures):
-            idx, data, label = future.result()
+            idx, data, label, chunk_warnings = future.result()
+
+            if chunk_warnings:
+                with merge_lock:
+                    extraction_warnings.extend(chunk_warnings)
 
             if label == "empty":
                 with merge_lock:
@@ -1464,6 +1804,24 @@ def generate_ontology_vision(
         print(f"  [DEPS] Added {added} cross-chapter dependency edges.")
 
     _rebuild_legacy(full_ontology)
+
+    full_ontology["extraction_format"] = fmt
+    full_ontology["extraction_model_tier"] = tier
+    full_ontology["extraction_model"] = model_for_tier(tier)
+    if extraction_warnings:
+        full_ontology["extraction_warnings"] = extraction_warnings
+        print(f"[WARN] {len(extraction_warnings)} extraction warning(s) — see extraction_warnings.")
+
+    # Carry the Markdown archive out ON the ontology, not just on disk. The caller
+    # (syllabus_pdf_jobs) rmtree's the whole work dir in its finally block, so
+    # anything left only in job_dir/markdown/ is gone the moment extraction ends —
+    # which would throw away the exact artifact that makes a later schema change
+    # cheap. This travels with the ontology into the job payload instead.
+    chapter_markdown = _collect_chapter_markdown(job_dir)
+    if chapter_markdown:
+        full_ontology["chapter_markdown"] = chapter_markdown
+        total = sum(len(v) for v in chapter_markdown.values())
+        print(f"[MD ARCHIVE] Carried {len(chapter_markdown)} chapter(s), {total:,} chars.")
 
     ontology_path.write_text(
         json.dumps(full_ontology, indent=2, ensure_ascii=False),
