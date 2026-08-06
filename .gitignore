@@ -1,0 +1,13 @@
+venv/
+__pycache__/
+*.pyc
+.env
+*.log
+
+# Diagnostic dumps from scripts/test_prep_material.py. A run whose lesson still
+# inlined its illustrations as base64 writes 2 MB per file, which has no
+# business in the repo. The small ones already committed stay tracked — this
+# only stops new runs from being picked up. The other scripts/*_output dirs are
+# the cost and quality comparisons behind the extraction-format choice, and are
+# small enough to keep as the record of it.
+scripts/prep_material_test_output/

@@ -1,0 +1,465 @@
+{
+  "params": {
+    "topic": "Fractions",
+    "subject": "Mathematics",
+    "grade": "5",
+    "subtopic": null,
+    "class_size": null,
+    "profile": "storyteller",
+    "previous_topic": "Whole numbers and place value",
+    "weak_topics": null,
+    "avoid": null,
+    "context_note": null,
+    "repeats": 2,
+    "list_profiles": false,
+    "dry_run": false,
+    "out_dir": "scripts/lesson_format_output_v2"
+  },
+  "profile": "storyteller",
+  "cost_per_lesson": {
+    "json": 0.0053308750000000005,
+    "markdown": 0.0022619
+  },
+  "runs": [
+    {
+      "fmt": "json",
+      "repeat": 1,
+      "parsed_first_try": false,
+      "repair_calls": 1,
+      "initial_issues": [],
+      "remaining_issues": [],
+      "parser_warnings": [
+        "JSON parse failed: JSONDecodeError: Expecting ',' delimiter: line 29 column 3 (char 1397)"
+      ],
+      "missing": [],
+      "tokens_in": 3342,
+      "tokens_out": 1892,
+      "cost_usd": 0.0057326,
+      "elapsed_s": 20.0,
+      "error": "",
+      "ok": true,
+      "raw_chars": 3743,
+      "fields": {
+        "planningNote": true,
+        "concept": true,
+        "explore.scenario": true,
+        "explore.points": true,
+        "challenge.activity": true,
+        "challenge.points": true,
+        "materialsUsed": true,
+        "levelSet.points": true,
+        "levelSet.extendPrompt": true,
+        "previousTopicRefresher": true,
+        "explore.imageFocus": true
+      }
+    },
+    {
+      "fmt": "json",
+      "repeat": 2,
+      "parsed_first_try": true,
+      "repair_calls": 1,
+      "initial_issues": [
+        "contains banned word \"recall\""
+      ],
+      "remaining_issues": [
+        "contains banned word \"recall\""
+      ],
+      "parser_warnings": [],
+      "missing": [],
+      "tokens_in": 3237,
+      "tokens_out": 1803,
+      "cost_usd": 0.00492915,
+      "elapsed_s": 33.1,
+      "error": "",
+      "ok": true,
+      "raw_chars": 3888,
+      "fields": {
+        "planningNote": true,
+        "concept": true,
+        "explore.scenario": true,
+        "explore.points": true,
+        "challenge.activity": true,
+        "challenge.points": true,
+        "materialsUsed": true,
+        "levelSet.points": true,
+        "levelSet.extendPrompt": true,
+        "previousTopicRefresher": true,
+        "explore.imageFocus": true
+      }
+    },
+    {
+      "fmt": "markdown",
+      "repeat": 1,
+      "parsed_first_try": true,
+      "repair_calls": 0,
+      "initial_issues": [],
+      "remaining_issues": [],
+      "parser_warnings": [],
+      "missing": [],
+      "tokens_in": 2398,
+      "tokens_out": 600,
+      "cost_usd": 0.0022194,
+      "elapsed_s": 9.4,
+      "error": "",
+      "ok": true,
+      "raw_chars": 2575,
+      "fields": {
+        "planningNote": true,
+        "concept": true,
+        "explore.scenario": true,
+        "explore.points": true,
+        "challenge.activity": true,
+        "challenge.points": true,
+        "materialsUsed": true,
+        "levelSet.points": true,
+        "levelSet.extendPrompt": true,
+        "previousTopicRefresher": true,
+        "explore.imageFocus": true
+      }
+    },
+    {
+      "fmt": "markdown",
+      "repeat": 2,
+      "parsed_first_try": true,
+      "repair_calls": 0,
+      "initial_issues": [],
+      "remaining_issues": [],
+      "parser_warnings": [],
+      "missing": [],
+      "tokens_in": 2398,
+      "tokens_out": 634,
+      "cost_usd": 0.0023044,
+      "elapsed_s": 14.5,
+      "error": "",
+      "ok": true,
+      "raw_chars": 2700,
+      "fields": {
+        "planningNote": true,
+        "concept": true,
+        "explore.scenario": true,
+        "explore.points": true,
+        "challenge.activity": true,
+        "challenge.points": true,
+        "materialsUsed": true,
+        "levelSet.points": true,
+        "levelSet.extendPrompt": true,
+        "previousTopicRefresher": true,
+        "explore.imageFocus": true
+      }
+    }
+  ],
+  "lessons": {
+    "json_1": {
+      "planningNote": "Given the teacher's preference for storytelling and real-life connections, the Explore activity should be a relatable scenario where dividing things naturally leads to fractions. The 'Fraction Pizza Shop' from the bank fits this perfectly as a Challenge, allowing students to apply their understanding interactively.",
+      "previousTopicRefresher": {
+        "previousTopic": "Whole numbers and place value",
+        "recap": [
+          {
+            "text": "Remember when we talked about big numbers, like how many people live in our village, or how much money is in a big savings account?",
+            "detail": "This connects to the idea of 'whole' amounts."
+          },
+          {
+            "text": "We learned that every digit in a number has a special place, making it worth tens or hundreds or thousands.",
+            "detail": "Reinforces understanding of quantity and value."
+          },
+          {
+            "text": "Today, we're going to explore what happens when we need to talk about parts of these whole things, not just the full amounts."
+          }
+        ]
+      },
+      "concept": [
+        {
+          "text": "Sometimes we need to share things equally, but there isn't a whole number for everyone."
+        },
+        {
+          "text": "Imagine sharing one big roti among three friends; each person gets a part, not a whole roti."
+        },
+        {
+          "text": "Fractions help us describe these equal parts of a whole."
+        }
+      ],
+      "explore": {
+        "scenario": "Imagine our classroom is preparing for a special festival! We have one long, delicious banana cake, and we need to share it perfectly equally among the whole class so everyone gets a fair piece. But we can't just give one cake to each person, can we?",
+        "points": [
+          {
+            "text": "Teacher draws a long rectangle on the board to represent the cake.",
+            "detail": "Emphasize it's one whole cake."
+          },
+          {
+            "text": "Ask students: 'If there are 30 of us, how many equal pieces do we need to cut the cake into so everyone gets their share?'",
+            "detail": "Guide them to understand the denominator."
+          },
+          {
+            "text": "Teacher then draws lines to divide the cake on the board into these equal parts, counting them out loud with the class.",
+            "detail": "Visually represent the division and the concept of equal parts."
+          }
+        ],
+        "imageFocus": "A long rectangle divided into many equal parts"
+      },
+      "challenge": {
+        "activity": "Fraction Pizza Shop",
+        "points": [
+          {
+            "text": "Teacher draws large circles on the board, labeling them 'Pizza 1', 'Pizza 2', etc.",
+            "detail": "Each circle represents a whole pizza."
+          },
+          {
+            "text": "Teacher announces an 'order': 'I need one pizza cut into 4 equal slices, and I'd like 2 of those slices, please!'",
+            "detail": "This introduces the numerator and denominator in context."
+          },
+          {
+            "text": "Students raise their hands to explain how they would 'cut' and 'serve' the order, describing the fraction out loud.",
+            "detail": "Encourage students to use fraction language like 'one-fourth' or 'two-fourths'."
+          }
+        ]
+      },
+      "materialsUsed": [
+        "Chalkboard"
+      ],
+      "levelSet": {
+        "points": [
+          {
+            "text": "Just like we shared that one big banana cake fairly among all of us, fractions help us share or describe parts of anything.",
+            "detail": "Connect back to the Explore scenario to solidify the concept."
+          },
+          {
+            "text": "Whether it's a piece of land, a jug of water, or even time, fractions let us talk about those smaller, equal portions."
+          }
+        ],
+        "extendPrompt": "When else in your daily life do you see things being divided into equal parts, like our cake?"
+      }
+    },
+    "json_2": {
+      "planningNote": "Given the teacher's preference for storytelling and real-life connections, the Explore activity should immerse students in a familiar scenario where fractions naturally arise. The 'Fraction Pizza Shop' from the Role Play bank is a perfect fit for the Challenge, as it encourages practical application without being a 'game', aligning with the teacher's profile.",
+      "previousTopicRefresher": {
+        "previousTopic": "Whole numbers and place value",
+        "recap": [
+          {
+            "text": "Remember how we learned about whole numbers, like 1, 2, 10, or 100, and how their position gives them value?",
+            "detail": "This is a quick mental check to ensure students recall the basic concept of whole numbers."
+          },
+          {
+            "text": "We know what a whole apple or a whole rupee looks like, right?"
+          },
+          {
+            "text": "Today, we're going to explore what happens when we don't have a whole, but just a part of it."
+          }
+        ]
+      },
+      "concept": [
+        {
+          "text": "Fractions are simply parts of a whole."
+        },
+        {
+          "text": "They tell us how many pieces of a whole we have, and how many pieces make up the whole thing."
+        }
+      ],
+      "explore": {
+        "scenario": "Imagine we are running a busy bakery right before a big festival! We've just baked a delicious, giant cake, but we need to share it fairly among all the customers who are waiting eagerly. How do we make sure everyone gets an equal share?",
+        "points": [
+          {
+            "text": "Teacher draws a large circle on the blackboard, representing the whole cake.",
+            "detail": "Emphasize that this is one whole, undivided cake."
+          },
+          {
+            "text": "Ask students: 'If I want to share this cake with one friend, how many equal pieces do I need to cut it into?' (Solicit 'two'.)",
+            "detail": "Guide them to understand the concept of dividing a whole into equal parts."
+          },
+          {
+            "text": "Teacher then draws lines to divide the 'cake' into two, then four, then eight equal parts, asking how many pieces each time and writing the fraction for one piece (1/2, 1/4, 1/8) next to it.",
+            "detail": "Visually demonstrate how the denominator changes with the number of equal parts and the numerator represents the shared portion."
+          }
+        ],
+        "imageFocus": "A large circle divided into equal parts"
+      },
+      "challenge": {
+        "activity": "Fraction Pizza Shop",
+        "points": [
+          {
+            "text": "Teacher announces: 'Welcome to our Fraction Pizza Shop! I am the customer, and you are my expert chefs.'",
+            "detail": "Set up a role-play scenario where students are active participants."
+          },
+          {
+            "text": "Teacher gives an 'order', for example: 'I would like a pizza, but I only want half of it.' or 'I need one-quarter of a pizza for my small appetite.'",
+            "detail": "Keep the fractions simple (halves, quarters, thirds) for initial understanding."
+          },
+          {
+            "text": "Students use their notebooks/worksheets to 'draw' a pizza and 'cut' out the fraction ordered by the teacher, showing how they would prepare it.",
+            "detail": "Encourage drawing clear divisions and shading the requested part. Teacher can walk around to observe and provide immediate feedback."
+          }
+        ]
+      },
+      "materialsUsed": [
+        "Chalkboard",
+        "Worksheets"
+      ],
+      "levelSet": {
+        "points": [
+          {
+            "text": "Just like our bakery cake, fractions help us talk about sharing things fairly, whether it's a piece of fruit or a part of a journey.",
+            "detail": "Reiterate the real-world application from the initial scenario."
+          },
+          {
+            "text": "When we say 'half' a glass of water or 'a quarter' of an hour, we are using fractions every day!"
+          }
+        ],
+        "extendPrompt": "Where else in your daily life do you see or hear about parts of a whole?"
+      }
+    },
+    "markdown_1": {
+      "planningNote": "Given the teacher's profile and the previous topic, the Explore scenario should involve sharing something tangible and familiar, connecting whole numbers to parts. The \"Fraction Pizza Shop\" activity from the bank fits the profile's enjoyment of storytelling and real-life connections while being simple to implement in a resource-constrained environment.",
+      "previousTopicRefresher": {
+        "previousTopic": "Whole numbers and place value",
+        "recap": [
+          {
+            "text": "Remember how we used numbers like 1, 5, or 10 to count whole things, like a full basket of mangoes or all the students in our class?"
+          },
+          {
+            "text": "We also learned about place value, where the position of a digit, like in the number 25, tells us its value – two tens and five ones."
+          },
+          {
+            "text": "Today, we're going to explore what happens when we need to talk about parts of those whole things, not just the whole things themselves."
+          }
+        ]
+      },
+      "concept": [
+        {
+          "text": "Fractions represent parts of a whole object or a collection of objects."
+        },
+        {
+          "text": "The top number of a fraction, the numerator, tells us how many parts we have."
+        },
+        {
+          "text": "The bottom number, the denominator, tells us how many equal parts make up the whole."
+        }
+      ],
+      "explore": {
+        "points": [
+          {
+            "text": "The teacher asks, \"If we have one roti and want to share it equally among two friends, how would we cut it?\""
+          },
+          {
+            "text": "Students discuss with a partner how they would cut the roti, and then a few volunteers describe their ideas to the class.",
+            "detail": "Listen for ideas about cutting into halves."
+          },
+          {
+            "text": "The teacher then draws a roti on the board and shows how to cut it into equal parts, introducing the idea of \"half\" and writing 1/2."
+          }
+        ],
+        "scenario": "Imagine our class is having a special lunch, and we have one big, delicious roti for everyone to share. But there are many of us, so we need to cut it fairly.",
+        "imageFocus": "A simple circle representing a roti, with lines to show cuts."
+      },
+      "challenge": {
+        "points": [
+          {
+            "text": "The teacher announces, \"Welcome to our Fraction Roti Shop! I am the customer today.\""
+          },
+          {
+            "text": "The teacher orders, \"I'd like half a roti, please!\" and points to a student to 'cut' it on the chalkboard.",
+            "detail": "The student uses chalk to draw a roti and divide it into two equal parts, shading one half."
+          },
+          {
+            "text": "The teacher then orders, \"Now, I'd like one-fourth of a roti!\" and another student draws and divides a roti into four equal parts, shading one."
+          }
+        ],
+        "activity": "Fraction Pizza Shop"
+      },
+      "materialsUsed": [
+        "Chalkboard"
+      ],
+      "levelSet": {
+        "points": [
+          {
+            "text": "So, just like we cut our big roti into smaller, equal pieces, fractions help us describe those pieces."
+          },
+          {
+            "text": "When we said \"half a roti,\" we were talking about one part out of two equal parts, written as 1/2."
+          }
+        ],
+        "extendPrompt": "How could understanding fractions help us share mangoes fairly among all our friends?"
+      }
+    },
+    "markdown_2": {
+      "planningNote": "Given the profile's love for stories and real-life connections, an Explore scenario around sharing food in a familiar setting (a village celebration) would work well. For the Challenge, 'Human Building Blocks' from the movement category offers a hands-on, interactive way to solidify understanding without being a game.",
+      "previousTopicRefresher": {
+        "previousTopic": "Whole numbers and place value",
+        "recap": [
+          {
+            "text": "Remember how we counted all the children in the village for the festival, like 35 children, and how the '3' means thirty and the '5' means five."
+          },
+          {
+            "text": "We also learned that 987 has 9 hundreds, 8 tens, and 7 ones, helping us understand the size of numbers."
+          },
+          {
+            "text": "Today, we're going to think about what happens when we need to share things that aren't whole, like a single chapati, into smaller, equal pieces."
+          }
+        ]
+      },
+      "concept": [
+        {
+          "text": "Fractions represent parts of a whole that has been divided into equal pieces."
+        },
+        {
+          "text": "The top number of a fraction (numerator) tells us how many parts we have."
+        },
+        {
+          "text": "The bottom number (denominator) tells us how many equal parts the whole is divided into."
+        }
+      ],
+      "explore": {
+        "points": [
+          {
+            "text": "The teacher asks, \"How can we make sure everyone gets an equal piece of this one giant chapati, so no one feels left out?\"",
+            "detail": "Guide students to suggest dividing it."
+          },
+          {
+            "text": "Students will discuss how to divide one chapati among 30 or 40 people, perhaps suggesting cutting it in half, then fourths, then more.",
+            "detail": "Encourage them to think about 'equal' shares."
+          },
+          {
+            "text": "The teacher then asks, \"If we divide this one chapati into 30 equal pieces, and each of you gets one piece, what part of the whole chapati did you get?\""
+          }
+        ],
+        "scenario": "Imagine our village is having a big harvest festival, and everyone is gathered to share a special, giant chapati. Old Man Ramu has brought one huge, perfectly round chapati for the whole class to share equally.",
+        "imageFocus": "A large circle on the chalkboard."
+      },
+      "challenge": {
+        "points": [
+          {
+            "text": "The teacher calls out a fraction, for example, \"one-half\" or \"one-quarter.\""
+          },
+          {
+            "text": "Students arrange themselves into groups representing that fraction of the whole class.",
+            "detail": "For \"one-half,\" half the class stands on one side, half on the other."
+          },
+          {
+            "text": "The teacher then asks each group to identify their 'numerator' (how many students are standing) and their 'denominator' (the total number of students in the class)."
+          }
+        ],
+        "activity": "Human Building Blocks"
+      },
+      "materialsUsed": [
+        "Chalkboard",
+        "Worksheets"
+      ],
+      "levelSet": {
+        "points": [
+          {
+            "text": "Just like we divided Old Man Ramu's giant chapati into equal pieces for everyone, fractions help us describe those pieces.",
+            "detail": "Emphasize the idea of 'equal parts'."
+          },
+          {
+            "text": "When we said each person got \"one-thirtieth\" of the chapati, we used numbers to describe a part of the whole."
+          }
+        ],
+        "extendPrompt": "How might fractions help a tailor divide a piece of cloth equally for several shirts?"
+      }
+    }
+  },
+  "raw": {
+    "json_1": "```json\n{\n  \"planningNote\": \"Given the teacher's preference for storytelling and real-life connections, the Explore activity should be a relatable scenario where dividing things naturally leads to fractions. The 'Fraction Pizza Shop' from the bank fits this perfectly as a Challenge, allowing students to apply their understanding interactively.\",\n  \"previousTopicRefresher\": {\n    \"previousTopic\": \"Whole numbers and place value\",\n    \"recap\": [\n      {\n        \"text\": \"Remember when we talked about big numbers, like how many people live in our village, or how much money is in a big savings account?\",\n        \"detail\": \"This connects to the idea of 'whole' amounts.\"\n      },\n      {\n        \"text\": \"We learned that every digit in a number has a special place, making it worth tens or hundreds or thousands.\",\n        \"detail\": \"Reinforces understanding of quantity and value.\"\n      },\n      {\n        \"text\": \"Today, we're going to explore what happens when we need to talk about parts of these whole things, not just the full amounts.\"\n      }\n    ]\n  },\n  \"concept\": [\n    {\n      \"text\": \"Sometimes we need to share things equally, but there isn't a whole number for everyone.\"\n    },\n    {\n      \"text\": \"Imagine sharing one big roti among three friends; each person gets a part, not a whole roti.\"\n    },\n    {\n      \"text\": \"Fractions help us describe these equal parts of a whole.\"\n    }\n  },\n  \"explore\": {\n    \"scenario\": \"Imagine our classroom is preparing for a special festival! We have one long, delicious banana cake, and we need to share it perfectly equally among the whole class so everyone gets a fair piece. But we can't just give one cake to each person, can we?\",\n    \"points\": [\n      {\n        \"text\": \"Teacher draws a long rectangle on the board to represent the cake.\",\n        \"detail\": \"Emphasize it's one whole cake.\"\n      },\n      {\n        \"text\": \"Ask students: 'If there are 30 of us, how many equal pieces do we need to cut the cake into so everyone gets their share?'\",\n        \"detail\": \"Guide them to understand the denominator.\"\n      },\n      {\n        \"text\": \"Teacher then draws lines to divide the cake on the board into these equal parts, counting them out loud with the class.\",\n        \"detail\": \"Visually represent the division and the concept of equal parts.\"\n      }\n    ],\n    \"imageFocus\": \"A long rectangle divided into many equal parts\"\n  },\n  \"challenge\": {\n    \"activity\": \"Fraction Pizza Shop\",\n    \"points\": [\n      {\n        \"text\": \"Teacher draws large circles on the board, labeling them 'Pizza 1', 'Pizza 2', etc.\",\n        \"detail\": \"Each circle represents a whole pizza.\"\n      },\n      {\n        \"text\": \"Teacher announces an 'order': 'I need one pizza cut into 4 equal slices, and I'd like 2 of those slices, please!'\",\n        \"detail\": \"This introduces the numerator and denominator in context.\"\n      },\n      {\n        \"text\": \"Students raise their hands to explain how they would 'cut' and 'serve' the order, describing the fraction out loud.\",\n        \"detail\": \"Encourage students to use fraction language like 'one-fourth' or 'two-fourths'.\"\n      }\n    ]\n  },\n  \"materialsUsed\": [\n    \"Chalkboard\"\n  ],\n  \"levelSet\": {\n    \"points\": [\n      {\n        \"text\": \"Just like we shared that one big banana cake fairly among all of us, fractions help us share or describe parts of anything.\",\n        \"detail\": \"Connect back to the Explore scenario to solidify the concept.\"\n      },\n      {\n        \"text\": \"Whether it's a piece of land, a jug of water, or even time, fractions let us talk about those smaller, equal portions.\"\n      }\n    ],\n    \"extendPrompt\": \"When else in your daily life do you see things being divided into equal parts, like our cake?\"\n  }\n}\n```",
+    "json_2": "```json\n{\n  \"planningNote\": \"Given the teacher's preference for storytelling and real-life connections, the Explore activity should immerse students in a familiar scenario where fractions naturally arise. The 'Fraction Pizza Shop' from the Role Play bank is a perfect fit for the Challenge, as it encourages practical application without being a 'game', aligning with the teacher's profile.\",\n  \"previousTopicRefresher\": {\n    \"previousTopic\": \"Whole numbers and place value\",\n    \"recap\": [\n      {\n        \"text\": \"Remember how we learned about whole numbers, like 1, 2, 10, or 100, and how their position gives them value?\",\n        \"detail\": \"This is a quick mental check to ensure students recall the basic concept of whole numbers.\"\n      },\n      {\n        \"text\": \"We know what a whole apple or a whole rupee looks like, right?\"\n      },\n      {\n        \"text\": \"Today, we're going to explore what happens when we don't have a whole, but just a part of it.\"\n      }\n    ]\n  },\n  \"concept\": [\n    {\n      \"text\": \"Fractions are simply parts of a whole.\"\n    },\n    {\n      \"text\": \"They tell us how many pieces of a whole we have, and how many pieces make up the whole thing.\"\n    }\n  ],\n  \"explore\": {\n    \"scenario\": \"Imagine we are running a busy bakery right before a big festival! We've just baked a delicious, giant cake, but we need to share it fairly among all the customers who are waiting eagerly. How do we make sure everyone gets an equal share?\",\n    \"points\": [\n      {\n        \"text\": \"Teacher draws a large circle on the blackboard, representing the whole cake.\",\n        \"detail\": \"Emphasize that this is one whole, undivided cake.\"\n      },\n      {\n        \"text\": \"Ask students: 'If I want to share this cake with one friend, how many equal pieces do I need to cut it into?' (Solicit 'two'.)\",\n        \"detail\": \"Guide them to understand the concept of dividing a whole into equal parts.\"\n      },\n      {\n        \"text\": \"Teacher then draws lines to divide the 'cake' into two, then four, then eight equal parts, asking how many pieces each time and writing the fraction for one piece (1/2, 1/4, 1/8) next to it.\",\n        \"detail\": \"Visually demonstrate how the denominator changes with the number of equal parts and the numerator represents the shared portion.\"\n      }\n    ],\n    \"imageFocus\": \"A large circle divided into equal parts\"\n  },\n  \"challenge\": {\n    \"activity\": \"Fraction Pizza Shop\",\n    \"points\": [\n      {\n        \"text\": \"Teacher announces: 'Welcome to our Fraction Pizza Shop! I am the customer, and you are my expert chefs.'\",\n        \"detail\": \"Set up a role-play scenario where students are active participants.\"\n      },\n      {\n        \"text\": \"Teacher gives an 'order', for example: 'I would like a pizza, but I only want half of it.' or 'I need one-quarter of a pizza for my small appetite.'\",\n        \"detail\": \"Keep the fractions simple (halves, quarters, thirds) for initial understanding.\"\n      },\n      {\n        \"text\": \"Students use their notebooks/worksheets to 'draw' a pizza and 'cut' out the fraction ordered by the teacher, showing how they would prepare it.\",\n        \"detail\": \"Encourage drawing clear divisions and shading the requested part. Teacher can walk around to observe and provide immediate feedback.\"\n      }\n    ]\n  },\n  \"materialsUsed\": [\n    \"Chalkboard\",\n    \"Worksheets\"\n  ],\n  \"levelSet\": {\n    \"points\": [\n      {\n        \"text\": \"Just like our bakery cake, fractions help us talk about sharing things fairly, whether it's a piece of fruit or a part of a journey.\",\n        \"detail\": \"Reiterate the real-world application from the initial scenario.\"\n      },\n      {\n        \"text\": \"When we say 'half' a glass of water or 'a quarter' of an hour, we are using fractions every day!\"\n      }\n    ],\n    \"extendPrompt\": \"Where else in your daily life do you see or hear about parts of a whole?\"\n  }\n}\n```",
+    "markdown_1": "planning-note: Given the teacher's profile and the previous topic, the Explore scenario should involve sharing something tangible and familiar, connecting whole numbers to parts. The \"Fraction Pizza Shop\" activity from the bank fits the profile's enjoyment of storytelling and real-life connections while being simple to implement in a resource-constrained environment.\n\n## Refresher: Whole numbers and place value\n- Remember how we used numbers like 1, 5, or 10 to count whole things, like a full basket of mangoes or all the students in our class?\n- We also learned about place value, where the position of a digit, like in the number 25, tells us its value – two tens and five ones.\n- Today, we're going to explore what happens when we need to talk about parts of those whole things, not just the whole things themselves.\n\n## Concept\n- Fractions represent parts of a whole object or a collection of objects.\n- The top number of a fraction, the numerator, tells us how many parts we have.\n- The bottom number, the denominator, tells us how many equal parts make up the whole.\n\n## Explore\nscenario: Imagine our class is having a special lunch, and we have one big, delicious roti for everyone to share. But there are many of us, so we need to cut it fairly.\nsketch: A simple circle representing a roti, with lines to show cuts.\n- The teacher asks, \"If we have one roti and want to share it equally among two friends, how would we cut it?\"\n- Students discuss with a partner how they would cut the roti, and then a few volunteers describe their ideas to the class. :: Listen for ideas about cutting into halves.\n- The teacher then draws a roti on the board and shows how to cut it into equal parts, introducing the idea of \"half\" and writing 1/2.\n\n## Challenge\nactivity: Fraction Pizza Shop\n- The teacher announces, \"Welcome to our Fraction Roti Shop! I am the customer today.\"\n- The teacher orders, \"I'd like half a roti, please!\" and points to a student to 'cut' it on the chalkboard. :: The student uses chalk to draw a roti and divide it into two equal parts, shading one half.\n- The teacher then orders, \"Now, I'd like one-fourth of a roti!\" and another student draws and divides a roti into four equal parts, shading one.\n\n## Materials\n- Chalkboard\n- Chalk\n\n## Level set\n- So, just like we cut our big roti into smaller, equal pieces, fractions help us describe those pieces.\n- When we said \"half a roti,\" we were talking about one part out of two equal parts, written as 1/2.\nextend: How could understanding fractions help us share mangoes fairly among all our friends?",
+    "markdown_2": "planning-note: Given the profile's love for stories and real-life connections, an Explore scenario around sharing food in a familiar setting (a village celebration) would work well. For the Challenge, 'Human Building Blocks' from the movement category offers a hands-on, interactive way to solidify understanding without being a game.\n\n## Refresher: Whole numbers and place value\n- Remember how we counted all the children in the village for the festival, like 35 children, and how the '3' means thirty and the '5' means five.\n- We also learned that 987 has 9 hundreds, 8 tens, and 7 ones, helping us understand the size of numbers.\n- Today, we're going to think about what happens when we need to share things that aren't whole, like a single chapati, into smaller, equal pieces.\n\n## Concept\n- Fractions represent parts of a whole that has been divided into equal pieces.\n- The top number of a fraction (numerator) tells us how many parts we have.\n- The bottom number (denominator) tells us how many equal parts the whole is divided into.\n\n## Explore\nscenario: Imagine our village is having a big harvest festival, and everyone is gathered to share a special, giant chapati. Old Man Ramu has brought one huge, perfectly round chapati for the whole class to share equally.\nsketch: A large circle on the chalkboard.\n- The teacher asks, \"How can we make sure everyone gets an equal piece of this one giant chapati, so no one feels left out?\" :: Guide students to suggest dividing it.\n- Students will discuss how to divide one chapati among 30 or 40 people, perhaps suggesting cutting it in half, then fourths, then more. :: Encourage them to think about 'equal' shares.\n- The teacher then asks, \"If we divide this one chapati into 30 equal pieces, and each of you gets one piece, what part of the whole chapati did you get?\"\n\n## Challenge\nactivity: Human Building Blocks\n- The teacher calls out a fraction, for example, \"one-half\" or \"one-quarter.\"\n- Students arrange themselves into groups representing that fraction of the whole class. :: For \"one-half,\" half the class stands on one side, half on the other.\n- The teacher then asks each group to identify their 'numerator' (how many students are standing) and their 'denominator' (the total number of students in the class).\n\n## Materials\n- Chalkboard\n- Worksheets\n\n## Level set\n- Just like we divided Old Man Ramu's giant chapati into equal pieces for everyone, fractions help us describe those pieces. :: Emphasize the idea of 'equal parts'.\n- When we said each person got \"one-thirtieth\" of the chapati, we used numbers to describe a part of the whole.\nextend: How might fractions help a tailor divide a piece of cloth equally for several shirts?"
+  }
+}

@@ -1,0 +1,76 @@
+"""FastAPI dependencies mirroring backend/src/middleware/auth.ts's Express
+middlewares. FastAPI's Depends() chain plays the same role — declare a
+dependency, it runs before the route body, raising HTTPException to short-circuit
+(the FastAPI equivalent of Express calling res.status(...).json(...) and
+returning without next())."""
+from typing import Optional
+from fastapi import Header, HTTPException, Depends
+
+from .lib.supabase_clients import get_anon_client, create_admin_client
+from .lib.admin_queries import fetch_admin
+from .lib.student_auth import verify_student_cookie
+from .lib.scanner_auth import verify_school_token
+
+
+def _bearer_token(authorization: Optional[str]) -> Optional[str]:
+    if not authorization or not authorization.startswith("Bearer "):
+        return None
+    token = authorization[len("Bearer ") :].strip()
+    return token or None
+
+
+def require_user(authorization: Optional[str] = Header(None)) -> dict:
+    """Replaces the Next.js/Express bearer-token check — verifies the Supabase
+    access token the frontend attaches on every call."""
+    token = _bearer_token(authorization)
+    if not token:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    try:
+        res = get_anon_client().auth.get_user(token)
+    except Exception:  # noqa: BLE001 — invalid/expired JWT raises AuthApiError
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    user = res.user if res else None
+    if not user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    return {"id": user.id, "email": user.email}
+
+
+def require_admin(schoolId: str, user: dict = Depends(require_user)) -> dict:
+    """Resolves the admin row for this user and confirms the path's :schoolId
+    matches — same check every admin route did inline in the Next.js version."""
+    ac = create_admin_client()
+    admin = fetch_admin(user["id"], ac)
+    if not admin:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    if admin["schoolId"] != schoolId:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    return admin
+
+
+def require_teacher(user: dict = Depends(require_user)) -> str:
+    """Resolves this user's teacher row id, or 403s."""
+    ac = create_admin_client()
+    res = ac.table("teachers").select("id").eq("user_id", user["id"]).maybe_single().execute()
+    teacher = res.data if res else None
+    if not teacher:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    return teacher["id"]
+
+
+def require_student_token(x_student_token: Optional[str] = Header(None)) -> str:
+    """The student portal's signed token can't cross origins as a cookie —
+    the frontend sends the same signed value as X-Student-Token instead."""
+    student_id = verify_student_cookie(x_student_token)
+    if not student_id:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    return student_id
+
+
+def require_scanner_token(x_scanner_token: Optional[str] = Header(None)) -> str:
+    """Scanner portal's join-code-derived token — already header-based, ports unchanged."""
+    school_id = verify_school_token(x_scanner_token)
+    if not school_id:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    return school_id
