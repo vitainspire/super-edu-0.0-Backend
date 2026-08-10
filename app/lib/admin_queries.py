@@ -670,26 +670,36 @@ def mark_teacher_unavailable(
         slot_key = f"{need['dayOfWeek']}|{need['periodNumber']}"
         used_this_slot = used_by_slot.get(slot_key, set())
 
-        # Prefer a subject-qualified substitute; if none is free, fall back to
-        # any available teacher (still respecting busy slots and workload
-        # caps) rather than leaving the period unresolved.
+        # Subject-qualified teachers only.
+        #
+        # There used to be a fallback here to any free teacher, so a period was
+        # always "covered" — but by someone who couldn't teach it, and who got
+        # no students, syllabus or prep material either (school_data() only
+        # unions in subject-matched covers). That produced a booking that read
+        # as solved on every dashboard while the class was really just being
+        # supervised.
+        #
+        # Leaving it unresolved is the honest outcome. It raises an admin alert
+        # (substitute_automation._alert_admins_uncovered) so someone who can
+        # actually rearrange the day — reassign across the staff, lift a
+        # workload cap, apply the suggest_swap rearrangement — decides what
+        # happens. An admin can still hand-pick anyone via
+        # update_substitute_assignment; that's a deliberate human override, and
+        # it's recorded as "manual" rather than as an automatic match.
         substitute_id = find_substitute(need, candidates, exclude_teacher_ids, used_this_slot)
-        subject_matched = substitute_id is not None
-        if not substitute_id:
-            substitute_id = find_substitute(need, candidates, exclude_teacher_ids, used_this_slot, require_subject_match=False)
         if substitute_id:
             used_by_slot.setdefault(slot_key, set()).add(substitute_id)
 
-        if substitute_id:
-            status = "assigned" if subject_matched else "assigned_fallback"
-        else:
-            status = "unresolved"
+        # Deliberately not named `status` — that's the availability status
+        # parameter above, and reassigning it here would silently couple the
+        # two meanings for any code added later in this function.
+        sub_status = "assigned" if substitute_id else "unresolved"
         new_subs.append({
             "id": f"{row['class_id']}-{date}-{row['period_number']}",
             "schoolId": school_id, "date": date, "dayOfWeek": day_of_week, "periodNumber": row["period_number"],
             "classId": row["class_id"], "subject": row.get("label"),
             "originalTeacherId": teacher_id, "substituteTeacherId": substitute_id,
-            "status": status,
+            "status": sub_status,
         })
 
     upsert_substitutions(new_subs, ac)

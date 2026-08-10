@@ -49,6 +49,20 @@ def require_admin(schoolId: str, user: dict = Depends(require_user)) -> dict:
     return admin
 
 
+def require_any_admin(user: dict = Depends(require_user)) -> dict:
+    """Admin gate for routes with no :schoolId in the path — the canonical
+    library and the pedagogy library are curated content shared by every
+    school, so there is nothing to scope the caller against. Being *an* admin
+    of *some* school is the whole trust boundary here (see admin_canonical.py's
+    module docstring); require_admin's per-school check simply has no path
+    parameter to compare against on these routes."""
+    ac = create_admin_client()
+    admin = fetch_admin(user["id"], ac)
+    if not admin:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    return admin
+
+
 def require_teacher(user: dict = Depends(require_user)) -> str:
     """Resolves this user's teacher row id, or 403s."""
     ac = create_admin_client()

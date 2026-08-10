@@ -3,12 +3,17 @@
 find_substitute finds the best-fit substitute for one period. By default only
 considers teachers who actually teach the period's subject (derived elsewhere
 from their real assignments/timetable, since Teacher.subject/grade aren't
-reliable). Pass require_subject_match=False to drop that requirement — used
-as a last-resort fallback (see mark_teacher_unavailable) when no
-subject-qualified teacher is free, so the period isn't left uncovered.
-Hard-excludes anyone who'd breach their own daily/weekly workload cap by
-taking this period, regardless of subject match. Ranks survivors by fewest
-periods already on that weekday, then name, for a deterministic pick.
+reliable). Hard-excludes anyone who'd breach their own daily/weekly workload
+cap by taking this period. Ranks survivors by fewest periods already on that
+weekday, then name, for a deterministic pick.
+
+require_subject_match=False drops the subject requirement. Nothing in the
+absence automation passes it any more — mark_teacher_unavailable used to, as a
+last-resort fallback, and that is exactly the behaviour that was removed:
+covering a class with a teacher who can't teach the subject booked a
+supervision slot that read as solved everywhere. The parameter stays because
+it's part of the shared parity spec this file is pinned to (see
+shared/parity/substitute-finder.json and lib/substituteFinder.ts).
 
 A SubstituteCandidate dict has: teacherId, name, subjectsTaught (set),
 busySlots (set of "day|period" strings), maxPeriodsPerDay (optional),

@@ -9,6 +9,8 @@ LEN_SHORT = 50
 LEN_NAME = 120
 LEN_TOPIC = 300
 LEN_TEXT = 2000
+# A whole pasted chapter section, for the prep-material pipeline's Stage 1.
+LEN_CONTENT = 20000
 
 
 class YearPlanTopic(BaseModel):
@@ -475,6 +477,32 @@ class SmartLessonSchema(BaseModel):
     subtopic: Optional[str] = Field(default=None, max_length=LEN_TOPIC)
     topicDefinitionId: Optional[str] = Field(default=None, max_length=36)
     contextNote: Optional[str] = Field(default=None, max_length=LEN_TEXT)
+
+
+class PrepMaterialSchema(BaseModel):
+    """Input for the Phase A/B/C prep-material pipeline (prep_material_routes).
+    Separate from SmartLessonSchema on purpose: this pipeline is driven by
+    pasted topic CONTENT rather than a classId, because its Stage 1 extracts
+    curriculum knowledge from the text itself instead of reading an already
+    ingested topic row."""
+    topic: str = Field(min_length=1, max_length=LEN_TOPIC)
+    subject: str = Field(min_length=1, max_length=LEN_TOPIC)
+    grade: str = Field(min_length=1, max_length=LEN_SHORT)
+    # A chapter section pasted whole, so LEN_TEXT (2000) is far too small.
+    content: str = Field(min_length=1, max_length=LEN_CONTENT)
+    subtopic: Optional[str] = Field(default=None, max_length=LEN_TOPIC)
+    # Enables the refresher section; omitted means "no topic on record".
+    previousTopic: Optional[str] = Field(default=None, max_length=LEN_TOPIC)
+    preferredContext: Optional[str] = Field(default=None, max_length=LEN_NAME)
+    duration: int = Field(default=30, ge=5, le=180)
+    classSize: int = Field(default=40, ge=1, le=200)
+    resourceLevel: int = Field(default=0, ge=0, le=2)
+    language: str = Field(default="English", max_length=LEN_SHORT)
+    learningObjective: str = Field(default="new lesson", max_length=LEN_NAME)
+    teachingStyle: str = Field(default="interactive", max_length=LEN_SHORT)
+    # Stop after Stage 5 and return the assembled prompt instead of calling the
+    # model — the CLI's --skip-generation, for iterating on prompt wording.
+    dryRun: bool = False
 
 
 class WorkbookImageSchema(BaseModel):
