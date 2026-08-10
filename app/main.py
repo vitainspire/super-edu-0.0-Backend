@@ -13,9 +13,33 @@ from .routes import (
     admin_timetable, admin_misc, admin_students, admin_grade_syllabus, admin_schedule_ai,
     admin_substitutes, teacher, student, scanner, ai_routes, ai_routes2, vision_routes, scanner_ai_routes,
     admin_syllabus_pdf, admin_textbooks, simulation_routes, smart_lesson_routes, media_routes,
+    admin_canonical, admin_pedagogy, images, prep_material_routes, admin_notifications,
 )
 
 app = FastAPI(title="EduTeach backend")
+
+
+# Registered BEFORE the CORS middleware below, which is what makes it the INNER
+# of the two: add_middleware inserts at the front of the stack, so the last one
+# added ends up outermost. That ordering is the entire point. A 500 built here
+# still travels back out through CORSMiddleware and picks up its
+# Access-Control-Allow-Origin header.
+#
+# @app.exception_handler(Exception) cannot do this. FastAPI installs it on
+# Starlette's ServerErrorMiddleware, which sits OUTSIDE the CORS layer, so its
+# responses reach the browser with no CORS headers at all — fetch() rejects
+# instead of resolving, and the frontend's .catch() reports a generic "failed to
+# load" for what is really a readable server error. Any handler that raises (a
+# missing table, a bad column) is otherwise indistinguishable from the backend
+# being down.
+@app.middleware("http")
+async def unhandled_exception_middleware(request: Request, call_next):
+    try:
+        return await call_next(request)
+    except Exception as exc:
+        print(f"[unhandled] {request.method} {request.url.path} — {type(exc).__name__}: {exc}")
+        return JSONResponse(status_code=500, content={"error": "Server error"})
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -56,7 +80,10 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception):
-    print(f"[unhandled] {exc}")
+    """Backstop only. unhandled_exception_middleware above catches everything
+    raised by a route, and does it inside the CORS layer where this cannot —
+    what reaches here is a failure in the middleware stack itself."""
+    print(f"[unhandled:outer] {exc}")
     return JSONResponse(status_code=500, content={"error": "Server error"})
 
 
@@ -73,7 +100,12 @@ app.include_router(admin_grade_syllabus.router, prefix="/api/admin/schools")
 app.include_router(admin_syllabus_pdf.router, prefix="/api/admin/schools")
 app.include_router(admin_textbooks.router, prefix="/api/admin/schools")
 app.include_router(admin_substitutes.router, prefix="/api/admin/schools")
+app.include_router(admin_notifications.router, prefix="/api/admin/schools")
 app.include_router(admin_schedule_ai.router, prefix="/api/admin")
+# Cross-school curated libraries — no :schoolId in the path, gated by
+# require_any_admin. Prefixes are the ones each module's docstring declares.
+app.include_router(admin_canonical.router, prefix="/api/admin/canonical")
+app.include_router(admin_pedagogy.router, prefix="/api/admin/pedagogy")
 app.include_router(teacher.router, prefix="/api/teacher")
 app.include_router(student.router, prefix="/api/student")
 app.include_router(scanner.router, prefix="/api/scanner")
@@ -84,6 +116,10 @@ app.include_router(scanner_ai_routes.router, prefix="/api")
 app.include_router(simulation_routes.router, prefix="/api")
 app.include_router(smart_lesson_routes.router, prefix="/api")
 app.include_router(media_routes.router, prefix="/api")
+app.include_router(images.router, prefix="/api")
+# Phase A/B/C pilot pipeline — parallel to smart_lesson_routes, not a
+# replacement for it (see prep_material_routes' module docstring).
+app.include_router(prep_material_routes.router, prefix="/api")
 
 
 if __name__ == "__main__":

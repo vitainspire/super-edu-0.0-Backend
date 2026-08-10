@@ -1,0 +1,1689 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Prep Material Viewer</title>
+  <style>
+    :root {
+      --paper: #eeeae0;
+      --paper-raised: #f8f6ef;
+      --ink: #22283b;
+      --ink-soft: #5b6079;
+      --ink-faint: #8b8f9f;
+      --rule: #cfc8b6;
+      --accent: #b8720f;
+      --accent-strong: #8f5a0c;
+      --accent-soft: #f3ddaa;
+      --danger: #a33636;
+      --danger-soft: #f6dede;
+      --good: #2f7d3a;
+      --good-soft: #dcefdc;
+      --font-display: 'Sitka Text', Cambria, 'Iowan Old Style', Georgia, serif;
+      --font-body: 'Segoe UI', -apple-system, Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: 'Cascadia Code', Consolas, ui-monospace, 'SF Mono', monospace;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --paper: #1c1e29;
+        --paper-raised: #262a38;
+        --ink: #e8e4d8;
+        --ink-soft: #a3a8c2;
+        --ink-faint: #6b7089;
+        --rule: #3b3f52;
+        --accent: #e3a63b;
+        --accent-strong: #f0bc5e;
+        --accent-soft: #4a3b18;
+        --danger: #e07a7a;
+        --danger-soft: #3a2020;
+        --good: #7fce8c;
+        --good-soft: #1f3322;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+    }
+
+    body {
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--font-body);
+      min-height: 100vh;
+    }
+
+    header.app-header {
+      padding: 22px 28px 16px;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    header.app-header h1 {
+      font-family: var(--font-display);
+      font-size: 26px;
+      font-weight: 600;
+      margin: 0 0 4px;
+    }
+
+    header.app-header p {
+      margin: 0;
+      color: var(--ink-soft);
+      font-size: 13.5px;
+      max-width: 70ch;
+    }
+
+    header.app-header code {
+      font-family: var(--font-mono);
+      background: var(--paper-raised);
+      border: 1px solid var(--rule);
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-size: 0.92em;
+    }
+
+    main.layout {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 24px;
+      align-items: start;
+      padding: 24px 28px 60px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 900px) {
+      main.layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    section.input-panel,
+    section.output-panel {
+      background: var(--paper-raised);
+      border: 1px solid var(--rule);
+      border-radius: 10px;
+      padding: 18px;
+    }
+
+    section.input-panel {
+      position: sticky;
+      top: 24px;
+    }
+
+    @media (max-width: 900px) {
+      section.input-panel {
+        position: static;
+      }
+    }
+
+    h2 {
+      font-family: var(--font-display);
+      font-size: 17px;
+      font-weight: 600;
+      margin: 0 0 10px;
+    }
+
+    .field-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .field-row>div {
+      flex: 1;
+    }
+
+    label.small-label {
+      display: block;
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+      margin-bottom: 4px;
+    }
+
+    input[type="text"],
+    select {
+      width: 100%;
+      font-family: var(--font-body);
+      font-size: 13.5px;
+      padding: 7px 9px;
+      border: 1px solid var(--rule);
+      border-radius: 6px;
+      background: var(--paper);
+      color: var(--ink);
+    }
+
+    input[type="text"]:focus,
+    select:focus,
+    textarea:focus,
+    button:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 1px;
+    }
+
+    p.hint {
+      color: var(--ink-soft);
+      font-size: 12.5px;
+      margin: 0 0 10px;
+    }
+
+    .subsection {
+      margin: 18px 0 14px;
+      padding-top: 16px;
+      border-top: 1px solid var(--rule);
+    }
+
+    .subsection:first-of-type {
+      margin-top: 0;
+      padding-top: 0;
+      border-top: none;
+    }
+
+    .subsection h3 {
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 600;
+      margin: 0 0 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .subsection h3 .step-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--accent-soft);
+      color: var(--accent-strong);
+      font-family: var(--font-body);
+      font-size: 10.5px;
+      font-weight: 700;
+    }
+
+    textarea#contentInput {
+      width: 100%;
+      height: 110px;
+      resize: vertical;
+      font-family: var(--font-body);
+      font-size: 13px;
+      line-height: 1.5;
+      padding: 8px 9px;
+      border: 1px solid var(--rule);
+      border-radius: 6px;
+      background: var(--paper);
+      color: var(--ink);
+    }
+
+    textarea#comparePromptInput {
+      width: 100%;
+      height: 140px;
+      resize: vertical;
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      line-height: 1.5;
+      padding: 8px 9px;
+      border: 1px solid var(--rule);
+      border-radius: 6px;
+      background: var(--paper);
+      color: var(--ink);
+      margin-bottom: 10px;
+    }
+
+    .compare-toolbar {
+      margin-top: 28px;
+      padding-top: 18px;
+      border-top: 1px solid var(--rule);
+    }
+
+    .model-checklist {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+    .model-checklist-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 8px;
+      border: 1px solid var(--rule);
+      border-radius: 6px;
+      background: var(--paper);
+    }
+    .model-checklist-row label {
+      flex: 1;
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      cursor: pointer;
+    }
+    .model-checklist-row input[type="checkbox"] {
+      width: auto;
+      cursor: pointer;
+    }
+    .model-checklist-row .remove-model {
+      background: transparent;
+      border: none;
+      color: var(--ink-faint);
+      font-size: 15px;
+      line-height: 1;
+      padding: 2px 6px;
+      cursor: pointer;
+    }
+    .model-checklist-row .remove-model:hover { color: var(--danger); }
+    .model-checklist-empty { color: var(--ink-faint); font-size: 12.5px; font-style: italic; }
+
+    .add-model-row {
+      display: flex;
+      gap: 8px;
+    }
+    .add-model-row input[type="text"] { flex: 1; }
+
+    .status-pill {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 2px 8px;
+      border-radius: 999px;
+      margin-left: 6px;
+    }
+
+    .status-pill.pending,
+    .status-pill.running {
+      background: var(--accent-soft);
+      color: var(--accent-strong);
+    }
+
+    .status-pill.done {
+      background: var(--good-soft);
+      color: var(--good);
+    }
+
+    .status-pill.error {
+      background: var(--danger-soft);
+      color: var(--danger);
+    }
+
+    .progress-wrap {
+      margin-top: 10px;
+    }
+
+    .progress-bar {
+      height: 7px;
+      border-radius: 999px;
+      background: var(--paper);
+      border: 1px solid var(--rule);
+      overflow: hidden;
+    }
+
+    .progress-bar>div {
+      height: 100%;
+      width: 0%;
+      background: var(--accent);
+      transition: width .3s ease;
+    }
+
+    .progress-msg {
+      font-size: 12px;
+      color: var(--ink-soft);
+      margin-top: 6px;
+    }
+
+    .cli-block pre {
+      background: var(--paper);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: 10px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+      margin: 0 0 8px;
+    }
+
+    textarea#jsonInput {
+      width: 100%;
+      height: 360px;
+      resize: vertical;
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      line-height: 1.5;
+      padding: 10px;
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      background: var(--paper);
+      color: var(--ink);
+    }
+
+    .input-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    button {
+      font-family: var(--font-body);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 14px;
+      border-radius: 6px;
+      border: 1px solid var(--accent);
+      background: var(--accent);
+      color: #241a06;
+      cursor: pointer;
+    }
+
+    button:hover {
+      filter: brightness(1.05);
+    }
+
+    button.secondary {
+      background: transparent;
+      border-color: var(--rule);
+      color: var(--ink);
+    }
+
+    button.secondary:hover {
+      border-color: var(--ink-soft);
+    }
+
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    label.file-btn {
+      display: inline-flex;
+      align-items: center;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 14px;
+      border-radius: 6px;
+      border: 1px solid var(--rule);
+      background: transparent;
+      color: var(--ink);
+      cursor: pointer;
+    }
+
+    label.file-btn:hover {
+      border-color: var(--ink-soft);
+    }
+
+    .error {
+      margin-top: 12px;
+      padding: 10px 12px;
+      background: var(--danger-soft);
+      border: 1px solid var(--danger);
+      color: var(--danger);
+      border-radius: 6px;
+      font-size: 12.5px;
+      font-family: var(--font-mono);
+      white-space: pre-wrap;
+    }
+
+    .output-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .sheet.placeholder {
+      color: var(--ink-faint);
+      font-size: 14px;
+      padding: 40px 10px;
+      text-align: center;
+      border: 1px dashed var(--rule);
+      border-radius: 8px;
+    }
+
+    .sheet-title {
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 600;
+      margin: 0 0 2px;
+      text-wrap: balance;
+    }
+
+    .sheet-sub {
+      color: var(--ink-soft);
+      font-style: italic;
+      font-size: 14px;
+      margin: 0 0 14px;
+    }
+
+    .planning-note {
+      border-left: 3px solid var(--accent);
+      padding: 8px 14px;
+      color: var(--ink-soft);
+      font-size: 13.5px;
+      background: var(--accent-soft);
+      border-radius: 0 6px 6px 0;
+      margin-bottom: 18px;
+    }
+
+    .section-block {
+      margin-bottom: 22px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .section-block:last-child {
+      border-bottom: none;
+    }
+
+    .section-title {
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 600;
+      margin: 0 0 4px;
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .section-title .eyebrow {
+      font-family: var(--font-body);
+      font-size: 10.5px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent-strong);
+      font-weight: 700;
+    }
+
+    .section-title .pill {
+      font-family: var(--font-body);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent-strong);
+      background: var(--accent-soft);
+      border-radius: 999px;
+      padding: 1px 9px;
+    }
+
+    .board-sketch {
+      font-size: 12.5px;
+      color: var(--ink-soft);
+      font-style: italic;
+      margin: 2px 0 10px;
+    }
+
+    ol.bullets {
+      margin: 0;
+      padding-left: 22px;
+    }
+
+    ol.bullets li {
+      margin-bottom: 9px;
+      line-height: 1.5;
+      font-size: 14px;
+    }
+
+    ol.bullets li .headline {
+      font-weight: 700;
+    }
+
+    ol.bullets li .detail {
+      color: var(--ink-soft);
+    }
+
+    .empty-note {
+      color: var(--ink-faint);
+      font-style: italic;
+      font-size: 13px;
+    }
+
+    ul.watch-list {
+      margin: 0;
+      padding-left: 0;
+      list-style: none;
+    }
+
+    ul.watch-list li {
+      display: flex;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px dashed var(--rule);
+      font-size: 13.5px;
+    }
+
+    ul.watch-list li:last-child {
+      border-bottom: none;
+    }
+
+    ul.watch-list .watch-label {
+      flex: 0 0 90px;
+      font-weight: 700;
+      color: var(--accent-strong);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      padding-top: 1px;
+    }
+
+    ul.watch-list .watch-body .headline {
+      display: block;
+      font-weight: 600;
+    }
+
+    ul.watch-list .watch-body .detail {
+      color: var(--ink-soft);
+    }
+
+    ul.materials {
+      margin: 0;
+      padding-left: 22px;
+      font-size: 14px;
+    }
+
+    ul.materials li {
+      margin-bottom: 4px;
+    }
+
+    .timings-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      font-size: 13px;
+    }
+
+    .timing-pill {
+      background: var(--paper);
+      border: 1px solid var(--rule);
+      border-radius: 999px;
+      padding: 4px 12px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .timing-total {
+      color: var(--ink-soft);
+      font-size: 12.5px;
+    }
+
+    @media print {
+
+      header.app-header,
+      section.input-panel,
+      .output-toolbar {
+        display: none !important;
+      }
+
+      main.layout {
+        grid-template-columns: 1fr;
+        padding: 0;
+      }
+
+      section.output-panel {
+        border: none;
+        padding: 0;
+      }
+
+      body {
+        background: #fff;
+        color: #000;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="app-header">
+    <h1>Prep Material Viewer</h1>
+    <p>
+      Ingest a real textbook against the backend, pick a topic/subtopic it actually found,
+      copy the ready-made <code>prep_material_cli.py</code> command — then paste that run's
+      <code>--json</code> output back in below to render it as a readable teacher's prep sheet,
+      the same section structure as <code>render_prep_material_markdown()</code>, just in a browser.
+    </p>
+  </header>
+
+  <main class="layout">
+    <section class="input-panel">
+      <h2>Input</h2>
+
+      <div class="subsection">
+        <h3><span class="step-num">·</span>Connect to the backend</h3>
+        <div class="field-row">
+          <div>
+            <label class="small-label" for="baseUrlInput">Base URL</label>
+            <input type="text" id="baseUrlInput" placeholder="http://localhost:4000" value="http://localhost:4000">
+          </div>
+        </div>
+        <div class="field-row">
+          <div>
+            <label class="small-label" for="schoolIdInput">School ID</label>
+            <input type="text" id="schoolIdInput" placeholder="your admin's school id">
+          </div>
+        </div>
+        <p class="hint">Requires <code>DEV_SKIP_AUTH=true</code> in the backend's <code>.env</code>
+          (see <code>app/deps.py</code>) — no token needed. <strong>CORS note:</strong> the backend's
+          <code>CORSMiddleware</code> only allows <code>FRONTEND_ORIGIN</code>
+          (default <code>http://localhost:3000</code>) — opening this file directly (<code>file://</code>)
+          will be blocked unless you serve it from an allowed origin (e.g. <code>python -m http.server</code>)
+          or add this origin to <code>FRONTEND_ORIGIN</code>.
+        </p>
+      </div>
+
+      <div class="subsection">
+        <h3><span class="step-num">1</span>Ingest a textbook</h3>
+        <div class="field-row">
+          <div>
+            <label class="small-label" for="gradeInput">Grade (--grade)</label>
+            <input type="text" id="gradeInput" placeholder="e.g. 2">
+          </div>
+          <div>
+            <label class="small-label" for="subjectInput">Subject (--subject)</label>
+            <input type="text" id="subjectInput" placeholder="e.g. Mathematics">
+          </div>
+        </div>
+        <div class="field-row">
+          <div>
+            <label class="small-label" for="ingestLanguageInput">PDF language</label>
+            <input type="text" id="ingestLanguageInput" placeholder="auto" value="auto">
+          </div>
+        </div>
+        <div class="input-actions">
+          <label class="file-btn">Choose PDF<input type="file" id="pdfFileInput" accept=".pdf,application/pdf"
+              hidden></label>
+          <button id="startIngestBtn" type="button">Start extraction</button>
+        </div>
+        <p class="hint" id="pdfFileName">No file chosen.</p>
+        <div id="ingestProgress" class="progress-wrap" hidden>
+          <span id="ingestStatusPill" class="status-pill pending">pending</span>
+          <div class="progress-bar">
+            <div id="ingestProgressBar"></div>
+          </div>
+          <p class="progress-msg" id="ingestMessage"></p>
+        </div>
+        <div id="ingestError" class="error" hidden></div>
+      </div>
+
+      <div class="subsection">
+        <h3><span class="step-num">2</span>Pick from what got ingested</h3>
+        <div class="field-row">
+          <div>
+            <label class="small-label" for="bookSelect">Book (grade · subject · file)</label>
+            <select id="bookSelect" disabled>
+              <option value="">(ingest a textbook first)</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-row">
+          <div>
+            <label class="small-label" for="topicSelect">Topic</label>
+            <select id="topicSelect" disabled>
+              <option value="">(pick a book first)</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-row">
+          <div>
+            <label class="small-label" for="subtopicSelect">Subtopic</label>
+            <select id="subtopicSelect" disabled>
+              <option value="">(pick a topic first)</option>
+            </select>
+          </div>
+        </div>
+        <p class="hint">Picking fills in Topic, Subtopic, Grade, Subject, and Content below —
+          all still plain fields, so edit freely before copying the CLI command. Ingested books
+          are saved in this browser (<code>localStorage</code>) and survive a refresh.</p>
+        <div class="input-actions">
+          <button id="clearBooksBtn" class="secondary" type="button">Clear saved books</button>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div>
+          <label class="small-label" for="topicInput">Topic (--topic)</label>
+          <input type="text" id="topicInput" placeholder="e.g. Numbers from 10 to 99">
+        </div>
+      </div>
+      <div class="field-row">
+        <div>
+          <label class="small-label" for="subtopicInput">Subtopic (--subtopic)</label>
+          <input type="text" id="subtopicInput" placeholder="e.g. Understanding tens and ones">
+        </div>
+      </div>
+      <div class="field-row">
+        <div>
+          <label class="small-label" for="contentInput">Content (--content / --content-file)</label>
+          <textarea id="contentInput"
+            placeholder="Paste the topic's content here, or pick a topic above to auto-fill its ingested summary."></textarea>
+        </div>
+      </div>
+      <p class="hint">Picked content is the topic's own AI-generated summary from ingestion —
+        thinner than a full textbook paragraph, and subtopic selection doesn't change it
+        (subtopic summaries aren't returned by this endpoint, only names). Edit it to focus
+        on the subtopic, or replace it with real pasted text.</p>
+
+      <div class="subsection cli-block">
+        <h3><span class="step-num">3</span>Run it, then paste the result</h3>
+        <p class="hint">Everything above, as the exact command — copy it, run it where
+          <code>scripts/prep_material_cli.py</code> lives, then paste its <code>--json</code>
+          output into the box below.
+        </p>
+        <pre
+          id="cliCommand">python -m scripts.prep_material_cli --topic "..." --grade "..." --subject "..." --json</pre>
+        <div class="input-actions">
+          <button id="copyCommandBtn" class="secondary" type="button">Copy command</button>
+          <button id="copyContentBtn" class="secondary" type="button">Copy content only</button>
+        </div>
+      </div>
+
+      <textarea id="jsonInput" placeholder="Paste prep material JSON here..." spellcheck="false"></textarea>
+      <div class="input-actions">
+        <button id="renderBtn">Render</button>
+        <label class="file-btn">Load .json file<input type="file" id="fileInput" accept=".json,application/json"
+            hidden></label>
+        <button id="exampleBtn" class="secondary" type="button">Load example</button>
+        <button id="clearBtn" class="secondary" type="button">Clear</button>
+      </div>
+      <div id="errorBox" class="error" hidden></div>
+
+      <div class="subsection">
+        <h3><span class="step-num">4</span>Compare with other models</h3>
+        <div class="field-row">
+          <div>
+            <label class="small-label" for="compareKeyInput">OpenRouter API key</label>
+            <input type="text" id="compareKeyInput" placeholder="sk-or-v1-...">
+          </div>
+        </div>
+        <div class="field-row">
+          <div>
+            <label class="small-label">Models to compare — tick the ones to run</label>
+            <div id="modelChecklist" class="model-checklist"></div>
+            <div class="add-model-row">
+              <input type="text" id="addModelInput" placeholder="org/model-id, e.g. anthropic/claude-fable-5">
+              <button id="addModelBtn" class="secondary" type="button">Add</button>
+            </div>
+          </div>
+        </div>
+        <div class="field-row">
+          <div>
+            <label class="small-label" for="comparePromptInput">Stage 5 prompt</label>
+            <textarea id="comparePromptInput"
+              placeholder="Paste the STAGE 5 — Prompt assembly block from your CLI run — same prompt Gemini got, sent here to each model above instead."></textarea>
+          </div>
+        </div>
+        <p class="hint">This calls OpenRouter directly from your browser with the key above —
+          it never touches the backend or this machine's <code>.env</code>. Every ticked model gets
+          the exact same prompt, run in parallel, each rendered into its own card below — a real
+          side-by-side comparison, not just one at a time. 90-second timeout per model.</p>
+        <div class="input-actions">
+          <button id="generateCompareBtn" type="button">Generate & compare</button>
+        </div>
+        <div id="compareError" class="error" hidden></div>
+      </div>
+    </section>
+
+    <section class="output-panel">
+      <div class="output-toolbar">
+        <h2>Prep Sheet</h2>
+        <button id="printBtn" class="secondary" disabled type="button">Print / Save as PDF</button>
+      </div>
+      <div id="sheet" class="sheet placeholder">
+        Paste JSON on the left and click Render — or click "Load example" to see a sample sheet first.
+      </div>
+
+      <div id="compareResults">
+        <div class="output-toolbar compare-toolbar">
+          <h2>Compare</h2>
+        </div>
+        <p class="sheet placeholder">Fill in the API key, models, and Stage 5 prompt on the left, then
+          click "Generate & compare" — one card per model appears here.</p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var jsonInput = document.getElementById("jsonInput");
+      var topicInput = document.getElementById("topicInput");
+      var subtopicInput = document.getElementById("subtopicInput");
+      var contentInput = document.getElementById("contentInput");
+      var errorBox = document.getElementById("errorBox");
+      var sheet = document.getElementById("sheet");
+      var printBtn = document.getElementById("printBtn");
+
+      var baseUrlInput = document.getElementById("baseUrlInput");
+      var schoolIdInput = document.getElementById("schoolIdInput");
+      var gradeInputEl = document.getElementById("gradeInput");
+      var subjectInputEl = document.getElementById("subjectInput");
+      var ingestLanguageInput = document.getElementById("ingestLanguageInput");
+      var pdfFileInput = document.getElementById("pdfFileInput");
+      var pdfFileName = document.getElementById("pdfFileName");
+      var startIngestBtn = document.getElementById("startIngestBtn");
+      var ingestProgress = document.getElementById("ingestProgress");
+      var ingestStatusPill = document.getElementById("ingestStatusPill");
+      var ingestProgressBar = document.getElementById("ingestProgressBar");
+      var ingestMessage = document.getElementById("ingestMessage");
+      var ingestError = document.getElementById("ingestError");
+      var bookSelect = document.getElementById("bookSelect");
+      var topicSelect = document.getElementById("topicSelect");
+      var subtopicSelect = document.getElementById("subtopicSelect");
+      var cliCommand = document.getElementById("cliCommand");
+      var copyCommandBtn = document.getElementById("copyCommandBtn");
+      var copyContentBtn = document.getElementById("copyContentBtn");
+
+      var compareKeyInput = document.getElementById("compareKeyInput");
+      var modelChecklist = document.getElementById("modelChecklist");
+      var addModelInput = document.getElementById("addModelInput");
+      var addModelBtn = document.getElementById("addModelBtn");
+      var comparePromptInput = document.getElementById("comparePromptInput");
+      var generateCompareBtn = document.getElementById("generateCompareBtn");
+      var compareError = document.getElementById("compareError");
+      var compareResults = document.getElementById("compareResults");
+      var COMPARE_TIMEOUT_MS = 90000;
+
+      // Only pre-populated with models actually given in this conversation —
+      // not a curated "known good" preset list, since a made-up OpenRouter
+      // model id would just fail at request time with no way to tell in
+      // advance. "Add" below appends anything else, checked, persisted for
+      // the session (not across reloads).
+      var compareModelList = [
+        { id: "deepseek/deepseek-v4-flash-0731", checked: true },
+        { id: "openai/gpt-5.6-luna", checked: true },
+        { id: "google/gemini-3.5-flash-lite", checked: true },
+        { id: "google/gemini-3.1-flash-lite", checked: true },
+        { id: "deepseek/deepseek-v4-pro", checked: true },
+        { id: "google/gemma-4-26b-a4b-it", checked: true },
+        { id: "google/gemma-4-31b-it", checked: true }
+      ];
+
+      // Ingested books persist across refreshes via localStorage — a plain
+      // flat JSON array is all this is, so localStorage is enough; no server
+      // of its own here to run SQLite against, and IndexedDB/sql.js would be
+      // real machinery for something this simple.
+      // Shape per book: {jobId, grade, subject, filename, topics}. topics is
+      // the flat review-list shape _map_ontology_to_topics() returns —
+      // {id, topic, description, weekNumber, subTopics: [names], exerciseCount, sidebarCount}.
+      var INGESTED_BOOKS_KEY = "prepMaterialViewer.ingestedBooks";
+
+      function loadIngestedBooks() {
+        try {
+          var raw = localStorage.getItem(INGESTED_BOOKS_KEY);
+          var parsed = raw ? JSON.parse(raw) : [];
+          return Array.isArray(parsed) ? parsed : [];
+        } catch (e) {
+          return []; // corrupted or storage disabled — start fresh, don't crash the page
+        }
+      }
+      function saveIngestedBooks() {
+        try {
+          localStorage.setItem(INGESTED_BOOKS_KEY, JSON.stringify(ingestedBooks));
+        } catch (e) {
+          // storage full or disabled (private browsing) — session still works,
+          // it just won't survive a refresh; not worth surfacing as an error.
+        }
+      }
+
+      var ingestedBooks = loadIngestedBooks();
+      var pollTimer = null;
+
+      var EXAMPLE = {
+        planningNote: "This lesson builds tens-and-ones understanding directly from counting skills students already have — since there's no prior topic on record, the concept section starts from ones and bundles them into a ten in front of the class, so grouping-by-ten feels discovered rather than announced.",
+        objective: "Identify tens and ones in two-digit numbers",
+        previousTopicRefresher: null,
+        concept: [
+          { text: "Pairs build a pile of 14 loose sticks", detail: "Say: \"Grab 14 matchsticks with your partner — don't count one by one yet.\" Give 30 seconds. Watch whether any pair starts grouping automatically." },
+          { text: "Pairs try bundling sticks into a group of ten", detail: "Say: \"Can you make ONE bundle of ten, and see what's left over?\" Wait 45 seconds; most pairs will land on 1 bundle + 4 loose." },
+          { text: "Class names the bundle a 'ten' and the rest 'ones'", detail: "Ask: \"What do we call that bundle, and what do we call the leftovers?\" Confirm aloud: 14 = 1 ten + 4 ones, once a few pairs answer." }
+        ],
+        explore: {
+          points: [
+            { text: "A sabzi seller counts 23 onions for a customer", detail: "Say: \"The sabzi seller has 23 onions and only has bags of 10. How many bags does she fill, and how many stay loose?\" Let the question hang — don't answer it yet." },
+            { text: "Pairs guess the split before touching any objects", detail: "Give 20 seconds for partners to whisper a guess (e.g. \"2 bags, 3 loose\"). Don't confirm — just collect a few guesses aloud." },
+            { text: "Pairs bundle 23 counters into tens to check their guess", detail: "Students choose EITHER matchsticks OR notebook tally marks to represent the onions — let each pair pick. Correct split: 2 tens + 3 ones." }
+          ],
+          imageFocus: "a row of 2 bundled sticks (tens) plus 3 loose sticks (ones), labelled 20 + 3 = 23"
+        },
+        challenge: {
+          activity: "Bundle and Bag",
+          points: [
+            { text: "Pairs choose their own two-digit number to bundle", detail: "Say: \"Pick any number between 30 and 50 — you decide.\" Whichever number they pick, they must build it with bundles + loose sticks in 2 minutes." },
+            { text: "Pairs tell a neighboring pair what made bundling easy", detail: "30-second turn-and-tell: \"Tell the pair next to you one thing that made grouping into tens easy today.\" Never ask about mistakes — only what worked." },
+            { text: "Class solves one shopkeeper's stock problem together", detail: "Ask: \"A shopkeeper has 47 bananas. How many bags of 10 can she make?\" Worked answer for your confidence: 4 bags of 10 + 7 loose — invite guesses before confirming." }
+          ]
+        },
+        sectionWatch: {
+          refresher: null,
+          concept: { text: "Watch for pairs that skip bundling and just count", detail: "If a pair counts all 14 one-by-one without grouping, prompt: \"Can you make that faster using a bundle of ten?\" rather than telling them the answer." },
+          explore: { text: "Listen for guesses that ignore the bundle-of-ten rule", detail: "A pair might guess \"1 bag, 13 loose\" — accept it as a guess, then let the hands-on bundling correct it naturally." },
+          challenge: { text: "Watch which pairs pick numbers near a bundle boundary", detail: "Numbers like 39 or 41 reveal whether students truly grasp carrying past a ten — worth a quick check-in with those pairs." },
+          levelSet: { text: "Watch for confident partner nods during the self-check", detail: "If a pair hesitates on \"Can you split any 2-digit number into tens and ones?\", that's the pair to check in with tomorrow, not today." }
+        },
+        materialsUsed: ["matchsticks or loose counters", "notebook and pencil"],
+        levelSet: {
+          points: [
+            { text: "Partners tick whether they can split a number alone", detail: "Ask each pair: \"Can you both split a 2-digit number into tens and ones without help?\" They tick yes/no together — no teacher check needed." },
+            { text: "Pairs share what felt easiest about today's bundling", detail: "30 seconds: \"Tell your partner the easiest part of today's activity.\" Never prompt for what was hard or wrong." },
+            { text: "Pairs choose a number to bundle at home or in class", detail: "Invite: \"Pick any two-digit number you see today — a bus number, a page number — and bundle it into tens and ones if you'd like.\" Framed as an invitation, not homework." }
+          ]
+        },
+        timings: { concept: 5, explore: 10, challenge: 10, levelSet: 5 }
+      };
+      var EXAMPLE_TOPIC = "Numbers from 10 to 99";
+      var EXAMPLE_SUBTOPIC = "Understanding tens and ones";
+
+      function el(tag, opts) {
+        var node = document.createElement(tag);
+        opts = opts || {};
+        if (opts.className) node.className = opts.className;
+        if (opts.text !== undefined) node.textContent = opts.text;
+        if (opts.html !== undefined) node.innerHTML = opts.html;
+        return node;
+      }
+
+      // Mirrors _as_section_dict() in prep_material_generator.py: the model
+      // sometimes drops the {"points": [...]} wrapper and returns a bare list.
+      function asSectionDict(value) {
+        if (Array.isArray(value)) return { points: value };
+        if (value && typeof value === "object") return value;
+        return {};
+      }
+
+      function renderBullets(bullets) {
+        if (!Array.isArray(bullets) || bullets.length === 0) {
+          return el("p", { className: "empty-note", text: "(none)" });
+        }
+        var ol = el("ol", { className: "bullets" });
+        bullets.forEach(function (b) {
+          if (!b || typeof b !== "object") return;
+          var li = el("li");
+          var headline = el("span", { className: "headline", text: b.text || "" });
+          li.appendChild(headline);
+          if (b.detail) {
+            li.appendChild(document.createTextNode(" — "));
+            li.appendChild(el("span", { className: "detail", text: b.detail }));
+          }
+          ol.appendChild(li);
+        });
+        return ol;
+      }
+
+      function sectionHeader(eyebrow, title, pillText) {
+        var h = el("div", { className: "section-title" });
+        h.appendChild(el("span", { className: "eyebrow", text: eyebrow }));
+        h.appendChild(el("span", { text: title }));
+        if (pillText) h.appendChild(el("span", { className: "pill", text: pillText }));
+        return h;
+      }
+
+      // targetEl defaults to the primary sheet — pass a compare card's sheet to render
+      // the same shape into the comparison panel instead.
+      function render(material, meta, targetEl) {
+        var target = targetEl || sheet;
+        meta = meta || {};
+        var topic = meta.topic || "";
+        var subtopic = meta.subtopic || "";
+        target.classList.remove("placeholder");
+        target.innerHTML = "";
+
+        var title = material.objective || topic || "Prep Material";
+        target.appendChild(el("h1", { className: "sheet-title", text: title }));
+        if (topic || subtopic) {
+          var subText = topic + (subtopic ? " — " + subtopic : "");
+          target.appendChild(el("p", { className: "sheet-sub", text: subText }));
+        }
+
+        if (material.planningNote) {
+          target.appendChild(el("blockquote", { className: "planning-note", text: material.planningNote }));
+        }
+
+        var refresherRaw = material.previousTopicRefresher;
+        if (refresherRaw) {
+          var refresher = Array.isArray(refresherRaw) ? { recap: refresherRaw } : refresherRaw;
+          var block = el("div", { className: "section-block" });
+          block.appendChild(sectionHeader("Recap", "Refresher — " + (refresher.previousTopic || "")));
+          block.appendChild(renderBullets(refresher.recap));
+          target.appendChild(block);
+        }
+
+        var conceptBlock = el("div", { className: "section-block" });
+        conceptBlock.appendChild(sectionHeader("01", "Concept"));
+        conceptBlock.appendChild(renderBullets(material.concept));
+        target.appendChild(conceptBlock);
+
+        var explore = asSectionDict(material.explore);
+        var exploreBlock = el("div", { className: "section-block" });
+        exploreBlock.appendChild(sectionHeader("02", "Explore"));
+        if (explore.imageFocus) {
+          exploreBlock.appendChild(el("p", { className: "board-sketch", text: "Board sketch: " + explore.imageFocus }));
+        }
+        exploreBlock.appendChild(renderBullets(explore.points));
+        target.appendChild(exploreBlock);
+
+        var challenge = asSectionDict(material.challenge);
+        var challengeBlock = el("div", { className: "section-block" });
+        challengeBlock.appendChild(sectionHeader("03", "Challenge", challenge.activity || null));
+        challengeBlock.appendChild(renderBullets(challenge.points));
+        target.appendChild(challengeBlock);
+
+        var levelSet = asSectionDict(material.levelSet);
+        var levelSetBlock = el("div", { className: "section-block" });
+        levelSetBlock.appendChild(sectionHeader("04", "Level Set"));
+        levelSetBlock.appendChild(renderBullets(levelSet.points));
+        target.appendChild(levelSetBlock);
+
+        var watch = material.sectionWatch || {};
+        var watchOrder = ["refresher", "concept", "explore", "challenge", "levelSet"];
+        var watchLabels = { refresher: "Refresher", concept: "Concept", explore: "Explore", challenge: "Challenge", levelSet: "Level Set" };
+        var watchItems = watchOrder.filter(function (k) { return watch[k]; });
+        if (watchItems.length) {
+          var watchBlock = el("div", { className: "section-block" });
+          watchBlock.appendChild(sectionHeader("—", "Watch For"));
+          var ul = el("ul", { className: "watch-list" });
+          watchItems.forEach(function (k) {
+            var w = watch[k];
+            var li = el("li");
+            li.appendChild(el("span", { className: "watch-label", text: watchLabels[k] }));
+            var body = el("div", { className: "watch-body" });
+            body.appendChild(el("span", { className: "headline", text: w.text || "" }));
+            if (w.detail) body.appendChild(el("span", { className: "detail", text: w.detail }));
+            li.appendChild(body);
+            ul.appendChild(li);
+          });
+          watchBlock.appendChild(ul);
+          target.appendChild(watchBlock);
+        }
+
+        var materials = material.materialsUsed || [];
+        var materialsBlock = el("div", { className: "section-block" });
+        materialsBlock.appendChild(sectionHeader("—", "Materials"));
+        if (materials.length) {
+          var mul = el("ul", { className: "materials" });
+          materials.forEach(function (m) { mul.appendChild(el("li", { text: m })); });
+          materialsBlock.appendChild(mul);
+        } else {
+          materialsBlock.appendChild(el("p", { className: "empty-note", text: "(none)" }));
+        }
+        target.appendChild(materialsBlock);
+
+        var timings = material.timings || {};
+        var timingKeys = Object.keys(timings).filter(function (k) { return timings[k] !== null && timings[k] !== undefined; });
+        if (timingKeys.length) {
+          var timingsBlock = el("div", { className: "section-block" });
+          timingsBlock.appendChild(sectionHeader("—", "Timings"));
+          var row = el("div", { className: "timings-row" });
+          var total = 0;
+          var labels = { levelSet: "Level Set" };
+          timingKeys.forEach(function (k) {
+            var v = timings[k];
+            if (typeof v === "number") total += v;
+            var label = labels[k] || (k.charAt(0).toUpperCase() + k.slice(1));
+            row.appendChild(el("span", { className: "timing-pill", text: label + ": " + v + " min" }));
+          });
+          row.appendChild(el("span", { className: "timing-total", text: "Total: " + total + " min" }));
+          timingsBlock.appendChild(row);
+          target.appendChild(timingsBlock);
+        }
+
+        printBtn.disabled = false;
+      }
+
+      function collectMeta() {
+        return { topic: topicInput.value.trim(), subtopic: subtopicInput.value.trim() };
+      }
+
+      function showError(message) {
+        errorBox.textContent = message;
+        errorBox.hidden = false;
+      }
+      function clearError() {
+        errorBox.hidden = true;
+        errorBox.textContent = "";
+      }
+
+      // Finds every top-level balanced {...} in a blob of text and returns
+      // the LAST one that's actually valid JSON. A full CLI transcript
+      // contains more than one complete-looking object — Stage 1's knowledge
+      // dict, Stage 5's prompt with an illustrative (non-JSON) schema example
+      // embedded in it, and Stage 6's real material — so grabbing the first
+      // balanced region isn't enough; it'd happily return Stage 1's dict.
+      // The CLI always prints Stage 6 last, so scanning backward and taking
+      // the first candidate that parses is what --json actually produced.
+      function extractJsonObject(text) {
+        var candidates = [];
+        var i = 0;
+        while (i < text.length) {
+          var start = text.indexOf("{", i);
+          if (start === -1) break;
+          var depth = 0, inString = false, escape = false, end = -1;
+          for (var j = start; j < text.length; j++) {
+            var ch = text[j];
+            if (inString) {
+              if (escape) escape = false;
+              else if (ch === "\\") escape = true;
+              else if (ch === '"') inString = false;
+              continue;
+            }
+            if (ch === '"') { inString = true; continue; }
+            if (ch === "{") depth++;
+            else if (ch === "}") {
+              depth--;
+              if (depth === 0) { end = j; break; }
+            }
+          }
+          if (end === -1) break; // unbalanced from here on — nothing more to find
+          candidates.push(text.slice(start, end + 1));
+          i = end + 1;
+        }
+        for (var k = candidates.length - 1; k >= 0; k--) {
+          try {
+            JSON.parse(candidates[k]);
+            return candidates[k];
+          } catch (e) { /* not valid on its own — try the previous candidate */ }
+        }
+        return null;
+      }
+
+      document.getElementById("renderBtn").addEventListener("click", function () {
+        clearError();
+        var raw = jsonInput.value.trim();
+        if (!raw) {
+          showError("Paste some JSON first — the output of a --json run, or click \"Load example\".");
+          return;
+        }
+        var material;
+        try {
+          material = JSON.parse(raw);
+        } catch (err) {
+          var extracted = extractJsonObject(raw);
+          if (!extracted) {
+            showError("Couldn't parse that as JSON:\n" + err.message);
+            return;
+          }
+          try {
+            material = JSON.parse(extracted);
+          } catch (err2) {
+            showError("Couldn't parse that as JSON, even after trimming to the outermost { … }:\n" + err2.message);
+            return;
+          }
+        }
+        try {
+          render(material, collectMeta());
+        } catch (err) {
+          showError("Parsed OK, but couldn't render it as a prep sheet:\n" + err.message);
+        }
+      });
+
+      document.getElementById("exampleBtn").addEventListener("click", function () {
+        clearError();
+        jsonInput.value = JSON.stringify(EXAMPLE, null, 2);
+        topicInput.value = EXAMPLE_TOPIC;
+        subtopicInput.value = EXAMPLE_SUBTOPIC;
+        contentInput.value = "Learners bundle loose counters into groups of ten and name the " +
+          "leftover ones, building up to splitting any two-digit number into tens and ones.";
+        gradeInputEl.value = "2";
+        subjectInputEl.value = "Mathematics";
+        render(EXAMPLE, collectMeta());
+        refreshCliCommand();
+      });
+
+      document.getElementById("clearBtn").addEventListener("click", function () {
+        clearError();
+        jsonInput.value = "";
+        topicInput.value = "";
+        subtopicInput.value = "";
+        contentInput.value = "";
+        gradeInputEl.value = "";
+        subjectInputEl.value = "";
+        resetSelect(topicSelect, "(pick a book first)");
+        resetSelect(subtopicSelect, "(pick a topic first)");
+        sheet.innerHTML = "Paste JSON on the left and click Render — or click \"Load example\" to see a sample sheet first.";
+        sheet.classList.add("placeholder");
+        printBtn.disabled = true;
+        refreshCliCommand();
+      });
+
+      document.getElementById("fileInput").addEventListener("change", function (evt) {
+        var file = evt.target.files && evt.target.files[0];
+        if (!file) return;
+        clearError();
+        var reader = new FileReader();
+        reader.onload = function () {
+          jsonInput.value = String(reader.result);
+        };
+        reader.onerror = function () {
+          showError("Couldn't read that file.");
+        };
+        reader.readAsText(file);
+      });
+
+      printBtn.addEventListener("click", function () {
+        window.print();
+      });
+
+      // ── Ingestion: real backend endpoints (see admin_syllabus_pdf.py) ─────────
+      //   POST /api/admin/schools/{schoolId}/syllabus/extract-pdf/upload  (multipart)
+      //   GET  /api/admin/schools/{schoolId}/syllabus/extract-pdf/{jobId}  (poll)
+      // This is Phase A/B ingestion, not Stage 1-6 — there is no HTTP endpoint for
+      // the prep-material pipeline itself, so this only gets you real topic/
+      // subtopic/subject/content values to hand to the CLI, not a rendered sheet.
+
+      function showIngestError(message) {
+        ingestError.textContent = message;
+        ingestError.hidden = false;
+      }
+      function clearIngestError() {
+        ingestError.hidden = true;
+        ingestError.textContent = "";
+      }
+
+      function apiBase() {
+        return (baseUrlInput.value || "").trim().replace(/\/+$/, "");
+      }
+
+      function authHeaders() {
+        // No token field — this tool assumes DEV_SKIP_AUTH=true on the backend.
+        return {};
+      }
+
+      function setIngestStatus(status, progress, message) {
+        ingestProgress.hidden = false;
+        ingestStatusPill.className = "status-pill " + status;
+        ingestStatusPill.textContent = status;
+        ingestProgressBar.style.width = Math.max(0, Math.min(100, progress || 0)) + "%";
+        ingestMessage.textContent = message || "";
+      }
+
+      pdfFileInput.addEventListener("change", function () {
+        var file = pdfFileInput.files && pdfFileInput.files[0];
+        pdfFileName.textContent = file ? file.name + " (" + Math.round(file.size / 1024) + " KB)" : "No file chosen.";
+      });
+
+      startIngestBtn.addEventListener("click", function () {
+        clearIngestError();
+        var base = apiBase();
+        var schoolId = schoolIdInput.value.trim();
+        var grade = gradeInputEl.value.trim();
+        var subject = subjectInputEl.value.trim();
+        var file = pdfFileInput.files && pdfFileInput.files[0];
+
+        if (!base || !schoolId) {
+          showIngestError("Fill in Base URL and School ID first.");
+          return;
+        }
+        if (!file) {
+          showIngestError("Choose a PDF first.");
+          return;
+        }
+        if (!grade || !subject) {
+          showIngestError("Grade and Subject are required by the upload endpoint.");
+          return;
+        }
+
+        var form = new FormData();
+        form.append("file", file);
+        form.append("language", ingestLanguageInput.value.trim() || "auto");
+        form.append("grade", grade);
+        form.append("subject", subject);
+
+        startIngestBtn.disabled = true;
+        setIngestStatus("pending", 0, "Uploading " + file.name + "…");
+
+        var url = base + "/api/admin/schools/" + encodeURIComponent(schoolId) + "/syllabus/extract-pdf/upload";
+        fetch(url, { method: "POST", headers: authHeaders(), body: form })
+          .then(function (res) {
+            if (!res.ok) {
+              return res.json().catch(function () { return {}; }).then(function (body) {
+                throw new Error("Upload failed (" + res.status + "): " + (body.detail || res.statusText));
+              });
+            }
+            return res.json();
+          })
+          .then(function (data) {
+            setIngestStatus("running", 1, "Queued as job " + data.jobId + "…");
+            pollIngestJob(data.jobId, grade, subject, file.name);
+          })
+          .catch(function (err) {
+            startIngestBtn.disabled = false;
+            setIngestStatus("error", 100, "");
+            showIngestError(err.message + "\n\nIf this is a network/CORS error, see the CORS note above — " +
+              "the browser blocks the request before it ever reaches the server.");
+          });
+      });
+
+      function pollIngestJob(jobId, grade, subject, filename) {
+        var base = apiBase();
+        var schoolId = schoolIdInput.value.trim();
+        var url = base + "/api/admin/schools/" + encodeURIComponent(schoolId) + "/syllabus/extract-pdf/" + jobId;
+
+        if (pollTimer) clearInterval(pollTimer);
+        pollTimer = setInterval(function () {
+          fetch(url, { headers: authHeaders() })
+            .then(function (res) {
+              if (!res.ok) throw new Error("Status check failed (" + res.status + ")");
+              return res.json();
+            })
+            .then(function (job) {
+              setIngestStatus(job.status, job.progress, job.message);
+              if (job.status === "done") {
+                clearInterval(pollTimer);
+                startIngestBtn.disabled = false;
+                var topics = job.topics || [];
+                ingestedBooks.push({ jobId: jobId, grade: grade, subject: subject, filename: filename, topics: topics });
+                saveIngestedBooks();
+                refreshBookSelect();
+                setIngestStatus("done", 100, topics.length + " topic(s) extracted from " + filename + ". Pick it below.");
+              } else if (job.status === "error") {
+                clearInterval(pollTimer);
+                startIngestBtn.disabled = false;
+                showIngestError(job.error || "Extraction failed.");
+              }
+            })
+            .catch(function (err) {
+              clearInterval(pollTimer);
+              startIngestBtn.disabled = false;
+              setIngestStatus("error", 100, "");
+              showIngestError(err.message);
+            });
+        }, 2500);
+      }
+
+      function refreshBookSelect() {
+        bookSelect.innerHTML = "";
+        bookSelect.disabled = ingestedBooks.length === 0;
+        if (!ingestedBooks.length) {
+          bookSelect.appendChild(el("option", { text: "(ingest a textbook first)" }));
+          return;
+        }
+        bookSelect.appendChild(el("option", { text: "(pick a book)" }));
+        ingestedBooks.forEach(function (book, i) {
+          var opt = el("option", {
+            text: "Grade " + book.grade + " — " + book.subject + " — " + book.filename + " (" + book.topics.length + " topics)"
+          });
+          opt.value = String(i);
+          bookSelect.appendChild(opt);
+        });
+      }
+      refreshBookSelect(); // picks up anything already in localStorage from a prior session
+
+      document.getElementById("clearBooksBtn").addEventListener("click", function () {
+        ingestedBooks = [];
+        saveIngestedBooks();
+        refreshBookSelect();
+        resetSelect(topicSelect, "(pick a book first)");
+        resetSelect(subtopicSelect, "(pick a topic first)");
+      });
+
+      function resetSelect(selectEl, placeholder) {
+        selectEl.innerHTML = "";
+        selectEl.appendChild(el("option", { text: placeholder }));
+        selectEl.disabled = true;
+      }
+
+      bookSelect.addEventListener("change", function () {
+        resetSelect(topicSelect, "(pick a topic first)");
+        resetSelect(subtopicSelect, "(pick a topic first)");
+        var book = ingestedBooks[parseInt(bookSelect.value, 10)];
+        if (!book) return;
+
+        gradeInputEl.value = book.grade;
+        subjectInputEl.value = book.subject;
+
+        topicSelect.innerHTML = "";
+        topicSelect.disabled = false;
+        topicSelect.appendChild(el("option", { text: "(pick a topic)" }));
+        book.topics.forEach(function (t, i) {
+          var opt = el("option", { text: t.topic + (t.weekNumber ? " (ch. " + t.weekNumber + ")" : "") });
+          opt.value = String(i);
+          topicSelect.appendChild(opt);
+        });
+        refreshCliCommand();
+      });
+
+      topicSelect.addEventListener("change", function () {
+        resetSelect(subtopicSelect, "(none — use whole topic)");
+        var book = ingestedBooks[parseInt(bookSelect.value, 10)];
+        var topic = book && book.topics[parseInt(topicSelect.value, 10)];
+        if (!topic) return;
+
+        topicInput.value = topic.topic || "";
+        contentInput.value = topic.description || "";
+        subtopicInput.value = "";
+
+        subtopicSelect.innerHTML = "";
+        subtopicSelect.disabled = false;
+        subtopicSelect.appendChild(el("option", { value: "", text: "(none — use whole topic)" }));
+        (topic.subTopics || []).forEach(function (name) {
+          subtopicSelect.appendChild(el("option", { value: name, text: name }));
+        });
+        refreshCliCommand();
+      });
+
+      subtopicSelect.addEventListener("change", function () {
+        subtopicInput.value = subtopicSelect.value || "";
+        refreshCliCommand();
+      });
+
+      // ── CLI command builder ────────────────────────────────────────────────────
+      // --content-file sidesteps shell-quoting a whole paragraph; the content
+      // itself is copied separately via "Copy content only".
+
+      function psQuote(value) {
+        return '"' + String(value == null ? "" : value).replace(/"/g, '""') + '"';
+      }
+
+      function refreshCliCommand() {
+        var parts = ["python -m scripts.prep_material_cli"];
+        var topic = topicInput.value.trim();
+        var subtopic = subtopicInput.value.trim();
+        if (topic) parts.push("--topic " + psQuote(topic));
+        if (subtopic) parts.push("--subtopic " + psQuote(subtopic));
+        parts.push("--grade " + psQuote(gradeInputEl.value.trim() || "1"));
+        parts.push("--subject " + psQuote(subjectInputEl.value.trim() || "Mathematics"));
+        if (contentInput.value.trim()) {
+          parts.push("--content-file lesson_content.txt");
+        }
+        parts.push("--json");
+
+        cliCommand.textContent = parts.join(" `\n  ");
+        if (contentInput.value.trim()) {
+          cliCommand.textContent += "\n\n# lesson_content.txt (save this next to where you run the command):\n# " +
+            contentInput.value.trim().split("\n").join("\n# ");
+        }
+      }
+
+      function copyText(str) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          return navigator.clipboard.writeText(str);
+        }
+        var ta = document.createElement("textarea");
+        ta.value = str;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        try { document.execCommand("copy"); } catch (e) { /* best effort */ }
+        document.body.removeChild(ta);
+        return Promise.resolve();
+      }
+
+      copyCommandBtn.addEventListener("click", function () {
+        copyText(cliCommand.textContent).then(function () {
+          copyCommandBtn.textContent = "Copied!";
+          setTimeout(function () { copyCommandBtn.textContent = "Copy command"; }, 1500);
+        });
+      });
+      copyContentBtn.addEventListener("click", function () {
+        copyText(contentInput.value).then(function () {
+          copyContentBtn.textContent = "Copied!";
+          setTimeout(function () { copyContentBtn.textContent = "Copy content only"; }, 1500);
+        });
+      });
+
+      // ── Compare: call OpenRouter directly from the browser ──────────────────
+      // Same Stage 5 prompt Gemini got (copy it from the CLI's printed output),
+      // fanned out to every model listed — straight from here with your own
+      // key, never through the backend, never touches this machine's .env.
+      // Each model gets its own card, its own timeout, and fails independently
+      // — one slow/broken model doesn't block the others from rendering.
+      function showCompareError(message) {
+        compareError.textContent = message;
+        compareError.hidden = false;
+      }
+      function clearCompareError() {
+        compareError.hidden = true;
+        compareError.textContent = "";
+      }
+
+      function buildCompareCard(model) {
+        var toolbar = el("div", { className: "output-toolbar compare-toolbar" });
+        toolbar.appendChild(el("h2", { text: "Compare: " + model }));
+        var sheetEl = el("div", { className: "sheet placeholder", text: "Waiting on " + model + "…" });
+        compareResults.appendChild(toolbar);
+        compareResults.appendChild(sheetEl);
+        return sheetEl;
+      }
+
+      function fetchWithTimeout(url, options, timeoutMs) {
+        var controller = new AbortController();
+        var timer = setTimeout(function () { controller.abort(); }, timeoutMs);
+        return fetch(url, Object.assign({}, options, { signal: controller.signal }))
+          .then(function (res) { clearTimeout(timer); return res; })
+          .catch(function (err) {
+            clearTimeout(timer);
+            if (err.name === "AbortError") {
+              throw new Error("Timed out after " + Math.round(timeoutMs / 1000) + "s with no response.");
+            }
+            throw err;
+          });
+      }
+
+      function runCompareModel(model, key, prompt, targetSheet) {
+        fetchWithTimeout("https://openrouter.ai/api/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": "Bearer " + key,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            model: model,
+            messages: [{ role: "user", content: prompt }],
+            response_format: { type: "json_object" }
+          })
+        }, COMPARE_TIMEOUT_MS)
+          .then(function (res) {
+            if (!res.ok) {
+              return res.json().catch(function () { return {}; }).then(function (body) {
+                throw new Error("OpenRouter error (" + res.status + "): " +
+                  (body.error && body.error.message ? body.error.message : res.statusText));
+              });
+            }
+            return res.json();
+          })
+          .then(function (data) {
+            var msg = data.choices && data.choices[0] && data.choices[0].message;
+            var content = msg && msg.content;
+            if (!content) throw new Error("No content in the response — the model may have returned only a refusal or reasoning trace.");
+
+            var material;
+            try {
+              material = JSON.parse(content);
+            } catch (err) {
+              var extracted = extractJsonObject(content);
+              if (!extracted) throw new Error("Model didn't return valid JSON:\n" + content.slice(0, 500));
+              material = JSON.parse(extracted);
+            }
+            render(material, collectMeta(), targetSheet);
+          })
+          .catch(function (err) {
+            targetSheet.classList.add("placeholder");
+            targetSheet.textContent = model + ": " + err.message;
+          });
+      }
+
+      function renderModelChecklist() {
+        modelChecklist.innerHTML = "";
+        if (!compareModelList.length) {
+          modelChecklist.appendChild(el("p", { className: "model-checklist-empty", text: "No models yet — add one below." }));
+          return;
+        }
+        compareModelList.forEach(function (entry, i) {
+          var row = el("div", { className: "model-checklist-row" });
+          var checkboxId = "modelCheck" + i;
+
+          var checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.id = checkboxId;
+          checkbox.checked = entry.checked;
+          checkbox.addEventListener("change", function () { entry.checked = checkbox.checked; });
+
+          var label = el("label", { text: entry.id });
+          label.setAttribute("for", checkboxId);
+
+          var removeBtn = el("button", { className: "remove-model", text: "×" });
+          removeBtn.type = "button";
+          removeBtn.title = "Remove " + entry.id;
+          removeBtn.addEventListener("click", function () {
+            compareModelList.splice(i, 1);
+            renderModelChecklist();
+          });
+
+          row.appendChild(checkbox);
+          row.appendChild(label);
+          row.appendChild(removeBtn);
+          modelChecklist.appendChild(row);
+        });
+      }
+      renderModelChecklist();
+
+      addModelBtn.addEventListener("click", function () {
+        var id = addModelInput.value.trim();
+        if (!id) return;
+        if (compareModelList.some(function (m) { return m.id === id; })) {
+          addModelInput.value = "";
+          return;
+        }
+        compareModelList.push({ id: id, checked: true });
+        addModelInput.value = "";
+        renderModelChecklist();
+      });
+      addModelInput.addEventListener("keydown", function (evt) {
+        if (evt.key === "Enter") { evt.preventDefault(); addModelBtn.click(); }
+      });
+
+      generateCompareBtn.addEventListener("click", function () {
+        clearCompareError();
+        var key = compareKeyInput.value.trim();
+        var models = compareModelList.filter(function (m) { return m.checked; }).map(function (m) { return m.id; });
+        var prompt = comparePromptInput.value.trim();
+
+        if (!key) { showCompareError("Paste your OpenRouter API key first."); return; }
+        if (!models.length) { showCompareError("Tick at least one model to compare."); return; }
+        if (!prompt) { showCompareError("Paste the STAGE 5 prompt from your CLI run first."); return; }
+
+        compareResults.innerHTML = "";
+        models.forEach(function (model) {
+          var targetSheet = buildCompareCard(model);
+          runCompareModel(model, key, prompt, targetSheet);
+        });
+      });
+
+      // Keep the command in sync with manual edits to any field it reads from.
+      document.querySelector(".input-panel").addEventListener("input", refreshCliCommand);
+      document.querySelector(".input-panel").addEventListener("change", refreshCliCommand);
+      refreshCliCommand();
+    })();
+  </script>
+</body>
+
+</html>

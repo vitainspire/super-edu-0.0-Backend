@@ -6,10 +6,11 @@ from pydantic import BaseModel
 from ..lib.supabase_clients import create_admin_client
 from ..lib.admin_queries import (
     fetch_school_teachers, fetch_school_classes, fetch_teacher_availability, fetch_substitutions_for_date,
-    update_substitute_assignment, mark_teacher_unavailable, revert_teacher_availability, fetch_teacher_eligibility_data,
+    update_substitute_assignment, fetch_teacher_eligibility_data,
     fetch_pending_leave_requests,
 )
 from ..lib.substitute_finder import suggest_swap
+from ..lib.substitute_automation import apply_teacher_absence, clear_teacher_absence
 from ..lib.notifications import create_notification
 from ..deps import require_admin
 
@@ -101,9 +102,9 @@ def post_substitutes(schoolId: str, body: MarkUnavailableBody, admin: dict = Dep
     ac = create_admin_client()
 
     if body.reason == "available":
-        revert_teacher_availability(body.teacherId, body.date, ac)
+        clear_teacher_absence(schoolId, body.teacherId, body.date, ac)
     else:
-        mark_teacher_unavailable(schoolId, body.teacherId, body.date, body.reason, "admin", body.note, ac)
+        apply_teacher_absence(schoolId, body.teacherId, body.date, body.reason, "admin", body.note, ac)
 
     return _build_payload(schoolId, body.date, ac)
 
@@ -125,8 +126,8 @@ def patch_substitutes(schoolId: str, body: UpdateAssignmentBody, admin: dict = D
 # ── Leave-request approval ──────────────────────────────────────────────────
 # The teacher-submitted multi-day /leaves request sits as status="pending"
 # (see teacher.py's create_pending_leave_request) until an admin acts here.
-# Substitute computation — and the notification to whichever teacher gets
-# assigned — only happens at approval time, never at submission time.
+# Substitute computation — and the notifications that follow it — only happen
+# at approval time, never at submission time.
 
 def _pending_requests_payload(school_id: str, ac) -> dict:
     rows = fetch_pending_leave_requests(school_id, ac)
@@ -153,11 +154,6 @@ def approve_leave_request(schoolId: str, body: LeaveRequestDecisionBody, admin: 
     start = date.fromisoformat(body.startDate)
     end = date.fromisoformat(body.endDate)
 
-    teachers = fetch_school_teachers(schoolId, ac)
-    teacher_name = {t["id"]: t["name"] for t in teachers}
-    classes = fetch_school_classes(schoolId, ac)
-    class_name = {c["id"]: c["name"] for c in classes}
-
     d = start
     while d <= end:
         date_str = d.isoformat()
@@ -168,19 +164,12 @@ def approve_leave_request(schoolId: str, body: LeaveRequestDecisionBody, admin: 
         )
         row = pending.data if pending else None
         if row:
-            new_subs = mark_teacher_unavailable(
+            # Flipping the row to approved is what makes the leave effective, and
+            # apply_teacher_absence publishes the resulting coverage — assignment
+            # notices, stand-downs and uncovered-period alerts all included.
+            apply_teacher_absence(
                 schoolId, body.teacherId, date_str, row["reason"], "teacher", row.get("note"), ac, status="approved",
             )
-            for s in new_subs:
-                substitute_id = s.get("substituteTeacherId")
-                if not substitute_id:
-                    continue
-                create_notification(
-                    substitute_id, "substitute_assigned",
-                    f"You're covering Period {s['periodNumber']} for {teacher_name.get(body.teacherId, 'a teacher')} "
-                    f"— {class_name.get(s['classId'], 'a class')} on {date_str}.",
-                    ac, class_id=s["classId"], date=date_str,
-                )
         d += timedelta(days=1)
 
     create_notification(

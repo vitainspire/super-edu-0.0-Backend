@@ -5,10 +5,12 @@ from pydantic import BaseModel
 
 from ..lib.supabase_clients import create_admin_client, get_anon_client
 from ..lib.admin_queries import (
-    fetch_published_academic_events, fetch_school_announcements, mark_teacher_unavailable,
-    revert_teacher_availability, fetch_teacher_availability_for_teacher, create_pending_leave_request,
+    fetch_published_academic_events, fetch_school_announcements,
+    fetch_teacher_availability_for_teacher, create_pending_leave_request,
     fetch_school_schedule,
 )
+from ..lib.substitute_automation import apply_teacher_absence, clear_teacher_absence
+from ..lib.timetable_resolution import resolve_day_timetable, overlay_substitutions_on_week
 from ..lib.notifications import fetch_notifications, mark_notification_read, mark_all_notifications_read
 from ..lib.schemas import (
     PeerPairDissolveSchema, TeacherProfileUpsertSchema, TeacherClassUpsertSchema, TeacherAssignmentUpsertSchema,
@@ -151,12 +153,24 @@ def school_data(request: Request):
 
         own_class_rows = ac.table("classes").select("id").eq("teacher_id", teacher_id).execute().data or []
 
-        # Today only, and only subject-matched coverage (status="assigned") —
-        # a fallback substitute (status="assigned_fallback", no subject match)
-        # deliberately does NOT get full class access this way; they only see
-        # the period exists via /api/teacher/substitutes-today, with no
-        # students/syllabus/prep-material behind it.
+        # Today's coverage folded into the weekly plan: periods this teacher has
+        # handed over are tagged "covered_away", periods they've picked up are
+        # appended as "covering". Everything else is tagged "regular" so the
+        # frontend switches on one field. Best-effort — a failure here must not
+        # cost the teacher their whole timetable, so the base plan stands.
         today_str = datetime.now(timezone.utc).date().isoformat()
+        try:
+            timetable = overlay_substitutions_on_week(timetable, teacher_id, today_str, ac)
+        except Exception as e:
+            print(f"[teacher/school-data] substitution overlay failed, serving base timetable: {e}")
+
+        # Only subject-matched coverage (status="assigned") widens class access.
+        # Every cover the automation now produces IS subject-matched — see
+        # mark_teacher_unavailable, which leaves a period unresolved rather than
+        # drafting in someone who can't teach it. The filter still matters for
+        # the two cases that bypass it: pre-existing "assigned_fallback" rows,
+        # and "manual" from an admin hand-picking a substitute. Those see the
+        # period on their timetable and nothing behind it.
         covering_rows = (
             ac.table("timetable_substitutions").select("class_id")
             .eq("substitute_teacher_id", teacher_id).eq("date", today_str).eq("status", "assigned")
@@ -706,7 +720,9 @@ def _timetable_row_to_dto(r: dict) -> dict:
     }
 
 
-# GET /api/teacher/timetable — own entries only.
+# GET /api/teacher/timetable — own entries only, the recurring weekly plan with
+# no per-date adjustments. For what the teacher should actually turn up to on a
+# given day, use /timetable/day.
 @router.get("/timetable")
 def get_own_timetable(teacher_id: str = Depends(require_teacher)):
     try:
@@ -715,6 +731,24 @@ def get_own_timetable(teacher_id: str = Depends(require_teacher)):
         return {"timetable": [_timetable_row_to_dto(r) for r in rows]}
     except Exception:
         return {"timetable": []}
+
+
+# GET /api/teacher/timetable/day?date=YYYY-MM-DD (defaults to today)
+# The teacher's schedule for one date with substitutions already applied:
+# periods handed to someone else are marked, periods picked up from an absent
+# colleague are included. This is the readjusted day, not the weekly plan.
+@router.get("/timetable/day")
+def get_resolved_day(request: Request, date: Optional[str] = None):
+    try:
+        ac = create_admin_client()
+        teacher = _soft_resolve_teacher(request, ac)
+        date = date or datetime.now(timezone.utc).date().isoformat()
+        if not teacher:
+            return {"date": date, "dayOfWeek": None, "onLeave": False, "reason": None, "entries": []}
+        return resolve_day_timetable(teacher["teacherId"], date, ac)
+    except Exception as e:
+        print(f"[teacher/timetable/day] failed: {e}")
+        return {"date": date, "dayOfWeek": None, "onLeave": False, "reason": None, "entries": []}
 
 
 # POST /api/teacher/timetable — note: admin backend also generates/manages
@@ -1096,8 +1130,7 @@ def answer_student_doubt(id: str, answer: str, teacher_id: str = Depends(require
     return {"ok": True}
 
 
-# POST /api/teacher/recovery-attempts — write-only from the teacher portal
-# (fetchPreviousApproaches, the paired read, has no live caller — skipped).
+# POST /api/teacher/recovery-attempts
 @router.post("/recovery-attempts")
 def upsert_recovery_attempt(body: TeacherRecoveryAttemptUpsertSchema, teacher_id: str = Depends(require_teacher)):
     create_admin_client().table("recovery_attempts").upsert({
@@ -1105,6 +1138,39 @@ def upsert_recovery_attempt(body: TeacherRecoveryAttemptUpsertSchema, teacher_id
         "approach_used": body.approachUsed, "helped": body.helped, "generated_at": body.generatedAt,
     }).execute()
     return {"ok": True}
+
+
+# GET /api/teacher/recovery-attempts?studentId=...
+#
+# The paired read. It was dropped during the port and the table went
+# write-only, which quietly disabled the feature it exists for: the recovery
+# prompt is built around "this child has tried N times, here is what was
+# already attempted, now give me something DIFFERENT". With nothing loading
+# the history back, every visit told the model no approach had been tried, so
+# it could hand back the explanation that had already failed twice.
+#
+# Oldest first — the prompt numbers the attempts in order, and an approach's
+# position in the sequence is part of what makes the next one different.
+@router.get("/recovery-attempts")
+def get_recovery_attempts(studentId: str, teacher_id: str = Depends(require_teacher)):
+    try:
+        rows = (
+            create_admin_client().table("recovery_attempts").select("*")
+            .eq("student_id", studentId).order("generated_at").execute().data or []
+        )
+        return {"recoveryAttempts": [
+            {
+                "id": r["id"], "studentId": r["student_id"], "topic": r["topic"],
+                "approachUsed": r.get("approach_used") or "", "helped": r.get("helped"),
+                "generatedAt": r.get("generated_at") or "",
+            }
+            for r in rows
+        ]}
+    except Exception as e:
+        # A missing history must not break the student page. The recovery flow
+        # degrades to what it did before this endpoint existed.
+        print(f"[teacher/recovery-attempts GET] failed: {e}")
+        return {"recoveryAttempts": []}
 
 
 def _taught_topic_row_to_dto(r: dict) -> dict:
@@ -1468,8 +1534,15 @@ _SUBSTITUTES_TODAY_EMPTY = {"onLeave": False, "reason": None, "covering": [], "c
 
 
 def _build_substitutes_today_status(teacher_id: str, date: str, ac) -> dict:
-    avail_res = ac.table("teacher_availability").select("reason").eq("teacher_id", teacher_id).eq("date", date).maybe_single().execute()
+    avail_res = ac.table("teacher_availability").select("reason, status").eq("teacher_id", teacher_id).eq("date", date).maybe_single().execute()
     avail = avail_res.data if avail_res else None
+    # A leave request the admin hasn't approved yet hasn't taken effect: the
+    # teacher is still on duty. Matters because this endpoint accepts any date,
+    # so a future date with a pending request would otherwise report on-leave —
+    # and disagree with the timetable grid rendered beside it, which resolves
+    # the same question through timetable_resolution.
+    if avail and (avail.get("status") or "approved") != "approved":
+        avail = None
     covering_rows = ac.table("timetable_substitutions").select("*").eq("substitute_teacher_id", teacher_id).eq("date", date).execute().data or []
     covered_by_rows = ac.table("timetable_substitutions").select("*").eq("original_teacher_id", teacher_id).eq("date", date).execute().data or []
 
@@ -1501,8 +1574,9 @@ def _build_substitutes_today_status(teacher_id: str, date: str, ac) -> dict:
                 "subject": r.get("subject"), "periodNumber": r["period_number"],
                 **time_by_key.get(f"{r['original_teacher_id']}|{r['class_id']}|{r['day_of_week']}|{r['period_number']}", {}),
                 "originalTeacherName": teacher_name.get(r["original_teacher_id"], "a teacher"),
-                # "assigned" = subject match, full class access; "assigned_fallback"
-                # (or "manual", from an admin's own reassignment) = informational
+                # "assigned" = subject match, full class access — and the only
+                # status the automation produces. "manual" (an admin's own
+                # reassignment) and legacy "assigned_fallback" are informational
                 # only, no prep-material/student access — see school_data()'s
                 # covering_rows filter, which only unions in "assigned" classes.
                 "status": r["status"],
@@ -1556,9 +1630,9 @@ def substitutes_today_post(body: SubstitutesTodayBody, request: Request):
         today = datetime.now(timezone.utc).date().isoformat()
 
         if body.reason == "available":
-            revert_teacher_availability(teacher["teacherId"], today, ac)
+            clear_teacher_absence(teacher["schoolId"], teacher["teacherId"], today, ac)
         else:
-            mark_teacher_unavailable(teacher["schoolId"], teacher["teacherId"], today, body.reason, "teacher", None, ac)
+            apply_teacher_absence(teacher["schoolId"], teacher["teacherId"], today, body.reason, "teacher", None, ac)
 
         return _build_substitutes_today_status(teacher["teacherId"], today, ac)
     except HTTPException:
@@ -1659,7 +1733,10 @@ def delete_leave(body: LeaveRangeBody, request: Request):
     today = datetime.now(timezone.utc).date()
     d = max(start, today)
     while d <= end:
-        revert_teacher_availability(teacher["teacherId"], d.isoformat(), ac)
+        # Goes through the automation path, not a bare revert: an already-approved
+        # leave may have substitutes assigned against it, and cancelling the leave
+        # has to stand them down too.
+        clear_teacher_absence(teacher["schoolId"], teacher["teacherId"], d.isoformat(), ac)
         d += timedelta(days=1)
 
     return {"leaves": fetch_teacher_availability_for_teacher(teacher["teacherId"], today.isoformat(), ac)}

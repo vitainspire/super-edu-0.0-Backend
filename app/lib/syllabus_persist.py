@@ -12,6 +12,12 @@ Fan-out rules mirror the manual authoring endpoints in admin_schools.py:
     prerequisite or estimate set on one section's row resolves in every
     other section too.
 
+Phase B (see migrations/020_phase_b_semantic_entities.sql) adds a second axis:
+each topic may also carry concepts/competencies/vocabulary/contexts, which are
+resolved onto the GLOBAL canonical library rather than stored per-book, plus
+free-text learning outcomes and two scalar tags on the topic row itself. All of
+it is additive — an ontology without those keys persists exactly as before.
+
 Only vision_extraction.generate_ontology_vision()'s ontology shape is
 understood here (entities.chapters/topics/subtopics/exercises/sidebars,
 graphs.concept_dependencies). Text-pasted imports (extract-syllabus route)
@@ -22,9 +28,47 @@ import json
 import uuid
 from datetime import datetime, timezone
 
+from . import canonical_mapping as cm
+
+# The kinds a topic can carry, in the order they're summarized. The ontology key
+# and the canonical table name are the same word for all four.
+_PHASE_B_KINDS = ("concepts", "competencies", "vocabulary", "contexts")
+
+# syllabus_topics carries CHECK constraints on both of these (migration 020).
+_BLOOM_LEVELS = {"remember", "understand", "apply", "analyze", "evaluate", "create"}
+_DIFFICULTIES = {"easy", "medium", "hard"}
+
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def _enum_or_none(value, allowed: set):
+    """Normalize a model-supplied tag to one of `allowed`, else None.
+
+    The extractor occasionally returns a capitalized ("Remember") or invented
+    ("intermediate") value. Both would violate the CHECK constraint and fail the
+    INSERT for the whole batch of topic rows — dropping one bad tag is a far
+    smaller loss than losing the textbook's entire syllabus over it.
+    """
+    if not isinstance(value, str):
+        return None
+    v = value.strip().lower()
+    return v if v in allowed else None
+
+
+def _clean_names(value) -> list:
+    """Trimmed, non-empty, case-insensitively de-duplicated strings, order kept."""
+    out, seen = [], set()
+    for n in (value or []):
+        if not isinstance(n, str):
+            continue
+        n = n.strip()
+        if not n or n.lower() in seen:
+            continue
+        seen.add(n.lower())
+        out.append(n)
+    return out
 
 
 def _grade_class_ids(ac, school_id: str, grade: str) -> list[str]:
@@ -110,6 +154,9 @@ def persist_extraction(
         num = chap_number(t)
         week_number = num if num != 999 else (i + 1)
         order = next_topic_order + i
+        # Phase B scalars live on the topic row itself, so they fan out with it.
+        bloom_level = _enum_or_none(t.get("bloom_level"), _BLOOM_LEVELS)
+        difficulty = _enum_or_none(t.get("difficulty"), _DIFFICULTIES)
 
         per_class_ids: dict[str, str] = {}
         for class_id in class_ids:
@@ -130,13 +177,87 @@ def persist_extraction(
                 "chapter_id": chapter_row_id,
                 "page_start": t.get("page_start"),
                 "page_end": t.get("page_end"),
+                "bloom_level": bloom_level,
+                "difficulty": difficulty,
                 "created_at": _now(),
             })
         topic_row_id_by_def_and_class[def_id] = per_class_ids
     if topic_rows:
         ac.table("syllabus_topics").insert(topic_rows).execute()
 
-    # ── 3. Subtopics — fanned per section ────────────────────────────────────
+    # ── 3. Phase B semantic entities — canonical, keyed on definition_id ─────
+    # Every name this extraction mentions is resolved onto the shared library in
+    # ONE batch per kind: a book naming "Counting" in twenty topics costs a
+    # single lookup and at most one LLM call, not twenty. resolve_canonical()
+    # matches against existing entries (and their aliases) before creating
+    # anything, so the library grows without duplicating what's already there.
+    #
+    # Links key on definition_id, NOT the per-section topic row id, so a topic's
+    # concepts are stored once regardless of how many sections the grade has —
+    # the same reasoning behind the junction tables' shape in migration 020.
+    # source_name records the raw extracted phrasing (migration 021) so a merge
+    # that turns out to be wrong can be undone by canonical_mapping.split_canonical().
+    phase_b_counts = dict.fromkeys(_PHASE_B_KINDS, 0)
+    for kind in _PHASE_B_KINDS:
+        names_by_topic = {}
+        for t in topics:
+            names = _clean_names(t.get(kind))
+            if names:
+                names_by_topic[t.get("id")] = names
+        if not names_by_topic:
+            continue
+
+        resolved = cm.resolve_canonical(
+            ac, kind, [n for names in names_by_topic.values() for n in names]
+        )
+        if not resolved:
+            continue
+        # resolve_canonical collapses names differing only in case, so look the
+        # ids back up case-insensitively rather than by exact string.
+        id_by_lower = {k.strip().lower(): v for k, v in resolved.items()}
+
+        junction_table, fk_col = cm.junction_for(kind)
+        link_rows = []
+        seen_links = set()
+        for onto_id, names in names_by_topic.items():
+            def_id = topic_definition_id[onto_id]
+            for name in names:
+                entity_id = id_by_lower.get(name.lower())
+                if not entity_id:
+                    continue  # resolve_canonical logged and dropped this one
+                # Two raw names in one topic can resolve to the same canonical
+                # row; the junction's unique constraint would reject the pair.
+                if (def_id, entity_id) in seen_links:
+                    continue
+                seen_links.add((def_id, entity_id))
+                link_rows.append({
+                    "id": str(uuid.uuid4()),
+                    "topic_definition_id": def_id,
+                    fk_col: entity_id,
+                    "source_name": name,
+                    "created_at": _now(),
+                })
+        if link_rows:
+            ac.table(junction_table).insert(link_rows).execute()
+        phase_b_counts[kind] = len(link_rows)
+
+    # Learning outcomes are deliberately NOT canonicalized — an outcome is a
+    # specific statement about one topic ("Add quantities up to 10"), not a
+    # reusable taxonomy entry the way a concept or competency is (migration 020).
+    outcome_rows = []
+    for t in topics:
+        def_id = topic_definition_id[t.get("id")]
+        for text in _clean_names(t.get("learning_outcomes")):
+            outcome_rows.append({
+                "id": str(uuid.uuid4()),
+                "topic_definition_id": def_id,
+                "text": text,
+                "created_at": _now(),
+            })
+    if outcome_rows:
+        ac.table("topic_learning_outcomes").insert(outcome_rows).execute()
+
+    # ── 4. Subtopics — fanned per section ────────────────────────────────────
     subs_by_topic: dict[str, list] = {}
     for s in (entities.get("subtopics", []) or []):
         tid = s.get("topic_id")
@@ -175,7 +296,7 @@ def persist_extraction(
     if subtopic_rows:
         ac.table("syllabus_sub_topics").insert(subtopic_rows).execute()
 
-    # ── 4. Exercises — fanned per section ────────────────────────────────────
+    # ── 5. Exercises — fanned per section ────────────────────────────────────
     _VALID_EXERCISE_TYPES = {
         "writing_practice", "art_activity", "matching_exercise", "reading_exercise",
         "comprehension", "listening_activity", "counting_activity", "general_activity",
@@ -218,7 +339,7 @@ def persist_extraction(
     if exercise_rows:
         ac.table("syllabus_exercises").insert(exercise_rows).execute()
 
-    # ── 5. Sidebars — fanned per section ─────────────────────────────────────
+    # ── 6. Sidebars — fanned per section ─────────────────────────────────────
     sidebars_by_topic: dict[str, list] = {}
     for sb in (entities.get("sidebars", []) or []):
         tid = sb.get("topic_id")
@@ -252,7 +373,7 @@ def persist_extraction(
     if sidebar_rows:
         ac.table("syllabus_sidebars").insert(sidebar_rows).execute()
 
-    # ── 6. Dependencies — grade+subject scoped, not fanned ───────────────────
+    # ── 7. Dependencies — grade+subject scoped, not fanned ───────────────────
     dep_rows = []
     seen_edges: set[tuple[str, str]] = set()
 
@@ -289,7 +410,7 @@ def persist_extraction(
             dep_rows, on_conflict="from_definition_id,to_definition_id,dependency_type"
         ).execute()
 
-    # ── 7. Raw ontology — kept for debugging / future re-processing ─────────
+    # ── 8. Raw ontology — kept for debugging / future re-processing ─────────
     safe_ontology = json.loads(json.dumps(ontology, default=str))
     ac.table("syllabus_ontology_extractions").insert({
         "id": str(uuid.uuid4()),
@@ -313,4 +434,8 @@ def persist_extraction(
         "exercises": exercise_count,
         "sidebars": sidebar_count,
         "dependencies": len(dep_rows),
+        # Phase B counts are link rows written, which are already per-definition
+        # (not fanned per section), so they need no division to read as logical.
+        **phase_b_counts,
+        "learningOutcomes": len(outcome_rows),
     }
