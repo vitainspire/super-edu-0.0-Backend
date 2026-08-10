@@ -109,9 +109,15 @@ def stock_ahead(ac, school_id: str, grade: str, subject: str, from_order_index: 
 
 def ensure_stock(school_id: str, grade: str, subject: str, from_order_index: int, teacher_id: Optional[str]) -> Optional[str]:
     """Idempotent stock check + top-up trigger. Returns the new batch's id if
-    a generation was started, None if stock is fine or a batch for this exact
-    (school, grade, subject) is already pending/running."""
+    a generation was started, None if stock is fine, a batch for this exact
+    (school, grade, subject) is already pending/running, or this grade+subject
+    is currently in full_personalization mode — there is no shared pool to
+    maintain there, every teacher generates their own on fetch instead (see
+    PrepMaterialModal's fetch path)."""
+    from .generation_mode import recompute_grade_subject_mode
     ac = create_admin_client()
+    if recompute_grade_subject_mode(ac, school_id, grade, subject) == "full_personalization":
+        return None
     if stock_ahead(ac, school_id, grade, subject, from_order_index) >= LOW_STOCK_THRESHOLD:
         return None
 
@@ -294,6 +300,13 @@ def _run_batch(batch_id: str, school_id: str, grade: str, subject: str, teacher_
 
         ac.table("prep_batches").update({"status": "done", "completed_at": _now_iso()}).eq("id", batch_id).execute()
         _set_progress(batch_id, message=f"{completed} of {len(todo)} lessons ready")
+        if completed:
+            from .admin_notifications import create_admin_notification
+            create_admin_notification(
+                school_id, "prep_batch_generated",
+                f"Grade {grade} {subject}: {completed} new prep material{'s' if completed != 1 else ''} generated (shared mode).",
+                ac,
+            )
     except Exception as e:
         print(f"[prep-batch] batch {batch_id} failed: {e}")
         try:

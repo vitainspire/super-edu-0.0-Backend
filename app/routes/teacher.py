@@ -798,7 +798,7 @@ def _prep_material_row_to_dto(r: dict) -> dict:
         "id": r["id"], "teacherId": r["teacher_id"], "classId": r["class_id"],
         "subject": r["subject"], "grade": r["grade"], "topic": r["topic"],
         "subtopic": r.get("subtopic"), "gapTopics": r.get("gap_topics") or [],
-        "lesson": r["lesson"], "createdAt": r["created_at"],
+        "lesson": r["lesson"], "createdAt": r["created_at"], "source": r.get("source") or "shared",
     }
 
 
@@ -823,10 +823,32 @@ def upsert_own_prep_material(body: TeacherPrepMaterialUpsertSchema, teacher_id: 
             "id": body.id, "teacher_id": teacher_id, "class_id": body.classId,
             "subject": body.subject, "grade": body.grade, "topic": body.topic,
             "subtopic": body.subtopic, "lesson": body.lesson, "created_at": body.createdAt,
+            "source": body.source or "shared",
         }).execute()
     except Exception as e:
         print(f"[teacher/prep-materials] upsert failed: {e}")
     return {"ok": True}
+
+
+# GET /api/teacher/prep-materials/generation-mode?classId=&subject= — a
+# read-only check of which mode this class's grade+subject is currently in.
+# Deliberately does NOT call recompute_grade_subject_mode (that's an admin-
+# facing write path) — a teacher's fetch should never trigger a recompute,
+# only read whatever is currently in effect.
+@router.get("/prep-materials/generation-mode")
+def get_own_generation_mode(classId: str, subject: str, teacher_id: str = Depends(require_teacher)):
+    from ..lib.generation_mode import get_grade_subject_mode
+    try:
+        ac = create_admin_client()
+        class_res = ac.table("classes").select("school_id, grade").eq("id", classId).maybe_single().execute()
+        class_row = class_res.data if class_res else None
+        if not class_row:
+            return {"mode": "opt_in"}
+        mode = get_grade_subject_mode(ac, class_row["school_id"], class_row["grade"], subject)
+        return {"mode": mode}
+    except Exception as e:
+        print(f"[teacher/prep-materials/generation-mode] failed: {e}")
+        return {"mode": "opt_in"}
 
 
 # GET /api/teacher/prep-materials/shared — fetch from the shared (school,
