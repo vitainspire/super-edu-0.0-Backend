@@ -16,9 +16,6 @@ from ..lib.schemas import AnnouncementSchema, AdminAskIntentSchema
 from ..lib.ai import call_ai
 from ..lib.logger import api_log, get_client_ip
 from ..lib.rate_limit import check_rate_limit
-from ..lib.admin_notifications import (
-    fetch_admin_notifications, mark_admin_notification_read, mark_all_admin_notifications_read,
-)
 from ..deps import require_admin
 
 router = APIRouter()
@@ -28,26 +25,8 @@ def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-# ─── Admin notifications ────────────────────────────────────────────────────
-
-@router.get("/{schoolId}/notifications")
-def get_admin_notifications(schoolId: str, admin: dict = Depends(require_admin)):
-    ac = create_admin_client()
-    return {"notifications": fetch_admin_notifications(schoolId, ac)}
-
-
-@router.patch("/{schoolId}/notifications/{id}/read")
-def read_admin_notification(schoolId: str, id: str, admin: dict = Depends(require_admin)):
-    ac = create_admin_client()
-    mark_admin_notification_read(id, schoolId, ac)
-    return {"ok": True}
-
-
-@router.patch("/{schoolId}/notifications/read-all")
-def read_all_admin_notifications(schoolId: str, admin: dict = Depends(require_admin)):
-    ac = create_admin_client()
-    mark_all_admin_notifications_read(schoolId, ac)
-    return {"ok": True}
+# Admin notification routes live in app/routes/admin_notifications.py
+# (app/lib/notifications.py), not here — see that file for the inbox routes.
 
 
 # ─── Exam plan ─────────────────────────────────────────────────────────────────

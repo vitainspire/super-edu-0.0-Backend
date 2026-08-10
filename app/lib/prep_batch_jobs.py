@@ -301,7 +301,7 @@ def _run_batch(batch_id: str, school_id: str, grade: str, subject: str, teacher_
         ac.table("prep_batches").update({"status": "done", "completed_at": _now_iso()}).eq("id", batch_id).execute()
         _set_progress(batch_id, message=f"{completed} of {len(todo)} lessons ready")
         if completed:
-            from .admin_notifications import create_admin_notification
+            from .notifications import create_admin_notification
             create_admin_notification(
                 school_id, "prep_batch_generated",
                 f"Grade {grade} {subject}: {completed} new prep material{'s' if completed != 1 else ''} generated (shared mode).",
