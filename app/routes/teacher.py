@@ -1108,8 +1108,7 @@ def answer_student_doubt(id: str, answer: str, teacher_id: str = Depends(require
     return {"ok": True}
 
 
-# POST /api/teacher/recovery-attempts — write-only from the teacher portal
-# (fetchPreviousApproaches, the paired read, has no live caller — skipped).
+# POST /api/teacher/recovery-attempts
 @router.post("/recovery-attempts")
 def upsert_recovery_attempt(body: TeacherRecoveryAttemptUpsertSchema, teacher_id: str = Depends(require_teacher)):
     create_admin_client().table("recovery_attempts").upsert({
@@ -1117,6 +1116,39 @@ def upsert_recovery_attempt(body: TeacherRecoveryAttemptUpsertSchema, teacher_id
         "approach_used": body.approachUsed, "helped": body.helped, "generated_at": body.generatedAt,
     }).execute()
     return {"ok": True}
+
+
+# GET /api/teacher/recovery-attempts?studentId=...
+#
+# The paired read. It was dropped during the port and the table went
+# write-only, which quietly disabled the feature it exists for: the recovery
+# prompt is built around "this child has tried N times, here is what was
+# already attempted, now give me something DIFFERENT". With nothing loading
+# the history back, every visit told the model no approach had been tried, so
+# it could hand back the explanation that had already failed twice.
+#
+# Oldest first — the prompt numbers the attempts in order, and an approach's
+# position in the sequence is part of what makes the next one different.
+@router.get("/recovery-attempts")
+def get_recovery_attempts(studentId: str, teacher_id: str = Depends(require_teacher)):
+    try:
+        rows = (
+            create_admin_client().table("recovery_attempts").select("*")
+            .eq("student_id", studentId).order("generated_at").execute().data or []
+        )
+        return {"recoveryAttempts": [
+            {
+                "id": r["id"], "studentId": r["student_id"], "topic": r["topic"],
+                "approachUsed": r.get("approach_used") or "", "helped": r.get("helped"),
+                "generatedAt": r.get("generated_at") or "",
+            }
+            for r in rows
+        ]}
+    except Exception as e:
+        # A missing history must not break the student page. The recovery flow
+        # degrades to what it did before this endpoint existed.
+        print(f"[teacher/recovery-attempts GET] failed: {e}")
+        return {"recoveryAttempts": []}
 
 
 def _taught_topic_row_to_dto(r: dict) -> dict:

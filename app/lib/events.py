@@ -104,3 +104,28 @@ def _record(event_type: str, payload: dict, ac) -> None:
         }).execute()
     except Exception as e:
         print(f"[events] automation_events write failed for {event_type}: {type(e).__name__}: {e}")
+
+
+def fetch_events(school_id: str, ac, date: str | None = None, limit: int = 100) -> list[dict]:
+    """Read the audit log back.
+
+    Without this the table was write-only, which makes it a log rather than an
+    audit trail — "why is Priya covering period 4?" needed a SQL client. The
+    payload is returned whole: it already carries the resolved names and times
+    the handlers used, so the answer does not depend on those rows still
+    existing (or still saying the same thing) at read time.
+    """
+    query = ac.table("automation_events").select("*").eq("school_id", school_id)
+    if date:
+        query = query.eq("date", date)
+    rows = query.order("created_at", desc=True).limit(limit).execute().data or []
+    return [
+        {
+            "id": r["id"], "type": r["type"], "date": r.get("date"),
+            # created_at is filled by the column default rather than by emit(),
+            # so it is read defensively — the caller orders and displays by it,
+            # but a row without one should not take the whole log down.
+            "payload": r.get("payload") or {}, "createdAt": r.get("created_at"),
+        }
+        for r in rows
+    ]

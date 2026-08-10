@@ -309,6 +309,29 @@ def test_every_decision_is_recorded(school):
     assert all(e["school_id"] == SCHOOL and e["date"] == DATE for e in school.rows("automation_events"))
 
 
+def test_the_audit_trail_can_be_read_back(school):
+    """It was write-only, which makes it a log rather than an audit trail —
+    "why is Bhaskar covering period 4?" needed a SQL client to answer."""
+    apply_teacher_absence(SCHOOL, "t-anita", DATE, "on_leave", "teacher", None, school)
+
+    read = events.fetch_events(SCHOOL, school)
+    assert [e["type"] for e in read]
+    assigned = next(e for e in read if e["type"] == events.SUBSTITUTION_ASSIGNED)
+    # The payload carries the resolved names, so the answer survives the rows
+    # it was derived from changing later.
+    assert assigned["payload"]["substituteTeacherName"] == "Bhaskar"
+    assert assigned["payload"]["className"] == "7B"
+    assert assigned["date"] == DATE
+
+
+def test_the_audit_trail_is_scoped_and_filterable(school):
+    apply_teacher_absence(SCHOOL, "t-anita", DATE, "on_leave", "teacher", None, school)
+
+    assert events.fetch_events("some-other-school", school) == []
+    assert events.fetch_events(SCHOOL, school, date="2026-03-04") == []
+    assert events.fetch_events(SCHOOL, school, date=DATE)
+
+
 # ── Failure isolation ─────────────────────────────────────────────────────────
 
 def test_a_failing_handler_does_not_fail_the_absence(school, monkeypatch):
