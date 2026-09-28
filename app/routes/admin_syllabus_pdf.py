@@ -90,6 +90,9 @@ async def extract_syllabus_pdf_upload(
     language: Optional[str] = Form("auto"),
     extractionFormat: Optional[str] = Form(None),
     modelTier: Optional[str] = Form(None),
+    board: Optional[str] = Form(None),
+    grade: Optional[str] = Form(None),
+    subject: Optional[str] = Form(None),
     admin: dict = Depends(require_admin),
 ):
     """Upload a textbook as multipart and start extraction.
@@ -99,7 +102,10 @@ async def extract_syllabus_pdf_upload(
     of any realistic size through — the JSON route below cannot, because
     base64 in a request body has to be parsed whole before it can be decoded.
 
-    Nothing is stored: the temp directory is deleted when the job ends.
+    Nothing is stored: the temp directory is deleted when the job ends. board/
+    grade/subject identify the upload for the Drive archive filename only —
+    the real, durable grade+subject association is still set at save time
+    (SaveExtractionBody), same as before this was added.
     """
 
     try:
@@ -114,6 +120,7 @@ async def extract_syllabus_pdf_upload(
     job_id = start_extraction(
         work_dir, pdf_path, file.filename or "textbook.pdf", language or "auto",
         extraction_format=extractionFormat, model_tier=modelTier,
+        board=board, grade=grade, subject=subject,
     )
     return _started(job_id, size)
 
@@ -162,6 +169,11 @@ def extract_syllabus_pdf_status(schoolId: str, jobId: str, admin: dict = Depends
         # What the extractor could not make sense of. Surfaced so the admin knows
         # which topics to check on the review panel instead of trusting silently.
         "warnings": job.get("warnings") or [],
+        # True while AI_EXTRACTION_ENABLED is off in syllabus_pdf_jobs.py — the
+        # PDF still gets archived to Drive, there just aren't any AI-extracted
+        # topics to review, which the frontend needs to tell apart from a real
+        # "no topics found" failure.
+        "aiSkipped": job.get("aiSkipped", False),
     }
 
 

@@ -1,0 +1,898 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Context Bench</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root {
+  --paper:#EFF2F1; --surface:#FFFFFF; --surface-2:#E4E9E7; --sunk:#E9EDEB;
+  --ink:#17211F; --ink-2:#475854; --ink-3:#6F817C;
+  --rule:#CFD8D5; --rule-soft:#E0E6E4;
+  --on:#1E6B58; --off:#8D9A96; --warn:#9E4E1A; --stop:#8C2F2F;
+  --verified:#1E6B58; --assumed:#9E4E1A;
+  --on-soft:#DCEAE4; --warn-soft:#F3E3D6; --stop-soft:#F2DEDE;
+  --accent:#A66A14;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper:#0E1413; --surface:#161E1C; --surface-2:#1E2825; --sunk:#121A18;
+    --ink:#E6ECE9; --ink-2:#A8B7B2; --ink-3:#7C8D88;
+    --rule:#2A3733; --rule-soft:#212C29;
+    --on:#5FBFA1; --off:#65746F; --warn:#DC9256; --stop:#E08585;
+    --verified:#5FBFA1; --assumed:#DC9256;
+    --on-soft:#123028; --warn-soft:#33220F; --stop-soft:#331A1A;
+    --accent:#E0A44D;
+  }
+}
+:root[data-theme="dark"] {
+  --paper:#0E1413; --surface:#161E1C; --surface-2:#1E2825; --sunk:#121A18;
+  --ink:#E6ECE9; --ink-2:#A8B7B2; --ink-3:#7C8D88;
+  --rule:#2A3733; --rule-soft:#212C29;
+  --on:#5FBFA1; --off:#65746F; --warn:#DC9256; --stop:#E08585;
+  --verified:#5FBFA1; --assumed:#DC9256;
+  --on-soft:#123028; --warn-soft:#33220F; --stop-soft:#331A1A;
+  --accent:#E0A44D;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);
+  font-family:"Source Serif 4",Georgia,serif;font-size:15px;line-height:1.5;
+  -webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:"Bricolage Grotesque",system-ui,sans-serif;margin:0;text-wrap:balance}
+.mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums}
+
+header{background:var(--surface);border-bottom:1px solid var(--rule);padding:24px 26px 20px}
+.hin{max-width:1400px;margin:0 auto}
+.eyebrow{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--ink-3);margin-bottom:9px}
+h1{font-size:clamp(24px,3.4vw,34px);font-weight:800;letter-spacing:-.02em;line-height:1.08}
+.sub{margin-top:9px;max-width:74ch;color:var(--ink-2);font-size:15.5px}
+
+.shell{max-width:1400px;margin:0 auto;padding:22px 26px 90px;
+  display:grid;grid-template-columns:minmax(0,340px) minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:1040px){.shell{grid-template-columns:minmax(0,1fr)}}
+
+.panel{background:var(--surface);border:1px solid var(--rule);border-radius:5px}
+.panel>h2{font-size:13px;font-weight:800;letter-spacing:.02em;padding:13px 16px;
+  border-bottom:1px solid var(--rule-soft)}
+.panel-body{padding:14px 16px 16px}
+.sticky{position:sticky;top:16px}
+
+/* ── form ── */
+.grp{margin-bottom:16px}
+.grp>h3{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink-3);margin-bottom:9px}
+.f{display:grid;grid-template-columns:1fr 74px;gap:6px;align-items:center;margin-bottom:7px}
+.f label{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink-2);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.f input[type=text],.f input[type=number],.f select{
+  grid-column:1/-1;width:100%;font:inherit;font-size:13px;padding:6px 9px;
+  background:var(--sunk);color:var(--ink);border:1px solid var(--rule);border-radius:3px}
+.f input:focus-visible,.f select:focus-visible,button:focus-visible{
+  outline:2px solid var(--accent);outline-offset:1px}
+.f .row{grid-column:1/-1;display:flex;gap:6px;align-items:center}
+.f .row input{flex:1}
+.prov{font-family:"IBM Plex Mono",monospace;font-size:9.5px;font-weight:600;
+  letter-spacing:.06em;text-transform:uppercase;padding:5px 7px;border-radius:3px;
+  border:1px solid var(--rule);background:var(--surface-2);color:var(--ink-3);
+  cursor:pointer;white-space:nowrap}
+.prov[data-p="verified"]{background:var(--on-soft);color:var(--verified);border-color:transparent}
+.prov[data-p="assumed"]{background:var(--warn-soft);color:var(--assumed);border-color:transparent}
+.prov[data-p="measured"]{background:var(--on-soft);color:var(--verified);border-color:transparent}
+.chk{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.chk input{width:15px;height:15px;accent-color:var(--accent)}
+.chk label{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink-2)}
+
+.presets{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.presets button{font-family:"IBM Plex Mono",monospace;font-size:10.5px;padding:6px 10px;
+  background:var(--surface-2);color:var(--ink-2);border:1px solid var(--rule);
+  border-radius:3px;cursor:pointer}
+.presets button:hover{border-color:var(--ink-3);color:var(--ink)}
+
+/* ── tabs ── */
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--rule);margin-bottom:0}
+.tabs button{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.05em;
+  padding:10px 14px;background:none;border:none;border-bottom:2px solid transparent;
+  color:var(--ink-3);cursor:pointer}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.pane{display:none;padding:16px}
+.pane.on{display:block}
+
+/* ── factors ── */
+.counts{display:flex;gap:18px;flex-wrap:wrap;padding:12px 16px;background:var(--surface-2);
+  border-bottom:1px solid var(--rule-soft)}
+.counts div{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink-3)}
+.counts b{font-size:19px;font-weight:600;color:var(--ink);display:block;margin-bottom:2px}
+.counts .g-on b{color:var(--on)} .counts .g-off b{color:var(--off)}
+
+.fx{border:1px solid var(--rule);border-left:3px solid var(--edge);border-radius:0 4px 4px 0;
+  padding:10px 12px;margin-bottom:7px;background:var(--surface)}
+.fx.on{--edge:var(--on)} .fx.off{--edge:var(--off);opacity:.82}
+.fx.na{--edge:var(--warn)} .fx.gate{--edge:var(--ink-3)}
+.fx-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.fx-n{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--ink-3);min-width:18px}
+.fx-name{font-family:"Bricolage Grotesque",sans-serif;font-weight:600;font-size:13.5px}
+.pill{font-family:"IBM Plex Mono",monospace;font-size:9px;font-weight:600;letter-spacing:.1em;
+  text-transform:uppercase;padding:2px 7px;border-radius:2px;margin-left:auto;white-space:nowrap}
+.pill.on{background:var(--on-soft);color:var(--on)}
+.pill.off{background:var(--surface-2);color:var(--off)}
+.pill.na{background:var(--warn-soft);color:var(--warn)}
+.tier{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--ink-3)}
+.fx-why{margin-top:6px;font-size:12.5px;color:var(--ink-2)}
+.fx-ev{margin-top:6px;display:flex;flex-wrap:wrap;gap:4px}
+.fx-ev code{font-family:"IBM Plex Mono",monospace;font-size:10px;padding:2px 5px;
+  border-radius:2px;background:var(--on-soft);color:var(--verified)}
+.fx-ev code.want{background:var(--surface-2);color:var(--ink-3)}
+
+/* ── prompt / profile ── */
+pre{margin:0;background:var(--sunk);border:1px solid var(--rule);border-radius:4px;
+  padding:14px;overflow-x:auto;font-family:"IBM Plex Mono",monospace;font-size:11.5px;
+  line-height:1.65;color:var(--ink-2);white-space:pre-wrap;word-break:break-word}
+pre b{color:var(--ink);font-weight:600}
+pre .cut{color:var(--stop)}
+.note{margin:0 0 12px;font-size:13.5px;color:var(--ink-2);max-width:78ch}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th,td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--rule-soft);vertical-align:top}
+th{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-3);font-weight:500}
+td.k{font-family:"IBM Plex Mono",monospace;font-size:11px}
+.tag{font-family:"IBM Plex Mono",monospace;font-size:9px;font-weight:600;letter-spacing:.08em;
+  text-transform:uppercase;padding:2px 6px;border-radius:2px}
+.tag.keep{background:var(--on-soft);color:var(--on)}
+.tag.drop{background:var(--stop-soft);color:var(--stop)}
+.limit{margin-top:16px;padding:13px 15px;background:var(--surface-2);
+  border-left:3px solid var(--warn);border-radius:0 4px 4px 0;font-size:13.5px;color:var(--ink-2)}
+.limit b{color:var(--ink)}
+/* ── run bar ── */
+.runbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+  padding:12px 16px;border-bottom:1px solid var(--rule-soft);background:var(--surface-2)}
+.run{font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:600;
+  letter-spacing:.04em;padding:9px 18px;border-radius:3px;cursor:pointer;
+  background:var(--accent);color:var(--paper);border:1px solid transparent}
+.run:disabled{opacity:.5;cursor:not-allowed}
+.run:hover:not(:disabled){filter:brightness(1.07)}
+.mode{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--ink-3)}
+.mode b{color:var(--ink-2);font-weight:500}
+.spin{display:inline-block;width:11px;height:11px;border:2px solid var(--rule);
+  border-top-color:var(--accent);border-radius:50%;animation:sp .7s linear infinite;
+  vertical-align:-1px;margin-right:6px}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* ── the plan ── */
+.ad{border:1px solid var(--rule);border-left:3px solid var(--edge);
+  border-radius:0 4px 4px 0;padding:12px 14px;margin-bottom:9px;background:var(--surface)}
+.ad.ok{--edge:var(--on)} .ad.no{--edge:var(--stop)}
+.ad-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.ad-change{font-size:14.5px;line-height:1.5}
+.ad-why{margin-top:7px;padding-top:7px;border-top:1px solid var(--rule-soft);
+  font-size:13px;color:var(--ink-2)}
+.ad-why b{font-family:"IBM Plex Mono",monospace;font-size:9px;font-weight:600;
+  letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3);display:block;margin-bottom:3px}
+.rej{margin-top:7px;font-size:12.5px;color:var(--stop)}
+.rej b{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.1em;
+  text-transform:uppercase;display:block;margin-bottom:3px}
+.empty{padding:22px;text-align:center;color:var(--ink-3);font-size:14px}
+
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}
+.actions button{font-family:"IBM Plex Mono",monospace;font-size:11.5px;font-weight:600;
+  letter-spacing:.04em;padding:9px 14px;border-radius:3px;cursor:pointer;
+  background:var(--accent);color:var(--paper);border:1px solid transparent}
+.actions button.ghost{background:var(--surface-2);color:var(--ink-2);border-color:var(--rule)}
+.actions button:hover{filter:brightness(1.06)}
+.said{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--on);
+  align-self:center;opacity:0;transition:opacity .15s}
+.said.on{opacity:1}
+.cmd{margin-top:14px}
+.cmd h3{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink-3);margin-bottom:7px}
+footer{max-width:1400px;margin:0 auto;padding:0 26px 60px;font-size:13px;color:var(--ink-3)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header><div class="hin">
+  <div class="eyebrow">Node 2 · contextual reinforcement</div>
+  <h1>Context Bench</h1>
+  <p class="sub">Set the room, press <b>Run Node&nbsp;2</b>, read what it proposes. The
+  factors, the prompt and the drop rules recompute as you type; the run itself goes to the
+  real pipeline, so the adaptations and the gate verdicts are the pipeline's rather than a
+  second implementation's.</p>
+</div></header>
+
+<div class="shell">
+  <section class="panel sticky">
+    <h2>The room</h2>
+    <div class="panel-body">
+      <div class="presets" id="presets"></div>
+      <div id="form"></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="runbar">
+      <button class="run" id="run-btn" disabled>Run Node 2</button>
+      <span class="mode" id="mode"></span>
+    </div>
+    <div class="tabs" role="tablist">
+      <button role="tab" aria-selected="true"  data-pane="factors">Factors</button>
+      <button role="tab" aria-selected="false" data-pane="prompt">What reaches the model</button>
+      <button role="tab" aria-selected="false" data-pane="profile">Profile &amp; drops</button>
+      <button role="tab" aria-selected="false" data-pane="plan">The plan</button>
+      <button role="tab" aria-selected="false" data-pane="export">Export for Node&nbsp;2</button>
+    </div>
+    <div class="counts" id="counts"></div>
+    <div class="pane on" id="pane-factors"></div>
+    <div class="pane"    id="pane-prompt"></div>
+    <div class="pane"    id="pane-profile"></div>
+    <div class="pane"    id="pane-plan"><div class="empty">Press
+      <b>Run Node&nbsp;2</b> to see what it proposes for this room.</div></div>
+    <div class="pane"    id="pane-export"></div>
+  </section>
+</div>
+
+<footer id="foot"></footer>
+
+<script>
+const REG    = /*__REGISTRY__*/null;
+const TOPICS = /*__TOPICS__*/null;
+
+const BASELINE="baseline", LOCAL="local", LONG="longitudinal", GATE="gate";
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c =>
+  ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* ── The form. `p` is the provenance a value carries; `origin` matters only for
+      the longitudinal tier, where recalled ≠ measured. ───────────────────── */
+const FIELDS = [
+  ["Class & period", [
+    ["class_size",            "number", 52],
+    ["lesson_duration",       "number", 30],
+    ["grouping_constraints",  "text",   ""],
+    ["classroom_space",       "text",   ""],
+  ]],
+  ["Language", [
+    ["medium_of_instruction", "text", "English"],
+    ["home_languages",        "text", "Marathi"],
+    ["teacher_languages",     "text", ""],
+    ["literacy_level",        "text", ""],
+  ]],
+  ["What the room has", [
+    ["materials_available",   "text",  "cup, chalk, string"],
+    ["has_board",             "bool",  true],
+    ["has_paper",             "bool",  false],
+    ["has_projector",         "bool",  false],
+    ["has_internet",          "bool",  false],
+    ["electricity",           "bool",  false],
+    ["devices_available",     "number", 0],
+  ]],
+  ["Access & readiness", [
+    ["accessibility_requirements", "text", ""],
+    ["response_modes_available",   "text", ""],
+    ["known_weak_topics",          "text", ""],
+    ["class_ability_spread",       "text", ""],
+    ["homework_feasible",          "text", ""],
+    ["home_support_available",     "text", ""],
+  ]],
+  ["Community — needs VERIFIED to count", [
+    ["community_occupations",  "text", "fishing"],
+    ["local_markets",          "text", ""],
+    ["community_practices",    "text", ""],
+    ["household_skills",       "text", ""],
+    ["local_phenomena",        "text", ""],
+    ["community_assets",       "text", ""],
+  ]],
+  ["Longitudinal — needs MEASURED to count", [
+    ["attendance_history",       "text", ""],
+    ["engagement_observations",  "text", ""],
+    ["missed_topics",            "text", ""],
+  ]],
+];
+
+const PRESETS = {
+  "Rural, no verified community data": {
+    class_size:52, lesson_duration:30, medium_of_instruction:"English",
+    home_languages:"Marathi", materials_available:"cup, chalk, string",
+    has_board:true, has_paper:false, electricity:false, devices_available:0,
+    community_occupations:{v:"fishing", p:"assumed"},
+  },
+  "Same room, community now verified": {
+    class_size:52, lesson_duration:30, medium_of_instruction:"English",
+    home_languages:"Marathi", materials_available:"cup, chalk, string",
+    has_board:true, has_paper:false, electricity:false, devices_available:0,
+    community_occupations:{v:"fishing", p:"verified"},
+    local_markets:{v:"the Tuesday vegetable market", p:"verified"},
+    household_skills:{v:"net mending, drying fish", p:"verified"},
+  },
+  "Well-resourced urban": {
+    class_size:28, lesson_duration:40, medium_of_instruction:"English",
+    home_languages:"English", materials_available:"paper, card, rulers, cups",
+    has_board:true, has_paper:true, has_projector:true, has_internet:true,
+    electricity:true, devices_available:15,
+  },
+  "Attendance recalled vs measured": {
+    class_size:45, lesson_duration:30, medium_of_instruction:"English",
+    home_languages:"Marathi", has_board:true, has_paper:true,
+    attendance_history:{v:"patchy in harvest season", p:"verified", o:"teacher"},
+  },
+  "Nothing recorded": {},
+};
+
+/* EVERY field Node 2 can read, not just the ones hand-listed above.
+   The curated groups give the common fields a sensible order and label; anything
+   in the registry they miss is appended below, grouped by the tier that governs
+   it. Registry-driven on purpose: a factor gains an evidence field in
+   `factors.py`, `build_bench.py` re-exports, and the input for it appears here
+   without anyone remembering to add it. */
+(function completeFields() {
+  const listed = new Set();
+  FIELDS.forEach(([, rows]) => rows.forEach(([n]) => listed.add(n)));
+  const missing = REG.allEvidenceFields.filter(n => !listed.has(n));
+  if (!missing.length) return;
+
+  const tierOf = {};
+  REG.factors.forEach(f => f.evidence.forEach(n => {
+    // A field read by several factors takes the strictest tier that reads it,
+    // because that is the one that decides whether an assumed value survives.
+    const rank = {baseline:0, local:1, longitudinal:2};
+    if (tierOf[n] === undefined || rank[f.tier] > rank[tierOf[n]]) tierOf[n] = f.tier;
+  }));
+
+  const kind = n =>
+    /^has_|^electricity$/.test(n) ? "bool"
+    : /_size$|_duration$|^devices_available$|^resource_level$/.test(n) ? "number"
+    : "text";
+
+  const buckets = {
+    baseline:     ["More about the room", []],
+    local:        ["More community — needs VERIFIED", []],
+    longitudinal: ["More longitudinal — needs MEASURED", []],
+  };
+  missing.forEach(n => (buckets[tierOf[n] || "baseline"][1]).push([n, kind(n)]));
+  Object.values(buckets).forEach(([title, rows]) => {
+    if (rows.length) FIELDS.push([title, rows]);
+  });
+})();
+
+let STATE = {};
+let TOPIC = 0;
+
+/* ── profile.normalise, ported exactly ─────────────────────────────────── */
+function normalise(state) {
+  const fields = {}, dropped = [];
+  for (const [name, cell] of Object.entries(state)) {
+    const value = cell.v, prov = cell.p || "assumed", origin = cell.o || "system";
+    if (!REG.allEvidenceFields.includes(name)) {
+      dropped.push({field:name, why:"no factor reads this field"}); continue; }
+    const empty = value === null || value === undefined ||
+      (typeof value === "string" && !value.trim()) ||
+      (Array.isArray(value) && !value.length);
+    if (empty) { dropped.push({field:name, why:"empty"}); continue; }
+    if (prov === "unknown") {
+      dropped.push({field:name, why:"provenance is unknown"}); continue; }
+    if (prov !== "verified" && REG.localOnly[name]) {
+      dropped.push({field:name,
+        why:`local-context field is '${prov}', and local context may only come from verified input`});
+      continue; }
+    fields[name] = {value, provenance:prov, origin};
+  }
+  return {fields, dropped};
+}
+
+const has = (p,n) => Object.prototype.hasOwnProperty.call(p.fields, n);
+const val = (p,n) => has(p,n) ? p.fields[n].value : null;
+const verifiedPresent = (p,names) => names.filter(n => has(p,n) && p.fields[n].provenance === "verified");
+const present = (p,names) => names.filter(n => has(p,n));
+
+/* ── activation._activate_one, ported exactly ──────────────────────────── */
+function activateOne(f, p) {
+  if (f.tier === GATE)
+    return {active:true, reason:"equity and safety are cross-cutting constraints, always checked", exposes:[]};
+  if (f.tier === BASELINE) {
+    const got = verifiedPresent(p, f.evidence).length ? verifiedPresent(p, f.evidence) : present(p, f.evidence);
+    return got.length
+      ? {active:true, reason:`${got.length} recorded field(s)`, exposes:got}
+      : {active:true, reason:"no recorded data — safe defaults only, no local facts", exposes:[]};
+  }
+  if (f.tier === LOCAL) {
+    const v = verifiedPresent(p, f.evidence);
+    return v.length ? {active:true, reason:`${v.length} verified local field(s)`, exposes:v}
+                    : {active:false, reason:"no verified community or cultural input", exposes:[]};
+  }
+  if (f.tier === LONG) {
+    const m = verifiedPresent(p, f.evidence).filter(n => p.fields[n].origin === "measured");
+    return m.length ? {active:true, reason:`${m.length} measured longitudinal field(s)`, exposes:m}
+                    : {active:false, reason:"no measured attendance or engagement history", exposes:[]};
+  }
+  return {active:false, reason:"unknown tier", exposes:[]};
+}
+
+/* ── activation, the §6 relevance checks that are deterministic ────────── */
+const differs = (home, medium) => {
+  const spoken = String(home||"").split(",").map(s=>s.trim().toLowerCase()).filter(Boolean);
+  return spoken.length > 0 && !spoken.includes(String(medium||"").trim().toLowerCase());
+};
+const matsOf = p => {
+  const out = new Set();
+  String(val(p,"materials_available")||"").split(",").map(s=>s.trim().toLowerCase())
+    .filter(Boolean).forEach(m=>out.add(m));
+  [["has_board","board"],["has_paper","paper"],["has_projector","projector"],
+   ["has_internet","internet"],["electricity","electricity"]]
+    .forEach(([k,imp]) => { if (val(p,k)) out.add(imp); });
+  if (Number(val(p,"devices_available")) > 0) out.add("device");
+  return out;
+};
+const matsRecorded = p => ["materials_available","has_board","has_paper","has_projector",
+  "has_internet","electricity","devices_available"].some(n => has(p,n));
+const techAvailable = p => {
+  if (has(p,"electricity") && !val(p,"electricity")) return false;
+  return !!(Number(val(p,"devices_available"))>0 || val(p,"has_projector") || val(p,"has_internet"));
+};
+
+function relevance(id, row, p) {
+  const plan = row.lessonPlan||{}, ac = row.academic||{}, act = row.selectedActivity||{},
+        exp = row.experiencePlan||{}, audit = row.masteryAudit||{}, chain = row.knowledgeChain||{};
+  if (id === "language") {
+    const nt = (plan.newVocabulary||[]).length, vocab = (ac.vocabulary||[]).length;
+    const mm = differs(val(p,"home_languages"), val(p,"medium_of_instruction"));
+    const hint = `${nt} new term(s) this period, ${vocab} in the topic's vocabulary; home/medium language mismatch: ${mm}`;
+    if (!mm && nt === 0) return [false, hint+" — no recorded barrier and no new terminology"];
+    return [null, hint];
+  }
+  if (id === "technology") {
+    const avail = techAvailable(p);
+    const mats = (act.materials||[]).join(" ").toLowerCase();
+    const wants = ["device","tablet","phone","projector","screen","computer","laptop","video","internet"]
+      .some(w => mats.includes(w));
+    const hint = `planned activity needs technology: ${wants}; technology usable in this room: ${avail}`;
+    if (!wants && !avail) return [false, hint+" — neither needed nor available"];
+    if (wants && !avail)  return [true,  hint+" — the planned activity cannot run as written"];
+    return [null, hint];
+  }
+  if (id === "resources") {
+    const needs = (act.materials||[]).map(m=>String(m).trim().toLowerCase()).filter(Boolean);
+    if (!matsRecorded(p)) return [null, "nothing recorded about this room's materials"];
+    const have = matsOf(p);
+    const missing = needs.filter(m => ![...have].some(h => h.includes(m) || m.includes(h)));
+    const hint = `activity needs ${needs.length?JSON.stringify(needs):"(nothing)"}; room has ${JSON.stringify([...have].sort())}`;
+    if (missing.length) return [true, hint+` — missing: ${missing.join(", ")}`];
+    if (needs.length)   return [false, hint+" — everything the activity needs is present"];
+    return [null, hint];
+  }
+  if (id === "cognitive_load") {
+    const dur = val(p,"lesson_duration") || Object.values(plan.minutes||{}).reduce((a,b)=>a+b,0) || 0;
+    return [null, `${(ac.requiredConcepts||[]).length} concept(s), ${(plan.newVocabulary||[]).length} new term(s), ${(exp.trajectory||[]).length}-step trajectory, ${dur} minute period`];
+  }
+  if (id === "classroom")
+    return [null, `class size ${val(p,"class_size")||"unrecorded"}; activity grouping ${act.grouping||"unspecified"}`];
+  if (id === "prior_knowledge") {
+    const assumes = chain.assumes || "";
+    const weak = String(val(p,"known_weak_topics")||"").split(",").filter(s=>s.trim()).length;
+    const hint = `this period assumes: ${assumes||"(nothing — it opens a strand)"}; ${weak} recorded weak topic(s)`;
+    if (!assumes && !weak) return [false, hint+" — nothing assumed and nothing recorded as weak"];
+    return [null, hint];
+  }
+  if (id === "participation")
+    return [null, `accessibility requirements recorded: ${has(p,"accessibility_requirements")}; response modes recorded: ${has(p,"response_modes_available")}`];
+  if (["local_relevance","cultural_community","funds_of_knowledge"].includes(id)) {
+    const closes = exp.closesGap||{};
+    const open = (audit.missing||[]).map(m=>m.kind).filter(k=>k && k!==closes.kind);
+    const hint = `shortfalls this period does NOT already close: ${open.join(", ")||"(none)"}; the period already closes '${closes.kind||"nothing"}'`;
+    if (!open.length && closes.kind) return [false, hint+" — the audit's shortfall is already spoken for"];
+    return [null, hint];
+  }
+  return [null, ""];
+}
+
+function activate(p, row) {
+  return REG.factors.map(f => {
+    const a = activateOne(f, p);
+    let rel = null, hint = "";
+    if (a.active && f.tier !== GATE) [rel, hint] = relevance(f.id, row, p);
+    return {f, ...a, relevant:rel, hint};
+  });
+}
+const proposable = list => list.filter(e => e.active && e.f.tier !== GATE && e.relevant !== false);
+
+/* ── reasoning._factor_block / _profile_block, ported ──────────────────── */
+const ROOM_FACTS = ["materials_available","has_board","has_paper","has_projector",
+  "has_internet","electricity","devices_available","classroom_space","class_size","lesson_duration"];
+
+function promptText(p, acts) {
+  const allowed = new Set(); proposable(acts).forEach(e => e.exposes.forEach(n => allowed.add(n)));
+  const physical = ROOM_FACTS.filter(n => has(p,n));
+  const names = [...new Set([...allowed, ...physical])].sort();
+
+  let room = names.length ? names.map(n => {
+    const f = p.fields[n];
+    const cite = allowed.has(n) ? "" : "   [constraint only - not citable evidence]";
+    return `  ${n} = ${JSON.stringify(f.value)}   (${f.provenance}, from ${f.origin})${cite}`;
+  }).join("\n") : "  (nothing recorded that any active factor may read)";
+
+  const list = proposable(acts);
+  let block = list.length ? list.map(e => {
+    const L = [`  [${e.f.id}] ${e.f.name}  (may produce: ${e.f.purposes.join("/")||"—"})`,
+               `      role:  ${e.f.role}`];
+    if (e.hint) L.push(`      this topic: ${e.hint}`);
+    L.push(e.exposes.length
+      ? `      evidence you may cite: ${e.exposes.join(", ")}`
+      : "      evidence you may cite: (none recorded — safe defaults only, and you may NOT state a local fact)");
+    return L.join("\n");
+  }).join("\n") : "  (no factor is active for this window)";
+
+  return {room, block, count:list.length};
+}
+
+/* ── render ────────────────────────────────────────────────────────────── */
+function buildForm() {
+  document.getElementById("presets").innerHTML = Object.keys(PRESETS)
+    .map(k => `<button data-preset="${esc(k)}">${esc(k)}</button>`).join("");
+
+  document.getElementById("form").innerHTML = FIELDS.map(([group, rows]) => `
+    <div class="grp"><h3>${esc(group)}</h3>${rows.map(([name, kind]) => {
+      if (kind === "bool") return `
+        <div class="chk">
+          <input type="checkbox" id="i-${name}" data-name="${name}" data-kind="bool">
+          <label for="i-${name}">${name}</label>
+        </div>`;
+      return `
+        <div class="f">
+          <label for="i-${name}">${name}</label>
+          <div class="row">
+            <input id="i-${name}" data-name="${name}" data-kind="${kind}"
+                   type="${kind === "number" ? "number" : "text"}">
+            <button class="prov" data-prov="${name}" type="button"></button>
+          </div>
+        </div>`;
+    }).join("")}</div>`).join("");
+}
+
+function readForm() {
+  const out = {};
+  document.querySelectorAll("[data-name]").forEach(el => {
+    const name = el.dataset.name;
+    let v = el.dataset.kind === "bool" ? el.checked
+          : el.dataset.kind === "number" ? (el.value === "" ? null : Number(el.value))
+          : el.value;
+    const cell = STATE[name] || {};
+    out[name] = {v, p: cell.p || "assumed", o: cell.o || "system"};
+  });
+  return out;
+}
+
+function paintProv() {
+  document.querySelectorAll("[data-prov]").forEach(b => {
+    const cell = STATE[b.dataset.prov] || {};
+    const p = cell.o === "measured" ? "measured" : (cell.p || "assumed");
+    b.dataset.p = p; b.textContent = p;
+  });
+}
+
+function apply(preset) {
+  const next = {};
+  FIELDS.forEach(([,rows]) => rows.forEach(([name, kind, dflt]) => {
+    next[name] = {v: kind === "bool" ? false : (kind === "number" ? null : ""),
+                  p:"assumed", o:"system"};
+  }));
+  for (const [k, raw] of Object.entries(preset)) {
+    const cell = (raw && typeof raw === "object" && "v" in raw) ? raw : {v:raw};
+    next[k] = {v:cell.v, p:cell.p || "verified",
+               o:cell.o || (cell.p === "measured" ? "measured" : "school_setup")};
+    if (cell.o === "measured") next[k].p = "verified";
+  }
+  STATE = next;
+  document.querySelectorAll("[data-name]").forEach(el => {
+    const cell = STATE[el.dataset.name] || {};
+    if (el.dataset.kind === "bool") el.checked = !!cell.v;
+    else el.value = cell.v ?? "";
+  });
+  paintProv(); render();
+}
+
+function render() {
+  STATE = readForm();
+  paintProv();
+  const p = normalise(STATE);
+  const row = TOPICS[TOPIC];
+  const acts = activate(p, row);
+  const prop = proposable(acts);
+
+  const on  = acts.filter(e => e.active && e.f.tier !== GATE).length;
+  const off = acts.filter(e => !e.active).length;
+  const na  = acts.filter(e => e.active && e.relevant === false).length;
+
+  document.getElementById("counts").innerHTML = `
+    <div class="g-on"><b>${prop.length}</b>reach the model</div>
+    <div><b>${on}</b>have evidence</div>
+    <div class="g-off"><b>${off}</b>switched off</div>
+    <div><b>${na}</b>not relevant here</div>
+    <div><b>${Object.keys(p.fields).length}</b>fields kept</div>
+    <div><b>${p.dropped.length}</b>dropped</div>`;
+
+  document.getElementById("pane-factors").innerHTML = `
+    <p class="note">Judged against <b>T${row.index} · ${esc(row.topic)}</b> —
+      <select id="topic-pick" style="font:inherit;font-size:12px;padding:3px 6px;background:var(--sunk);color:var(--ink);border:1px solid var(--rule);border-radius:3px">
+      ${TOPICS.map((t,i)=>`<option value="${i}" ${i===TOPIC?"selected":""}>T${t.index} ${esc(t.topic)}</option>`).join("")}
+      </select>. A factor can have evidence and still be irrelevant to a particular lesson.</p>
+    ` + acts.map(e => {
+      const cls = e.f.tier === GATE ? "gate" : !e.active ? "off" : e.relevant === false ? "na" : "on";
+      const pill = e.f.tier === GATE ? `<span class="pill off">gate</span>`
+        : !e.active ? `<span class="pill off">off</span>`
+        : e.relevant === false ? `<span class="pill na">not here</span>`
+        : `<span class="pill on">reaches the model</span>`;
+      const want = e.f.evidence.filter(n => !has(p,n));
+      return `<div class="fx ${cls}">
+        <div class="fx-h">
+          <span class="fx-n">${e.f.number}</span>
+          <span class="fx-name">${esc(e.f.name)}</span>
+          <span class="tier">${e.f.tier}</span>
+          ${pill}
+        </div>
+        <div class="fx-why">${esc(e.relevant === false ? e.hint : e.reason)}</div>
+        ${(e.exposes.length || (!e.active && want.length)) ? `<div class="fx-ev">
+          ${e.exposes.map(n=>`<code>${esc(n)}</code>`).join("")}
+          ${!e.active ? want.slice(0,4).map(n=>`<code class="want">${esc(n)}</code>`).join("") : ""}
+        </div>` : ""}
+      </div>`;
+    }).join("");
+
+  const {room, block, count} = promptText(p, acts);
+  document.getElementById("pane-prompt").innerHTML = `
+    <p class="note">This is assembled by the same rules <code>context_flow/reasoning.py</code>
+      uses. An inactive factor contributes no line; a field no active factor may read is
+      already gone. <b>${count}</b> factor(s) reach the model here — not twenty with
+      seventeen described as unavailable.</p>
+    <pre><b>═══ THE ROOM ═══</b>
+${esc(room)}
+
+<b>═══ WHAT YOU MAY REASON ABOUT ═══</b>
+${esc(block)}</pre>
+    <div class="limit"><b>Where this bench stops.</b> Everything above is decided by rules,
+      so the page can compute it exactly. The adaptation <em>wording</em> is the one
+      structured model call Node&nbsp;2 makes, and a static page cannot make it — run
+      <code>python -m context_flow.cli run</code> for that. What you are setting here is
+      what that call is allowed to see, which is what decides what it can ever say.</div>`;
+
+  document.getElementById("pane-profile").innerHTML = `
+    <p class="note">A bare value is <b>assumed</b>, never verified — a caller who forgets to
+      state provenance is one whose data nobody confirmed. Community fields are dropped
+      unless verified; attendance and engagement need <b>measured</b>, because a teacher can
+      verify that the community fishes and nobody verifies an attendance pattern by
+      recalling it.</p>
+    <table><thead><tr><th>Field</th><th>Value</th><th>Provenance</th><th></th></tr></thead><tbody>
+    ${Object.entries(p.fields).map(([n,f])=>`<tr>
+      <td class="k">${esc(n)}</td><td>${esc(JSON.stringify(f.value))}</td>
+      <td class="k">${esc(f.provenance)} · ${esc(f.origin)}</td>
+      <td><span class="tag keep">kept</span></td></tr>`).join("")}
+    ${p.dropped.map(d=>`<tr>
+      <td class="k">${esc(d.field)}</td><td colspan="2">${esc(d.why)}</td>
+      <td><span class="tag drop">dropped</span></td></tr>`).join("")}
+    </tbody></table>`;
+
+  // The profile in the exact shape `context_flow/profile.py::normalise` reads:
+  // {field: {value, provenance, origin}}. Only fields that would SURVIVE
+  // normalisation are written — exporting the dropped ones would hand Node 2 a
+  // file whose contents it silently discards, and the drop reasons are one tab
+  // away for anyone who wants to know why a field is absent.
+  const exported = {};
+  for (const [n, f] of Object.entries(p.fields))
+    exported[n] = {value: f.value, provenance: f.provenance, origin: f.origin};
+  const profileJSON = JSON.stringify(exported, null, 2);
+  window.__PROFILE_JSON = profileJSON;
+
+  // NOT the plan pane: it holds the result of a paid call, and wiping it every
+  // time a checkbox moves would throw that away.
+  document.getElementById("pane-export").innerHTML = `
+    <p class="note">This is the file <code>python -m context_flow.cli</code> takes as
+      <code>--profile</code>. It carries <b>${Object.keys(exported).length}</b> field(s) —
+      only the ones that survive normalisation, because exporting a field Node 2 would
+      discard hands you a file that quietly does nothing. The
+      <b>${p.dropped.length}</b> dropped one(s) and their reasons are under
+      <em>Profile &amp; drops</em>.</p>
+    <div class="actions">
+      <button id="copy-profile">Copy JSON</button>
+      <button class="ghost" id="save-profile">Save school.json</button>
+      <span class="said" id="said">copied</span>
+    </div>
+    <pre>${esc(profileJSON)}</pre>
+    <div class="cmd">
+      <h3>Then, with an API key set</h3>
+      <pre># what this profile switches on, before spending anything
+python -m context_flow.cli factors --profile school.json
+
+# the run: Node 1's contract in, a Context Reinforcement Plan out
+python -m context_flow.cli run \\
+    --contract chapter02.contract.json \\
+    --profile  school.json \\
+    --out      chapter02.record.json</pre>
+    </div>
+    <div class="limit"><b>Shadow mode is on unless you pass <code>--apply</code>.</b>
+      The plan is produced, gated and logged, and Generation is not given it — that is
+      what §16 asks for until a teacher-rated golden set says otherwise.</div>`;
+
+  document.getElementById("foot").innerHTML =
+    `Ported from <code>context_flow/factors.py</code>, <code>profile.py</code>,
+     <code>activation.py</code> and <code>reasoning.py</code> — the registry is exported
+     from the Python, not retyped, so a factor added there and not here shows up as a
+     mismatch rather than as agreement.`;
+}
+
+/* ── wiring ────────────────────────────────────────────────────────────── */
+buildForm();
+document.getElementById("form").addEventListener("input", render);
+document.getElementById("form").addEventListener("click", e => {
+  const b = e.target.closest("[data-prov]"); if (!b) return;
+  const name = b.dataset.prov, cell = STATE[name] || {p:"assumed", o:"system"};
+  // Three states, because the longitudinal tier needs `measured` and nothing else does.
+  const cycle = {assumed:"verified", verified:"measured", measured:"assumed"};
+  const next = cycle[cell.o === "measured" ? "measured" : (cell.p || "assumed")];
+  STATE[name] = {...cell,
+    p: next === "measured" ? "verified" : next,
+    o: next === "measured" ? "measured" : "school_setup"};
+  render();
+});
+document.getElementById("presets").addEventListener("click", e => {
+  const b = e.target.closest("[data-preset]"); if (!b) return;
+  apply(PRESETS[b.dataset.preset]);
+});
+document.querySelector(".tabs").addEventListener("click", e => {
+  const b = e.target.closest("[data-pane]"); if (!b) return;
+  document.querySelectorAll(".tabs button").forEach(x =>
+    x.setAttribute("aria-selected", String(x === b)));
+  document.querySelectorAll(".pane").forEach(x =>
+    x.classList.toggle("on", x.id === "pane-" + b.dataset.pane));
+});
+document.addEventListener("change", e => {
+  if (e.target.id === "topic-pick") { TOPIC = Number(e.target.value); render(); }
+});
+
+/* ── running Node 2 for real ────────────────────────────────────────────
+   The page NEVER computes the plan itself. It posts the profile to
+   `context_flow/serve.py`, which imports the pipeline and calls `run_context()`
+   in process — so the adaptations, the gate verdicts and the prompt are the
+   pipeline's, not a second implementation's. Opened as a plain file with no
+   server there is no `/api/health`, and the page says so rather than offering a
+   button that cannot work. */
+let SERVED = null;
+
+async function detectServer() {
+  const mode = document.getElementById("mode"), btn = document.getElementById("run-btn");
+  try {
+    const r = await fetch("/api/health", {cache: "no-store"});
+    if (!r.ok) throw new Error("no");
+    SERVED = await r.json();
+  } catch { SERVED = null; }
+
+  if (!SERVED) {
+    mode.innerHTML = `opened as a file — the factors, the prompt and the export all work.
+      To actually run Node 2: <b>python -m context_flow.serve</b>`;
+    btn.disabled = true;
+    return;
+  }
+  if (!SERVED.hasKey) {
+    mode.innerHTML = `served, but <b>OPENROUTER_API_KEY is not set</b> — the prompt
+      below is what a run would send. Set the key and restart to run it.`;
+    btn.disabled = false;   // still useful: it returns the assembled prompt
+    btn.textContent = "Show the prompt";
+    return;
+  }
+  mode.innerHTML = `ready — one structured call to <b>${esc(SERVED.model)}</b>,
+    shadow mode (the plan is gated and logged, Generation is not given it)`;
+  btn.disabled = false;
+}
+
+async function runNode2() {
+  const btn = document.getElementById("run-btn"), pane = document.getElementById("pane-plan");
+  document.querySelectorAll(".tabs button").forEach(x =>
+    x.setAttribute("aria-selected", String(x.dataset.pane === "plan")));
+  document.querySelectorAll(".pane").forEach(x => x.classList.toggle("on", x.id === "pane-plan"));
+
+  btn.disabled = true;
+  const was = btn.textContent;
+  btn.innerHTML = `<span class="spin"></span>running`;
+  pane.innerHTML = `<div class="empty"><span class="spin"></span>
+    one structured call — this is the slow part</div>`;
+
+  const p = normalise(readForm());
+  const profile = {};
+  for (const [n, f] of Object.entries(p.fields))
+    profile[n] = {value: f.value, provenance: f.provenance, origin: f.origin};
+
+  try {
+    const r = await fetch("/api/run", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({profile, topicIndexes: [TOPICS[TOPIC].index]}),
+    });
+    renderPlan(await r.json());
+  } catch (err) {
+    pane.innerHTML = `<div class="limit"><b>The run did not complete.</b>
+      ${esc(String(err))} — check the terminal running
+      <code>python -m context_flow.serve</code>.</div>`;
+  } finally {
+    btn.disabled = false; btn.textContent = was;
+  }
+}
+
+function renderPlan(d) {
+  const pane = document.getElementById("pane-plan");
+  if (d.error) {
+    pane.innerHTML = `<div class="limit"><b>The run failed.</b> ${esc(d.error)}</div>`;
+    return;
+  }
+  if (d.noKey) {
+    pane.innerHTML = `<div class="limit"><b>No API key, so no call was made.</b>
+      This is the prompt this room would have sent — assembled by the real
+      <code>reasoning.py</code>. Set <code>OPENROUTER_API_KEY</code> and restart the
+      server to run it.</div><pre>${esc(d.prompt)}</pre>`;
+    return;
+  }
+
+  const plan = d.plan || {}, gate = d.gate || {};
+  const ads = plan.adaptations || [];
+  const head = `
+    <div class="counts" style="margin:-16px -16px 16px;border-top:0">
+      <div><b>${gate.proposed ?? 0}</b>proposed</div>
+      <div class="g-on"><b>${gate.accepted ?? 0}</b>accepted</div>
+      <div class="g-off"><b>${gate.rejected ?? 0}</b>refused by the gate</div>
+      <div><b>${d.handedToGeneration ?? 0}</b>handed to generation</div>
+      <div><b>${esc(d.status || "?")}</b>status</div>
+    </div>`;
+
+  const body = ads.length ? ads.map(a => `
+    <div class="ad ${a.accepted ? "ok" : "no"}">
+      <div class="ad-h">
+        <span class="factor">${esc(a.factor)}</span>
+        <span class="kind">${esc(a.type)} · ${esc(a.purpose)} · ${esc(a.section || "unplaced")}</span>
+        <span class="pill ${a.accepted ? "on" : "off"}">${a.accepted ? "accepted" : "refused"}</span>
+      </div>
+      <div class="ad-change">${esc(a.change)}</div>
+      <div class="ad-why"><b>why</b>${esc(a.reason)}</div>
+      ${(a.evidence || []).length ? `<div class="fx-ev">${
+        a.evidence.map(e => `<code>${esc(e)}</code>`).join("")}</div>` : ""}
+      ${(a.rejectedBecause || []).length ? `<div class="rej"><b>the gate refused it</b>${
+        a.rejectedBecause.map(w => esc(w)).join("<br>")}</div>` : ""}
+    </div>`).join("")
+    : `<div class="empty">Node 2 proposed nothing for this room and this topic.
+       That is a real answer — it judged the lesson already fits.</div>`;
+
+  const shadow = d.shadow ? `<div class="limit"><b>Shadow mode.</b> The plan was
+    produced, gated and logged; Generation was not given it. That is what §16 asks
+    for until a teacher-rated golden set says otherwise.</div>` : "";
+
+  pane.innerHTML = head + body + shadow +
+    `<div class="cmd"><h3>The prompt that was sent</h3><pre>${esc(d.prompt || "")}</pre></div>`;
+}
+
+function flash(text) {
+  const el = document.getElementById("said");
+  if (!el) return;
+  el.textContent = text; el.classList.add("on");
+  setTimeout(() => el.classList.remove("on"), 1600);
+}
+document.addEventListener("click", async e => {
+  if (e.target.id === "run-btn") runNode2();
+  if (e.target.id === "copy-profile") {
+    try { await navigator.clipboard.writeText(window.__PROFILE_JSON); flash("copied"); }
+    catch { flash("copy blocked — select the JSON below"); }
+  }
+  if (e.target.id === "save-profile") {
+    // A blob download rather than the clipboard, because the file is what the
+    // CLI wants and retyping a 40-field JSON is how a typo reaches a run.
+    const blob = new Blob([window.__PROFILE_JSON], {type: "application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = Object.assign(document.createElement("a"),
+                            {href: url, download: "school.json"});
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    flash("saved school.json");
+  }
+});
+
+apply(PRESETS["Rural, no verified community data"]);
+detectServer();
+</script>
+</body>
+</html>

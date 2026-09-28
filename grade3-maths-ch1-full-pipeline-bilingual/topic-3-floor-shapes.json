@@ -1,0 +1,375 @@
+{
+  "materials": [
+    "matchboxes",
+    "bangles"
+  ],
+  "teachingOrder": [
+    "refresher",
+    "challenge",
+    "concept",
+    "realLife",
+    "levelSet",
+    "explore"
+  ],
+  "planningNote": "This period focuses on the concept of tiling, specifically which shapes fit together without gaps and which do not. It builds on the understanding of shape properties from the previous lesson and prepares children to recognize tessellating patterns in their environment.",
+  "objective": "Identify shapes that tile a surface",
+  "floor": "Given two matchboxes, a child can place them side-by-side and correctly state that they fit together without leaving a gap.",
+  "previousTopicRefresher": {
+    "previousTopic": "4. Let us observe the shapes in a rangoli.",
+    "recap": [
+      {
+        "text": "Recall tiled floors and walls",
+        "detail": "Ask students to recall what they observed about tiled floors or brick walls on their way home. Have them discuss in pairs for 30 seconds. Call on a few students to share if the tiles or bricks fit perfectly.",
+        "detail_te": "విద్యార్థులను ఇంటికి వెళ్ళే దారిలో చూసిన టైల్స్ వేసిన ఫ్లోర్స్ లేదా బ్రిక్ వాల్స్ గురించి గుర్తుచేసుకోమని అడగండి. 30 సెకన్ల పాటు జంటలుగా చర్చించమని చెప్పండి. టైల్స్ లేదా బ్రిక్స్ సరిగ్గా సరిపోయాయో లేదో చెప్పమని కొద్దిమంది విద్యార్థులను అడగండి.",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "Bangles and gaps",
+        "detail": "Ask students what they noticed about bangles placed next to each other. Did they leave gaps or fit perfectly? Wait for a few responses, guiding them to remember the spaces between round objects.",
+        "detail_te": "పక్కపక్కన పెట్టిన బ్యాంగిల్స్ గురించి ఏమి గమనించారో విద్యార్థులను అడగండి. అవి గ్యాప్స్ వదిలాయా లేదా సరిగ్గా సరిపోయాయా? గుండ్రని వస్తువుల మధ్య ఖాళీలను గుర్తుంచుకోవడానికి వారికి మార్గనిర్దేశం చేస్తూ, కొన్ని ప్రతిస్పందనల కోసం వేచి ఉండండి.",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "Objects that fit perfectly",
+        "detail": "Ask students to name the object they found at home that fit perfectly next to another identical object. Listen for examples like books or matchboxes, which have straight edges. This connects to today's topic of shapes fitting together.",
+        "detail_te": "ఇంట్లో ఒకేలాంటి మరో వస్తువు పక్కన సరిగ్గా సరిపోయే వస్తువు పేరు చెప్పమని విద్యార్థులను అడగండి. స్ట్రెయిట్ ఎడ్జెస్ ఉన్న బుక్స్ లేదా మ్యాచ్‌బాక్స్‌లు వంటి ఉదాహరణల కోసం వినండి. ఇది ఈరోజు మనం నేర్చుకునే షేప్స్ సరిపోవడానికి సంబంధించినది.",
+        "treatment_te": "cue"
+      }
+    ]
+  },
+  "concept": [
+    {
+      "text": "Matchboxes fit without gaps",
+      "detail": "Hold up two matchboxes. Place them side-by-side on the blackboard. Ask students if there is any space left between them. Emphasize that their straight edges touch flush, leaving no gap.",
+      "detail_te": "రెండు మ్యాచ్‌బాక్స్‌లను పట్టుకోండి. వాటిని బ్లాక్‌బోర్డ్‌పై పక్కపక్కన ఉంచండి. వాటి మధ్య ఏదైనా ఖాళీ ఉందా అని విద్యార్థులను అడగండి. వాటి స్ట్రెయిట్ ఎడ్జెస్ సరిగ్గా కలిసి, గ్యాప్ లేకుండా ఉంటాయని నొక్కి చెప్పండి.",
+      "treatment_te": "cue"
+    },
+    {
+      "text": "Bangles leave gaps",
+      "detail": "Hold up two bangles. Place them side-by-side on the blackboard. Ask students if there is any space left between them. Point out the curved edges create empty spaces.",
+      "detail_te": "రెండు బ్యాంగిల్స్‌ను పట్టుకోండి. వాటిని బ్లాక్‌బోర్డ్‌పై పక్కపక్కన ఉంచండి. వాటి మధ్య ఏదైనా ఖాళీ ఉందా అని విద్యార్థులను అడగండి. కర్వ్డ్ ఎడ్జెస్ ఖాళీ స్థలాలను సృష్టిస్తాయని చెప్పండి.",
+      "treatment_te": "cue"
+    },
+    {
+      "text": "Shapes that tile vs. shapes that don't",
+      "detail": "Explain that some shapes, like the matchbox faces (rectangles), can fit together perfectly without gaps, covering a surface completely. Other shapes, like bangles (circles), always leave gaps when placed next to each other.",
+      "detail_te": "కొన్ని షేప్స్, మ్యాచ్‌బాక్స్ ఫేసెస్ (రెక్టాంగిల్స్) వంటివి, గ్యాప్స్ లేకుండా సరిగ్గా కలిసి, ఒక ఉపరితలాన్ని పూర్తిగా కవర్ చేయగలవని వివరించండి. బ్యాంగిల్స్ (సర్కిల్స్) వంటి ఇతర షేప్స్, పక్కపక్కన ఉంచినప్పుడు ఎల్లప్పుడూ గ్యాప్స్ వదులుతాయని వివరించండి.",
+      "treatment_te": "cue"
+    }
+  ],
+  "realLife": {
+    "points": [
+      {
+        "text": "Floor tiles and wall bricks",
+        "detail": "Explain that the floors in many houses or the walls of buildings are covered with tiles or bricks. These are often rectangular or square shapes because they fit together without leaving gaps, making the surface strong and smooth.",
+        "detail_te": "చాలా ఇళ్లలో ఫ్లోర్స్ లేదా భవనాల గోడలు టైల్స్ లేదా బ్రిక్స్ తో కప్పబడి ఉంటాయని వివరించండి. ఇవి తరచుగా రెక్టాంగ్యులర్ లేదా స్క్వేర్ షేప్స్ లో ఉంటాయి, ఎందుకంటే అవి గ్యాప్స్ లేకుండా సరిగ్గా కలిసిపోతాయి, ఉపరితలాన్ని బలంగా మరియు నునుపుగా చేస్తాయి.",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "Arranging matchboxes on paper",
+        "detail": "Describe how Pooja and her brother arrange matchboxes on paper. Explain that they can arrange them closely because the matchboxes have straight sides that allow them to fit together without empty spaces.",
+        "detail_te": "పూజ మరియు ఆమె సోదరుడు పేపర్‌పై మ్యాచ్‌బాక్స్‌లను ఎలా అమర్చుతారో వివరించండి. మ్యాచ్‌బాక్స్‌లకు స్ట్రెయిట్ సైడ్స్ ఉన్నందున అవి ఖాళీ స్థలాలు లేకుండా కలిసిపోతాయని వివరించండి.",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "Bangles on a paper",
+        "detail": "Refer to the book's example of bangles on paper. Explain that because bangles are round, no matter how you arrange them, there will always be small gaps between them. This is why you don't see floors made of circular tiles.",
+        "detail_te": "పుస్తకంలోని బ్యాంగిల్స్ ఆన్ పేపర్ ఉదాహరణను చూడండి. బ్యాంగిల్స్ గుండ్రంగా ఉన్నందున, మీరు వాటిని ఎలా అమర్చినా, వాటి మధ్య ఎల్లప్పుడూ చిన్న గ్యాప్స్ ఉంటాయని వివరించండి. అందుకే మీరు సర్క్యులర్ టైల్స్ తో చేసిన ఫ్లోర్స్ చూడరు.",
+        "treatment_te": "cue"
+      }
+    ]
+  },
+  "challenge": {
+    "activity": "Identify the shapes used to form different floors",
+    "points": [
+      {
+        "text": "PLAY: Arrange matchboxes or bangles",
+        "detail": "Divide the class into pairs. Give each pair two matchboxes and two bangles. Ask them to choose either the matchboxes OR the bangles and try to arrange them on their desk to cover as much space as possible without gaps. Give them two minutes.",
+        "detail_te": "క్లాస్‌ను జంటలుగా విభజించండి. ప్రతి జతకు రెండు మ్యాచ్‌బాక్స్‌లు మరియు రెండు బ్యాంగిల్స్ ఇవ్వండి. మ్యాచ్‌బాక్స్‌లు లేదా బ్యాంగిల్స్‌లో ఏదో ఒకటి ఎంచుకొని, వాటిని తమ డెస్క్‌పై వీలైనంత ఎక్కువ స్థలాన్ని గ్యాప్స్ లేకుండా కవర్ చేయడానికి ప్రయత్నించమని అడగండి. వారికి రెండు నిమిషాలు ఇవ్వండి.",
+        "treatment_te": "full"
+      },
+      {
+        "text": "REFLECT: Discuss fitting without gaps",
+        "detail": "Ask pairs who chose matchboxes to share what they observed. Then ask pairs who chose bangles to share their observations. Listen for descriptions of gaps or no gaps. Ask which object was easier to arrange without leaving space.",
+        "detail_te": "మ్యాచ్‌బాక్స్‌లను ఎంచుకున్న జంటలను వారు ఏమి గమనించారో పంచుకోమని అడగండి. ఆపై బ్యాంగిల్స్‌ను ఎంచుకున్న జంటలను వారి పరిశీలనలను పంచుకోమని అడగండి. గ్యాప్స్ ఉన్నాయా లేదా గ్యాప్స్ లేవా అనే వివరణల కోసం వినండి. ఖాళీ లేకుండా అమర్చడానికి ఏ వస్తువు సులభంగా ఉందని అడగండి.",
+        "treatment_te": "full"
+      },
+      {
+        "text": "ACT: Identify shapes forming floors",
+        "detail": "Direct students to the floor patterns in their books. Guide them to identify the shapes used to form the floor. For the matchbox example, confirm that matchboxes can be arranged without leaving any gap because of their straight sides. For the bangles, confirm that they cannot be arranged without gaps due to their curved edges.",
+        "detail_te": "విద్యార్థులను వారి పుస్తకాలలోని ఫ్లోర్ పాటర్న్స్‌ను చూడమని చెప్పండి. ఫ్లోర్‌ను రూపొందించడానికి ఉపయోగించిన షేప్స్‌ను గుర్తించమని వారికి మార్గనిర్దేశం చేయండి. మ్యాచ్‌బాక్స్ ఉదాహరణకు, మ్యాచ్‌బాక్స్‌లను వాటి స్ట్రెయిట్ సైడ్స్ కారణంగా ఎటువంటి గ్యాప్ లేకుండా అమర్చవచ్చని నిర్ధారించండి. బ్యాంగిల్స్‌కు, వాటి కర్వ్డ్ ఎడ్జెస్ కారణంగా వాటిని గ్యాప్స్ లేకుండా అమర్చలేమని నిర్ధారించండి.",
+        "treatment_te": "full"
+      }
+    ]
+  },
+  "levelSet": {
+    "points": [
+      {
+        "text": "Recap: Some shapes tile, some don't",
+        "detail": "Recap that some shapes fit together perfectly, and some leave gaps. Ask pairs to discuss if the gaps in the floor patterns shown in the book are also shapes, or if they are just empty spaces. Listen for understanding that gaps are not shapes themselves.",
+        "detail_te": "కొన్ని షేప్స్ సరిగ్గా కలిసిపోతాయని, కొన్ని గ్యాప్స్ వదులుతాయని పునరావృతం చేయండి. పుస్తకంలో చూపిన ఫ్లోర్ పాటర్న్స్‌లోని గ్యాప్స్ కూడా షేప్స్ లేదా అవి కేవలం ఖాళీ స్థలాలా అని చర్చించమని జంటలను అడగండి. గ్యాప్స్ షేప్స్ కాదని అర్థం చేసుకున్నారని వినండి.",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "Share one tiling example",
+        "detail": "Ask students to share with a partner one example of a shape they saw today that fits together without gaps. Encourage them to name the object or the shape.",
+        "detail_te": "ఈరోజు వారు చూసిన గ్యాప్స్ లేకుండా కలిసిపోయే షేప్ ఉదాహరణను ఒక భాగస్వామితో పంచుకోమని విద్యార్థులను అడగండి. వస్తువు లేదా షేప్ పేరు చెప్పమని వారిని ప్రోత్సహించండి.",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "Look for tiling patterns at home",
+        "detail": "Invite students to look for patterns on floors, walls, or even clothes at home. Ask them to notice which shapes fit together perfectly to make a pattern, and which shapes would leave gaps if they tried to arrange them.",
+        "detail_te": "ఇంట్లో ఫ్లోర్స్, గోడలు లేదా బట్టలపై పాటర్న్స్‌ను చూడమని విద్యార్థులను ఆహ్వానించండి. ఏ షేప్స్ ఒక పాటర్న్‌ను చేయడానికి సరిగ్గా కలిసిపోతాయో, మరియు ఏ షేప్స్ అమర్చడానికి ప్రయత్నిస్తే గ్యాప్స్ వదులుతాయో గమనించమని వారిని అడగండి.",
+        "treatment_te": "cue"
+      }
+    ]
+  },
+  "explore": {
+    "points": [
+      {
+        "text": "Observe a honeycomb or brick wall",
+        "detail": "Tell students that on their way home, they should look at a brick wall or, if they see one, a honeycomb. Ask them to notice if there are any gaps between the bricks or the cells of the honeycomb.",
+        "image": {
+          "url": "/api/textbook-catalog/image/ts_scert_class3_maths_en/1/img_ts_scert_class3_maths_en_ch01_16",
+          "caption": "An outline drawing of a butterfly made from geometric shapes. The butterfly's body is formed by three stacked rectangles, topped with a circle for the head and two antennae. Its wings are triangular shapes, with the upper wings containing a circle and the lower wings containing a star and a smaller circle each. This image is directly referenced by the lesson text for an activity involving identifying and coloring shapes."
+        },
+        "detail_te": "ఇంటికి వెళ్ళే దారిలో, బ్రిక్ వాల్ లేదా, ఒకవేళ చూస్తే, తేనెపట్టును చూడమని విద్యార్థులకు చెప్పండి. బ్రిక్స్ లేదా తేనెపట్టులోని గదుల మధ్య ఏదైనా గ్యాప్స్ ఉన్నాయో లేదో గమనించమని వారిని అడగండి.",
+        "treatment_te": "full"
+      },
+      {
+        "text": "Find objects that cannot tile",
+        "detail": "Tell students to find an object at home that, if they tried to arrange many of them together, would always leave gaps. An example could be a spoon or a round fruit.",
+        "detail_te": "ఇంట్లో ఒక వస్తువును కనుగొనమని విద్యార్థులకు చెప్పండి, దానిని చాలా వాటిని కలిపి అమర్చడానికి ప్రయత్నిస్తే, ఎల్లప్పుడూ గ్యాప్స్ వదులుతుంది. ఉదాహరణకు ఒక స్పూన్ లేదా గుండ్రని పండు కావచ్చు.",
+        "treatment_te": "full"
+      },
+      {
+        "text": "Think about why shapes fit",
+        "detail": "Tell students to think about why some shapes fit together perfectly without gaps, while others do. They should consider the edges of the shapes they observe.",
+        "detail_te": "కొన్ని షేప్స్ గ్యాప్స్ లేకుండా సరిగ్గా ఎందుకు కలిసిపోతాయి, మరికొన్ని ఎందుకు కలిసిపోవు అని ఆలోచించమని విద్యార్థులకు చెప్పండి. వారు గమనించిన షేప్స్ యొక్క ఎడ్జెస్ గురించి ఆలోచించాలి.",
+        "treatment_te": "full"
+      }
+    ],
+    "imageFocus": "matchboxes arranged without gaps"
+  },
+  "sectionWatch": {
+    "refresher": {
+      "text": "Connecting previous observations",
+      "detail": "Ensure students remember their observations about gaps (or lack thereof) from the previous day's Explore. This confirms their readiness for the tiling concept."
+    },
+    "concept": {
+      "text": "Understanding gaps vs. no gaps",
+      "detail": "Observe if students clearly differentiate between the matchboxes fitting perfectly and the bangles leaving gaps. Pay attention to whether they attribute this to straight versus curved edges."
+    },
+    "realLife": {
+      "text": "Relating tiling to everyday objects",
+      "detail": "Check if students can connect the abstract idea of shapes fitting together to concrete examples like floor tiles and the book's matchbox/bangle scenarios."
+    },
+    "challenge": {
+      "text": "Hands-on tiling experience",
+      "detail": "Watch for students who struggle to arrange the matchboxes without gaps, or who try to force bangles to fit. This indicates a need to revisit the properties of straight vs. curved edges."
+    },
+    "levelSet": {
+      "text": "Clarifying 'gaps are not shapes'",
+      "detail": "Listen carefully during the recap for students who still consider the empty spaces as shapes. Reinforce that gaps are simply the absence of material."
+    },
+    "explore": {
+      "text": "Preparing for next topic on tiling",
+      "detail": "Ensure students understand they are looking for real-world examples of shapes that tile perfectly and those that do not, focusing on the reason behind it (edges)."
+    }
+  },
+  "materialsUsed": [
+    "matchboxes",
+    "bangles"
+  ],
+  "pagesCited": [],
+  "figureRefs": [
+    "img_ts_scert_class3_maths_en_ch01_16"
+  ],
+  "timings": {
+    "refresher": 5,
+    "concept": 6,
+    "realLife": 8,
+    "challenge": 8,
+    "levelSet": 4,
+    "explore": 14
+  },
+  "index": 3,
+  "topic": "This floor is formed using ___ shapes.",
+  "subtopic": "",
+  "pageRange": [
+    null,
+    null
+  ],
+  "bookMoves": [
+    {
+      "ord": 1,
+      "type": "activity",
+      "gist": "Asks to identify the shapes used to form different floors.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "This floor is formed using ___ shapes. This floor is formed using ___ shapes."
+    },
+    {
+      "ord": 2,
+      "type": "activity",
+      "gist": "Asks if match-boxes can be arranged without gaps.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "This floor is formed using ___ shapes. Pooja and her brother are arranging some match-boxes on a paper. Can they arrange them without leaving any gap?"
+    },
+    {
+      "ord": 3,
+      "type": "activity",
+      "gist": "Asks if bangles can be arranged without gaps and instructs to make a paper boat.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "Now they took some bangles and placed them on a white paper. Is it possible to arrange them without any gaps on the paper? Take a paper. Fold it as shown in the picture and make a boat."
+    },
+    {
+      "ord": 4,
+      "type": "activity",
+      "gist": "Instructs to make a paper boat and a rocket without looking at previous pictures.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "Take another piece of paper and try making a boat without looking at the above pictures. Then, try to make a rocket."
+    },
+    {
+      "ord": 5,
+      "type": "practice",
+      "gist": "Asks to identify and color shapes in a picture with given colors.",
+      "section": "levelSet",
+      "fidelity": "verbatim",
+      "verbatim": "1. Some shapes are given below with diﬀ erent colours. Identify the shapes in the picture and colour them with the same colour."
+    },
+    {
+      "ord": 6,
+      "type": "practice",
+      "gist": "Asks to count specific shapes in a peacock picture from the previous page.",
+      "section": "levelSet",
+      "fidelity": "verbatim",
+      "verbatim": "2. Look at the picture of the peacock given in the previous page and answer the following. (A) How many s are there ? ———— (B) How many s are there ? ———— (C) How many s are there ? ———— (D) How many s are there ? ————"
+    },
+    {
+      "ord": 7,
+      "type": "practice",
+      "gist": "Asks to count specific shapes in each picture.",
+      "section": "levelSet",
+      "fidelity": "verbatim",
+      "verbatim": "3. How many are there in each picture? Count them and write in the blank. 4. How many are there in each picture? Count them and write in the blank."
+    },
+    {
+      "ord": 8,
+      "type": "practice",
+      "gist": "Asks to count and write the number of specific shapes.",
+      "section": "levelSet",
+      "fidelity": "verbatim",
+      "verbatim": "5. Count and write. (A) —— s are there. (B) —— s are there (C) —— s are there"
+    }
+  ],
+  "_meta": {
+    "masteryTarget": "some shapes fit together without gaps, and some do not",
+    "selectedActivity": "Count Around the Classroom",
+    "activitySource": "library",
+    "selectedContext": "Classroom",
+    "formats": {
+      "refresher": "partner re-tell in one breath",
+      "realLife": "cricket or playground scene",
+      "challenge": "build-and-check with local materials",
+      "levelSet": "partner tick-list self-check",
+      "explore": "measure-something-outside dare"
+    },
+    "plannedMinutes": {
+      "refresher": 5,
+      "concept": 6,
+      "realLife": 8,
+      "challenge": 8,
+      "levelSet": 4,
+      "explore": 14
+    },
+    "plannedHook": {},
+    "plannedBridge": null,
+    "provenance": {
+      "pages": [
+        null,
+        null
+      ],
+      "textbookExcerptChars": 1615,
+      "knowledgeExtracted": {
+        "concepts": 3,
+        "competencies": 4,
+        "vocabulary": 8,
+        "contexts": 7
+      },
+      "canonicalLibraryIdsUsed": {},
+      "canonicalEntriesSeededHere": {},
+      "activity": {
+        "name": "Count Around the Classroom",
+        "source": "library",
+        "id": "2787a173-1078-4ac9-9ca1-71b9e8955968"
+      },
+      "context": "Classroom",
+      "sectionFormats": {
+        "refresher": "partner re-tell in one breath",
+        "realLife": "cricket or playground scene",
+        "challenge": "build-and-check with local materials",
+        "levelSet": "partner tick-list self-check",
+        "explore": "measure-something-outside dare"
+      },
+      "plannedMinutes": {
+        "refresher": 5,
+        "concept": 6,
+        "realLife": 8,
+        "challenge": 8,
+        "levelSet": 4,
+        "explore": 14
+      }
+    },
+    "sectionCitations": {
+      "concept": "Textbook, no ingested textbook pages (context assembly) — concepts: Shapes, Tiling/Tessellation, Gaps; vocabulary: shapes, floor, gap, bangles, boat, rocket (+2 more). Resolved against the shared canonical library.",
+      "realLife": "Textbook-named context(s) (context assembly): floor, match-boxes, paper, bangles, boat, peacock (+1 more).",
+      "levelSet": "Free (generation) — the misconception this section is meant to surface: \"the gaps in the floor are also shapes\".",
+      "explore": "Free — built to hand off to the next topic's Refresher (generation); opens on one of the textbook's own named things where possible",
+      "refresher": "Built entirely from the previous topic's Explore (planning + generation) — no new textbook or library lookup for this section.",
+      "challenge": "Activity \"Count Around the Classroom\" — Pedagogy Library (activity selection), matched on 0 competenc(ies)."
+    },
+    "teluguReview": "unreviewed-draft",
+    "teluguBulletsApplied": 18,
+    "teluguBulletsTotal": 18
+  },
+  "figures": [],
+  "figureImages": {
+    "img_ts_scert_class3_maths_en_ch01_16": {
+      "url": "https://imnidyunrleqewcnoxng.supabase.co/storage/v1/object/public/textbook-images/ts_scert_class3_maths_en/ch01/img_ts_scert_class3_maths_en_ch01_16.jpg",
+      "caption": "An outline drawing of a butterfly made from geometric shapes. The butterfly's body is formed by three stacked rectangles, topped with a circle for the head and two antennae. Its wings are triangular shapes, with the upper wings containing a circle and the lower wings containing a star and a smaller circle each. This image is directly referenced by the lesson text for an activity involving identifying and coloring shapes."
+    },
+    "img_ts_scert_class3_maths_en_ch01_18": {
+      "url": "https://imnidyunrleqewcnoxng.supabase.co/storage/v1/object/public/textbook-images/ts_scert_class3_maths_en/ch01/img_ts_scert_class3_maths_en_ch01_18.jpg",
+      "caption": "A 3x6 grid of alternating brown and white squares, resembling a checkerboard pattern. This is one of three flooring patterns students need to observe to identify the shapes used in them."
+    },
+    "img_ts_scert_class3_maths_en_ch01_19": {
+      "url": "https://imnidyunrleqewcnoxng.supabase.co/storage/v1/object/public/textbook-images/ts_scert_class3_maths_en/ch01/img_ts_scert_class3_maths_en_ch01_19.jpg",
+      "caption": "An image showing a 3x3 grid of squares, alternating between green and white in a checkerboard pattern. The top row has green, white, green squares. The middle row has white, green, white squares. The bottom row has green, white, green squares. The image appears to be a pattern for a floor tile arrangement."
+    },
+    "img_ts_scert_class3_maths_en_ch01_20": {
+      "url": "https://imnidyunrleqewcnoxng.supabase.co/storage/v1/object/public/textbook-images/ts_scert_class3_maths_en/ch01/img_ts_scert_class3_maths_en_ch01_20.jpg",
+      "caption": "A rectangular pattern of alternating red and white equilateral triangles. The triangles in each row alternate in color, and each row is offset so that red triangles sit below white triangles and vice-versa, creating a tessellating pattern."
+    },
+    "img_ts_scert_class3_maths_en_ch01_21": {
+      "url": "https://imnidyunrleqewcnoxng.supabase.co/storage/v1/object/public/textbook-images/ts_scert_class3_maths_en/ch01/img_ts_scert_class3_maths_en_ch01_21.jpg",
+      "caption": "An illustration of a girl and a boy arranging matchboxes on a rectangular paper. The girl is sitting and placing a matchbox, while the boy is kneeling beside her, observing. Some matchboxes are already arranged in a row and column, and others are scattered around the paper."
+    }
+  },
+  "_needsReview": true,
+  "_reviewReasons": [
+    "The sheet asks for two matchboxes and two bangles per pair, which means 60-120 matchboxes and bangles for a class of 30-60 children. Fix: Change the activity to a demonstration with the teacher using a few items, or ask children to bring one matchbox or bangle from home.",
+    "Dividing the class into pairs and having them arrange matchboxes or bangles on their desks simultaneously will be unmanageable for one teacher with 60 children. Fix: Conduct this as a whole-class demonstration with the teacher manipulating the objects on the blackboard or a central table."
+  ],
+  "sectionImages": {
+    "realLife": [
+      "img_ts_scert_class3_maths_en_ch01_18",
+      "img_ts_scert_class3_maths_en_ch01_19",
+      "img_ts_scert_class3_maths_en_ch01_20",
+      "img_ts_scert_class3_maths_en_ch01_21"
+    ]
+  }
+}

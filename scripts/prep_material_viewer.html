@@ -441,6 +441,41 @@
       margin-bottom: 10px;
     }
 
+    .real-run-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      margin-bottom: 14px;
+      background: var(--accent-soft);
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+    }
+
+    .real-run-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--accent-strong);
+      margin-right: 2px;
+    }
+
+    .real-run-btn {
+      background: var(--paper-raised);
+      border: 1px solid var(--rule);
+      color: var(--ink);
+      font-size: 12.5px;
+      font-weight: 600;
+      padding: 6px 11px;
+      border-radius: 999px;
+    }
+
+    .real-run-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #241a06;
+    }
+
     .sheet.placeholder {
       color: var(--ink-faint);
       font-size: 14px;
@@ -473,6 +508,48 @@
       background: var(--accent-soft);
       border-radius: 0 6px 6px 0;
       margin-bottom: 18px;
+    }
+
+    .floor-note {
+      font-size: 13px;
+      color: var(--ink-soft);
+      margin: 0 0 12px;
+      line-height: 1.5;
+    }
+    .floor-note strong { color: var(--ink); }
+
+    .detail-te {
+      display: none;
+      margin-top: 4px;
+      font-size: 13px;
+      color: var(--ink-soft);
+      border-left: 2px solid var(--accent-soft);
+      padding-left: 9px;
+    }
+    /* Off by default — a teacher who reads English fine shouldn't have to
+       scroll past a translation on every bullet. The toggle below the
+       title flips this on for the whole sheet. */
+    .sheet.show-telugu .detail-te { display: block; }
+
+    .telugu-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: none;
+      border: 1.5px solid var(--rule);
+      border-radius: 999px;
+      padding: 4px 11px;
+      margin: 0 0 16px;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ink-soft);
+      cursor: pointer;
+    }
+    .telugu-toggle.active {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      color: var(--ink);
     }
 
     .section-block {
@@ -609,9 +686,41 @@
       font-variant-numeric: tabular-nums;
     }
 
+    .timing-pill.flex {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      color: var(--accent-strong);
+    }
+
     .timing-total {
       color: var(--ink-soft);
       font-size: 12.5px;
+    }
+
+    .figures {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-top: 10px;
+    }
+
+    .figure-card {
+      margin: 0;
+      max-width: 280px;
+    }
+
+    .figure-card img {
+      display: block;
+      max-width: 100%;
+      border-radius: 8px;
+      border: 1px solid var(--rule);
+    }
+
+    .figure-card figcaption {
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--ink-faint);
+      line-height: 1.4;
     }
 
     @media print {
@@ -831,6 +940,18 @@
     </section>
 
     <section class="output-panel">
+      <div class="real-run-bar" id="realRunBar">
+        <span class="real-run-label">Grade 3 Maths, Ch.1 — real bilingual run:</span>
+        <button type="button" class="real-run-btn" data-real-run="0">Topic 1 — Shalini &amp; Rajani</button>
+        <button type="button" class="real-run-btn" data-real-run="1">Topic 2 — Rangoli shapes</button>
+        <button type="button" class="real-run-btn" data-real-run="2">Topic 3 — Floor shapes</button>
+      </div>
+      <div class="real-run-bar" id="realRunBar2">
+        <span class="real-run-label">Grade 5 EVS, Ch.2 (Agriculture) — real bilingual run:</span>
+        <button type="button" class="real-run-btn" data-real-run="3">Topic 1 — Agriculture &amp; crops</button>
+        <button type="button" class="real-run-btn" data-real-run="4">Topic 2 — Comparing seeds</button>
+        <button type="button" class="real-run-btn" data-real-run="5">Topic 3 — Woman farmer</button>
+      </div>
       <div class="output-toolbar">
         <h2>Prep Sheet</h2>
         <button id="printBtn" class="secondary" disabled type="button">Print / Save as PDF</button>
@@ -848,6 +969,2304 @@
       </div>
     </section>
   </main>
+
+  <!-- The three real, generated sheets from
+       grade3-maths-ch1-full-pipeline-bilingual/ — baked in here (not
+       fetched) so this page shows real content the moment it's opened,
+       even as a plain double-clicked file:// page with no local server
+       running. Each one is exactly what that folder's topic-N JSON holds,
+       plus a `figureImages` lookup resolving the real public image URL the
+       pipeline's own output never carries (see scripts/prep_material_viewer.html's
+       renderFigures() and the JSON files' own comments for why). -->
+  <script type="application/json" id="realrun-0">
+{
+  "materials": [],
+  "teachingOrder": [
+    "refresher",
+    "concept",
+    "realLife",
+    "challenge",
+    "levelSet",
+    "explore"
+  ],
+  "planningNote": "This period introduces children to the idea that objects appear differently from various viewpoints, building foundational spatial understanding. It sets the stage for later lessons on shape properties and tiling by emphasizing observation from multiple angles.",
+  "objective": "Show different views of an object",
+  "floor": "Given a matchbox, a child can physically move around it and point out what the top, front, and side views look like, without needing to draw or compare to other objects.",
+  "previousTopicRefresher": null,
+  "concept": [
+    {
+      "text": "Observe a matchbox from the front",
+      "detail": "Hold up a matchbox and show it to the class from the front. Ask students to describe what they see, focusing on the main visible face. Give them a few seconds to respond aloud.",
+      "detail_te": "ఒక అగ్గిపెట్టెను పట్టుకుని, దాని ముందు భాగాన్ని తరగతికి చూపించండి. విద్యార్థులు ఏమి చూస్తున్నారో వివరించమని అడగండి, ముఖ్యంగా కనిపించే ప్రధాన ముఖంపై దృష్టి పెట్టమని చెప్పండి. వారికి బిగ్గరగా స్పందించడానికి కొన్ని సెకన్లు ఇవ్వండి.",
+      "treatment_te": "cue"
+    },
+    {
+      "text": "Compare front and top views",
+      "detail": "Rotate the matchbox to show its top view. Ask students if it looks the same as the front view. Draw both the front and top views on the blackboard as clearly as possible, labeling them 'Front View' and 'Top View'.",
+      "detail_te": "అగ్గిపెట్టెను తిప్పి, దాని పై భాగాన్ని చూపించండి. ఇది ముందు భాగం వలెనే కనిపిస్తుందా అని విద్యార్థులను అడగండి. 'Front View' మరియు 'Top View' అని లేబుల్ చేసి, బ్లాక్‌బోర్డుపై ముందు మరియు పై భాగం రెండింటినీ వీలైనంత స్పష్టంగా గీయండి.",
+      "treatment_te": "cue"
+    },
+    {
+      "text": "Different views from different positions",
+      "detail": "Explain that an object looks different depending on where you look at it from, not because the object itself changes. Use the matchbox to demonstrate how moving around it reveals different sides.",
+      "detail_te": "ఒక వస్తువును మీరు ఎక్కడ నుండి చూస్తారనే దానిపై ఆధారపడి అది భిన్నంగా కనిపిస్తుందని వివరించండి, వస్తువు మారడం వల్ల కాదు. అగ్గిపెట్టెను ఉపయోగించి, దాని చుట్టూ కదలడం ద్వారా వివిధ వైపులా ఎలా కనిపిస్తాయో ప్రదర్శించండి.",
+      "treatment_te": "cue"
+    }
+  ],
+  "realLife": {
+    "points": [
+      {
+        "text": "Chair views in the home",
+        "detail": "Mention that a chair at home can look like Shalini's drawing if you are standing directly above it. Ask students to imagine looking down at their own chair from the ceiling. Wait for a few hands to go up.",
+        "detail_te": "మీరు దాని పైన నిలబడి ఉంటే ఇంట్లో ఒక కుర్చీ శాలిని గీసినట్లుగా కనిపిస్తుందని చెప్పండి. పైకప్పు నుండి వారి స్వంత కుర్చీని క్రిందికి చూస్తున్నట్లు ఊహించుకోమని విద్యార్థులను అడగండి. కొన్ని చేతులు పైకి లేచే వరకు వేచి ఉండండి.",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "House views from different directions",
+        "detail": "Describe looking at a house from the front, then walking around to see it from the side. Explain that the house itself stays the same, but what you see changes. This is similar to the house pictures in their book.",
+        "detail_te": "ఒక ఇంటిని ముందు నుండి చూసి, ఆపై దాని పక్క నుండి చూడటానికి చుట్టూ నడవడాన్ని వివరించండి. ఇల్లు మారదని, కానీ మీరు చూసేది మారుతుందని వివరించండి. ఇది వారి పుస్తకంలోని ఇంటి చిత్రాల మాదిరిగానే ఉంటుంది.",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "Table views for drawing",
+        "detail": "Explain that if you were to draw a table, what you draw would depend on whether you were looking at it from the front, side, or directly from above. This is why the book asks them to imagine and draw different views.",
+        "detail_te": "మీరు ఒక టేబుల్‌ను గీయాలంటే, మీరు దానిని ముందు నుండి, పక్క నుండి లేదా నేరుగా పై నుండి చూస్తున్నారా అనే దానిపై ఆధారపడి మీరు గీసేది మారుతుందని వివరించండి. అందుకే పుస్తకం వారిని వివిధ వీక్షణలను ఊహించి గీయమని అడుగుతుంది.",
+        "treatment_te": "cue"
+      }
+    ]
+  },
+  "challenge": {
+    "activity": "If Shalini drew a chair and what the reader",
+    "points": [
+      {
+        "text": "PLAY: Discuss Shalini's chair drawing",
+        "detail": "Divide the class into pairs. Have them look at Shalini's chair drawing and discuss whether they think it is a chair or not. One partner should argue it is, the other it is not. Give them two minutes.",
+        "detail_te": "తరగతిని జంటలుగా విభజించండి. శాలిని గీసిన కుర్చీ చిత్రాన్ని చూసి, అది కుర్చీనా కాదా అని చర్చించమని వారిని అడగండి. ఒక భాగస్వామి అది అని వాదించాలి, మరొకరు కాదని వాదించాలి. వారికి రెండు నిమిషాలు ఇవ్వండి.",
+        "treatment_te": "full"
+      },
+      {
+        "text": "REFLECT: Share different perspectives",
+        "detail": "After two minutes, ask a few pairs to share their thoughts with the class. Encourage them to explain why they thought it was or wasn't a chair, focusing on what part of the chair they were imagining. Acknowledge all responses.",
+        "detail_te": "రెండు నిమిషాల తర్వాత, కొన్ని జంటలను వారి ఆలోచనలను తరగతితో పంచుకోమని అడగండి. అది కుర్చీ అని లేదా కాదని వారు ఎందుకు అనుకున్నారో వివరించమని వారిని ప్రోత్సహించండి, కుర్చీలోని ఏ భాగాన్ని వారు ఊహించుకున్నారో దానిపై దృష్టి పెట్టండి. అన్ని ప్రతిస్పందనలను అంగీకరించండి.",
+        "treatment_te": "full"
+      },
+      {
+        "text": "ACT: Identify views of a house",
+        "detail": "Direct students to the house pictures in their book. Explain that Shalini's drawing is a top view, just like one of the house pictures. Guide them to identify the top, front, and side views for each house picture. The top view shows the roof, the front view shows the main entrance, and the side view shows one side wall.",
+        "detail_te": "విద్యార్థులను వారి పుస్తకంలోని ఇంటి చిత్రాల వైపు మళ్లించండి. శాలిని గీసిన చిత్రం ఒక 'top view' అని వివరించండి, ఇంటి చిత్రాలలో ఒకదాని వలెనే. ప్రతి ఇంటి చిత్రానికి 'top', 'front' మరియు 'side views' ను గుర్తించడానికి వారికి మార్గనిర్దేశం చేయండి. 'top view' పైకప్పును చూపిస్తుంది, 'front view' ప్రధాన ప్రవేశాన్ని చూపిస్తుంది మరియు 'side view' ఒక పక్క గోడను చూపిస్తుంది.",
+        "treatment_te": "full"
+      }
+    ]
+  },
+  "levelSet": {
+    "points": [
+      {
+        "text": "Recap: Objects look different from different places",
+        "detail": "Briefly recap that objects look different depending on where you look from. Then, ask pairs to discuss if the matchbox changes when you look at it from the top, or if it just looks different. Watch for students who still think the object itself transforms.",
+        "detail_te": "వస్తువులు మీరు ఎక్కడ నుండి చూస్తారనే దానిపై ఆధారపడి భిన్నంగా కనిపిస్తాయని క్లుప్తంగా పునరావృతం చేయండి. ఆపై, అగ్గిపెట్టెను పై నుండి చూసినప్పుడు అది మారుతుందా, లేదా అది భిన్నంగా కనిపిస్తుందా అని చర్చించమని జంటలను అడగండి. వస్తువు స్వయంగా మారుతుందని ఇంకా భావించే విద్యార్థుల కోసం చూడండి.",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "Most interesting observation today",
+        "detail": "Ask students to turn to a partner and share one thing they found interesting or surprising today about looking at objects from different angles. Listen for comments about the matchbox or the chair drawings.",
+        "detail_te": "విద్యార్థులు ఒక భాగస్వామి వైపు తిరిగి, వివిధ కోణాల నుండి వస్తువులను చూడటం గురించి ఈ రోజు వారికి ఆసక్తికరంగా లేదా ఆశ్చర్యకరంగా అనిపించిన ఒక విషయాన్ని పంచుకోమని అడగండి. అగ్గిపెట్టె లేదా కుర్చీ చిత్రాల గురించి వ్యాఖ్యల కోసం వినండి.",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "Notice views on the way home",
+        "detail": "Invite students to look at a parked bicycle or a bullock cart on their way home. Ask them to notice how it looks from the front, from the side, and if they can, from directly above (like from a balcony or a small hill).",
+        "detail_te": "ఇంటికి వెళ్ళేటప్పుడు పార్క్ చేసిన సైకిల్ లేదా ఎద్దుల బండిని చూడమని విద్యార్థులను ఆహ్వానించండి. అది ముందు నుండి, పక్క నుండి మరియు వారు చేయగలిగితే, నేరుగా పై నుండి (బాల్కనీ లేదా చిన్న కొండ నుండి వంటివి) ఎలా కనిపిస్తుందో గమనించమని వారిని అడగండి.",
+        "treatment_te": "cue"
+      }
+    ]
+  },
+  "explore": {
+    "points": [
+      {
+        "text": "Observe a chair from above",
+        "detail": "Tell students that at home, they should try to look at a chair from directly above it, like Shalini did. Ask them to notice its shape and what parts they can see from that view.",
+        "image": {
+          "url": "/api/textbook-catalog/image/ts_scert_class3_maths_en/1/img_ts_scert_class3_maths_en_ch01_01",
+          "caption": "An illustration of a young girl in a blue school uniform showing a book to a woman in a blue sari, who is holding a book in her left hand. A wooden chair is visible behind the girl. The illustration depicts a scene from the lesson text."
+        },
+        "detail_te": "ఇంట్లో, శాలిని చేసినట్లుగా, కుర్చీని నేరుగా పై నుండి చూడటానికి ప్రయత్నించమని విద్యార్థులకు చెప్పండి. దాని ఆకారాన్ని మరియు ఆ వీక్షణ నుండి వారు ఏ భాగాలను చూడగలరో గమనించమని వారిని అడగండి.",
+        "treatment_te": "full"
+      },
+      {
+        "text": "Look at a cup from the side and top",
+        "detail": "Tell students to take a cup and look at it first from the side, then from directly above. Ask them to observe how the shape changes from these two different viewpoints.",
+        "detail_te": "విద్యార్థులు ఒక కప్పును తీసుకుని, మొదట పక్క నుండి, ఆపై నేరుగా పై నుండి చూడమని చెప్పండి. ఈ రెండు వేర్వేరు వీక్షణల నుండి ఆకారం ఎలా మారుతుందో గమనించమని వారిని అడగండి.",
+        "treatment_te": "full"
+      },
+      {
+        "text": "Find an object with distinct views",
+        "detail": "Tell students to find one object in their house, like a book or a small box, that looks very different from its top, front, and side views. They should be ready to describe it tomorrow.",
+        "detail_te": "వారి ఇంట్లో ఒక వస్తువును కనుగొనమని విద్యార్థులకు చెప్పండి, అది ఒక పుస్తకం లేదా చిన్న పెట్టె వంటిది, దాని 'top', 'front' మరియు 'side views' నుండి చాలా భిన్నంగా కనిపిస్తుంది. రేపు దానిని వివరించడానికి వారు సిద్ధంగా ఉండాలి.",
+        "treatment_te": "full"
+      }
+    ],
+    "imageFocus": "matchbox"
+  },
+  "sectionWatch": {
+    "refresher": null,
+    "concept": {
+      "text": "Matchbox views comparison",
+      "detail": "Observe if students can articulate the difference between the actual object changing and the view of the object changing. Ensure they understand that the matchbox remains the same, only their perspective shifts."
+    },
+    "realLife": {
+      "text": "Connecting views to daily objects",
+      "detail": "Check if students can relate the concept of different views to the real-life examples provided. Look for nods of understanding when discussing the house or table views."
+    },
+    "challenge": {
+      "text": "Shalini's chair discussion",
+      "detail": "Listen for pairs who correctly identify Shalini's drawing as a top view. Watch for students who insist it cannot be a chair because it does not look like the front view they are used to seeing."
+    },
+    "levelSet": {
+      "text": "Confirming understanding of views",
+      "detail": "During the recap, identify any students who still believe the object itself changes when viewed from a different angle. This indicates a need for further clarification on perspective."
+    },
+    "explore": {
+      "text": "Preparing for next day's recall",
+      "detail": "Ensure students understand the task to observe objects at home. The goal is for them to be able to describe what they saw from different angles tomorrow."
+    }
+  },
+  "materialsUsed": [
+    "matchbox"
+  ],
+  "pagesCited": [],
+  "figureRefs": [
+    "img_ts_scert_class3_maths_en_ch01_01"
+  ],
+  "timings": {
+    "concept": 8,
+    "realLife": 5,
+    "challenge": 10,
+    "levelSet": 5,
+    "explore": 13
+  },
+  "index": 1,
+  "topic": "Shalini and Rajani like drawing pictures.",
+  "subtopic": "",
+  "pageRange": [
+    null,
+    null
+  ],
+  "bookMoves": [
+    {
+      "ord": 1,
+      "type": "concept",
+      "gist": "Introduces Shalini and Rajani who like drawing pictures.",
+      "section": "concept",
+      "fidelity": "faithful"
+    },
+    {
+      "ord": 2,
+      "type": "concept",
+      "gist": "Teacher asks students to draw chairs, leading to a disagreement between Shalini and Rajni.",
+      "section": "concept",
+      "fidelity": "faithful"
+    },
+    {
+      "ord": 3,
+      "type": "activity",
+      "gist": "Asks if Shalini drew a chair and what the reader thinks.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "Has Shalini drawn the picture of a chair? What do you think?"
+    },
+    {
+      "ord": 4,
+      "type": "concept",
+      "gist": "Teacher explains Shalini's drawing is a top view of a chair, showing other examples.",
+      "section": "concept",
+      "fidelity": "faithful"
+    },
+    {
+      "ord": 5,
+      "type": "concept",
+      "gist": "Introduces front view and side view.",
+      "section": "concept",
+      "fidelity": "faithful"
+    },
+    {
+      "ord": 6,
+      "type": "activity",
+      "gist": "Asks if the reader has observed a chair from different views and if it looks different.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "Have you looked at a chair from the top, from the side and from the front? Does the chair look the same or diﬀ erent when seen from diﬀ erent sides? 1. Look at the pictures of a house drawn here. Can you say which is drawn from the top, which is from the front and which is from the side. Write in the boxes given below them."
+    },
+    {
+      "ord": 7,
+      "type": "activity",
+      "gist": "Asks to identify objects from their side view.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "2. Identify these objects. (i) Look at the pictures of objects given below. These pictures show their side view. Write the names of the objects in the boxes given below them."
+    },
+    {
+      "ord": 8,
+      "type": "activity",
+      "gist": "Asks to identify objects from their top view.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "(ii) Look at the pictures of some objects given below. These pictures show their top view. Write the names of the objects in the boxes given below them."
+    },
+    {
+      "ord": 9,
+      "type": "activity",
+      "gist": "Asks to imagine and draw top and side views of a table.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "(iii) Imagine how a table looks like from the top and the side. Draw the correct picture in the boxes. Top view Side view"
+    },
+    {
+      "ord": 10,
+      "type": "activity",
+      "gist": "Instructs to trace a match-box and observe the shapes formed.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "(i) Let us draw. Take a match-box, put it on a piece of paper and draw along the edges as shown here. Observe the shapes formed."
+    },
+    {
+      "ord": 11,
+      "type": "activity",
+      "gist": "Instructs to trace a bangle and other objects, then identify and draw their shapes.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "(ii) Take a bangle and trace it. Observe the shape formed. (iii) Trace the following objects on a paper. Identify the shapes and draw in the table. Object Shape of the object"
+    },
+    {
+      "ord": 12,
+      "type": "activity",
+      "gist": "Instructs to open a match-box and observe its appearance.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "3. Let us see the shapes in objects. Take a match-box. Open it as shown in the ﬁ gure. See how it looks."
+    }
+  ],
+  "_meta": {
+    "masteryTarget": "how something looks depends on where I look at it from",
+    "selectedActivity": "Body Shapes On The Floor",
+    "activitySource": "library",
+    "selectedContext": "School",
+    "formats": {
+      "refresher": "hands-up recall of the previous object",
+      "realLife": "walk-to-school scene",
+      "challenge": "team relay at the board",
+      "levelSet": "draw-what-you-learned card",
+      "explore": "predict-then-test"
+    },
+    "plannedMinutes": {
+      "refresher": 4,
+      "concept": 8,
+      "realLife": 5,
+      "challenge": 10,
+      "levelSet": 5,
+      "explore": 13
+    },
+    "plannedHook": {
+      "scene": "The class has just drawn a matchbox from the front, side, and top.",
+      "object": "A matchbox",
+      "question": "What happens if we trace around the matchbox?",
+      "answeredNextLesson": "an object's outline can be traced"
+    },
+    "plannedBridge": null,
+    "provenance": {
+      "pages": [
+        null,
+        null
+      ],
+      "textbookExcerptChars": 2930,
+      "knowledgeExtracted": {
+        "concepts": 3,
+        "competencies": 4,
+        "vocabulary": 5,
+        "contexts": 11
+      },
+      "canonicalLibraryIdsUsed": {},
+      "canonicalEntriesSeededHere": {},
+      "activity": {
+        "name": "Body Shapes On The Floor",
+        "source": "library",
+        "id": "1d313eeb-47fb-4381-b252-38c94a7d0add"
+      },
+      "context": "School",
+      "sectionFormats": {
+        "refresher": "hands-up recall of the previous object",
+        "realLife": "walk-to-school scene",
+        "challenge": "team relay at the board",
+        "levelSet": "draw-what-you-learned card",
+        "explore": "predict-then-test"
+      },
+      "plannedMinutes": {
+        "refresher": 4,
+        "concept": 8,
+        "realLife": 5,
+        "challenge": 10,
+        "levelSet": 5,
+        "explore": 13
+      }
+    },
+    "sectionCitations": {
+      "concept": "Textbook, no ingested textbook pages (context assembly) — concepts: Different views of an object (top, front, side), Tracing objects to identify shapes, Unfolding 3D objects to see their 2D net/shape; vocabulary: top view, side view, front view, trace, shape. Resolved against the shared canonical library.",
+      "realLife": "Textbook-named context(s) (context assembly): chairs, house, table, match-box, bangle, book (+5 more).",
+      "levelSet": "Free (generation) — the misconception this section is meant to surface: \"the matchbox changes when I look at it from the top\".",
+      "explore": "Free (generation) — planned to open on: \"The class has just drawn a matchbox from the front, side, and top.\".",
+      "refresher": "Built entirely from the previous topic's Explore (planning + generation) — no new textbook or library lookup for this section.",
+      "challenge": "Activity \"Body Shapes On The Floor\" — Pedagogy Library (activity selection), matched on 0 competenc(ies)."
+    },
+    "teluguReview": "unreviewed-draft",
+    "teluguBulletsApplied": 15,
+    "teluguBulletsTotal": 15
+  },
+  "figures": [],
+  "figureImages": {
+    "img_ts_scert_class3_maths_en_ch01_01": {
+      "url": "https://imnidyunrleqewcnoxng.supabase.co/storage/v1/object/public/textbook-images/ts_scert_class3_maths_en/ch01/img_ts_scert_class3_maths_en_ch01_01.jpg",
+      "caption": "An illustration of a young girl in a blue school uniform showing a book to a woman in a blue sari, who is holding a book in her left hand. A wooden chair is visible behind the girl. The illustration depicts a scene from the lesson text."
+    },
+    "img_ts_scert_class3_maths_en_ch01_02": {
+      "url": "https://imnidyunrleqewcnoxng.supabase.co/storage/v1/object/public/textbook-images/ts_scert_class3_maths_en/ch01/img_ts_scert_class3_maths_en_ch01_02.jpg",
+      "caption": "An illustration of a rectangular chair as viewed from the top, with a slightly textured, light brown seat and back, and darker brown armrests or side supports. The bottom edge shows two small, rounded feet."
+    },
+    "img_ts_scert_class3_maths_en_ch01_03": {
+      "url": "https://imnidyunrleqewcnoxng.supabase.co/storage/v1/object/public/textbook-images/ts_scert_class3_maths_en/ch01/img_ts_scert_class3_maths_en_ch01_03.jpg",
+      "caption": "Two cartoon girls, Pooja and Reena, are shown alongside two illustrations of a chair. Pooja is on the left, pointing down. To her right is a front view of a chair, showing its seat, backrest, and armrests. Reena is on the right, pointing to her left. To her left is a side view of a chair, showing its seat, backrest, and armrests from the side."
+    },
+    "img_ts_scert_class3_maths_en_ch01_04": {
+      "url": "https://imnidyunrleqewcnoxng.supabase.co/storage/v1/object/public/textbook-images/ts_scert_class3_maths_en/ch01/img_ts_scert_class3_maths_en_ch01_04.jpg",
+      "caption": "Three different views of a house are shown: the first house has a blue door on the front, the second house is viewed from the top with an orange thatched roof, and the third house has a small window and a pointed roof, shown from the side."
+    },
+    "img_ts_scert_class3_maths_en_ch01_05": {
+      "url": "https://imnidyunrleqewcnoxng.supabase.co/storage/v1/object/public/textbook-images/ts_scert_class3_maths_en/ch01/img_ts_scert_class3_maths_en_ch01_05.jpg",
+      "caption": "Three items are shown from their side view for identification: a light-blue cup with a handle, a light-blue bucket with a handle, and a transparent glass with vertical striations."
+    },
+    "img_ts_scert_class3_maths_en_ch01_06": {
+      "url": "https://imnidyunrleqewcnoxng.supabase.co/storage/v1/object/public/textbook-images/ts_scert_class3_maths_en/ch01/img_ts_scert_class3_maths_en_ch01_06.jpg",
+      "caption": "Three hand-drawn illustrations are shown side-by-side. From left to right: a light-colored staircase with a dark handrail, a light-colored computer monitor (CRT style) seen from the side, and a clear glass bottle."
+    },
+    "img_ts_scert_class3_maths_en_ch01_07": {
+      "url": "https://imnidyunrleqewcnoxng.supabase.co/storage/v1/object/public/textbook-images/ts_scert_class3_maths_en/ch01/img_ts_scert_class3_maths_en_ch01_07.jpg",
+      "caption": "Three images are presented: a top-down view of a cup with a handle, a front-on view of a flight of stairs, and a side-view of a cup."
+    }
+  },
+  "_needsReview": true,
+  "_reviewReasons": [
+    "Dividing the class into pairs for discussion and argument will be chaotic and difficult to manage with 30-60 children on fixed benches. Fix: Rephrase the activity as a whole-class discussion led by the teacher, using call-and-response or asking for a show of hands.",
+    "The sheet refers to 'Shalini's drawing' and 'house pictures in their book' multiple times without specifying page numbers or providing the actual images. Fix: Specify the exact page numbers for all referenced images in the textbook, or describe the images if they are not in the textbook.",
+    "The 'Challenge' section relies heavily on 'Shalini's chair drawing' and 'house pictures in their book' which are not provided or referenced with page numbers. Fix: Specify the exact page numbers for all referenced images in the textbook, or describe the images if they are not in the textbook."
+  ],
+  "sectionImages": {
+    "concept": [
+      "img_ts_scert_class3_maths_en_ch01_02",
+      "img_ts_scert_class3_maths_en_ch01_03"
+    ],
+    "challenge": [
+      "img_ts_scert_class3_maths_en_ch01_04"
+    ],
+    "explore": [
+      "img_ts_scert_class3_maths_en_ch01_05",
+      "img_ts_scert_class3_maths_en_ch01_06",
+      "img_ts_scert_class3_maths_en_ch01_07"
+    ]
+  }
+}
+  </script>
+  <script type="application/json" id="realrun-1">
+{
+  "materials": [
+    "matchbox",
+    "loose match-sticks"
+  ],
+  "teachingOrder": [
+    "refresher",
+    "concept",
+    "realLife",
+    "challenge",
+    "levelSet",
+    "explore"
+  ],
+  "planningNote": "This period builds on the previous lesson's observation of objects from different angles by focusing on the outlines and properties of shapes within those objects. It introduces the idea that shapes have distinct sides and corners, preparing for the next topic on how shapes fit together.",
+  "objective": "Sort shapes by number of sides",
+  "floor": "Given a matchbox, a child can trace one of its faces and correctly count the number of sides and corners of the resulting shape, without needing to compare it to other shapes.",
+  "previousTopicRefresher": {
+    "previousTopic": "Shalini and Rajani like drawing pictures.",
+    "recap": [
+      {
+        "text": "Recall chair views",
+        "detail": "Ask students to recall what they noticed about the chair they looked at from above yesterday. Wait for a few hands to go up and call on one or two to share. Listen for descriptions of the top view.",
+        "detail_te": "నిన్న చూసిన కుర్చీ గురించి ఏమి గమనించారో చెప్పమని విద్యార్థులను అడగండి. కొందరు చేతులు పైకి ఎత్తిన తర్వాత, ఒకరిద్దరిని చెప్పమని అడగండి. పై నుండి చూసినప్పుడు కుర్చీ ఎలా కనిపించిందో వినండి.",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "Different views of a cup",
+        "detail": "Ask students to share what they observed when looking at a cup from the side and from the top. Have them discuss in pairs for 30 seconds, then call on one or two pairs to share. Watch for clear articulation of how the view changed.",
+        "detail_te": "ఒక కప్పును పక్క నుండి మరియు పై నుండి చూసినప్పుడు ఏమి గమనించారో చెప్పమని విద్యార్థులను అడగండి. 30 సెకన్ల పాటు జంటలుగా చర్చించమని చెప్పండి, ఆపై ఒకరిద్దరు జంటలను చెప్పమని అడగండి. వీక్షణ ఎలా మారిందో స్పష్టంగా చెప్పడం గమనించండి.",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "Object views and outlines",
+        "detail": "Explain that looking at objects from different views helps us see their outlines and shapes. Transition by stating that today they will focus on these shapes and what they are made of.",
+        "detail_te": "వస్తువులను వివిధ కోణాల నుండి చూడటం వాటి ఆకృతులను మరియు ఆకారాన్ని చూడటానికి సహాయపడుతుందని వివరించండి. ఈ రోజు ఈ ఆకారాలపై మరియు అవి దేనితో తయారు చేయబడ్డాయో దృష్టి సారిస్తారని చెప్పి, తదుపరి అంశానికి వెళ్ళండి.",
+        "treatment_te": "cue"
+      }
+    ]
+  },
+  "concept": [
+    {
+      "text": "Tracing a matchbox face",
+      "detail": "Take a matchbox and place it on the blackboard. Trace around one of its rectangular faces with chalk, creating a shape. Ask students what shape they see.",
+      "detail_te": "ఒక అగ్గిపెట్టెను తీసుకుని, దానిని నల్లబల్లపై ఉంచండి. దాని దీర్ఘచతురస్రాకార ముఖం చుట్టూ సుద్దతో గీసి, ఒక ఆకారాన్ని సృష్టించండి. విద్యార్థులు ఏ ఆకారాన్ని చూస్తున్నారని అడగండి.",
+      "treatment_te": "cue"
+    },
+    {
+      "text": "Sides and corners of a rectangle",
+      "detail": "Point to the traced rectangle on the board. Count its sides and corners aloud with the class. Explain that shapes have these properties. Draw a triangle next to it and count its sides and corners.",
+      "detail_te": "బోర్డుపై గీసిన దీర్ఘచతురస్రం వైపు చూపండి. దాని భుజాలను మరియు మూలలను తరగతితో కలిసి గట్టిగా లెక్కించండి. ఆకారాలకు ఈ లక్షణాలు ఉంటాయని వివరించండి. దాని పక్కన ఒక త్రిభుజాన్ని గీసి, దాని భుజాలను మరియు మూలలను లెక్కించండి.",
+      "treatment_te": "cue"
+    },
+    {
+      "text": "Comparing shapes with same side count",
+      "detail": "Draw a long, thin rectangle and a short, wide rectangle on the board, both having four sides. Ask students if they are the same shape. Explain that even with the same number of sides, shapes can look different. This closes the gap about all 4-sided shapes being squares.",
+      "detail_te": "బోర్డుపై పొడవైన, సన్నని దీర్ఘచతురస్రం మరియు పొట్టి, వెడల్పాటి దీర్ఘచతురస్రం గీయండి, రెండింటికీ నాలుగు భుజాలు ఉంటాయి. అవి ఒకే ఆకారమా అని విద్యార్థులను అడగండి. ఒకే సంఖ్యలో భుజాలు ఉన్నప్పటికీ, ఆకారాలు భిన్నంగా కనిపించవచ్చని వివరించండి. ఇది నాలుగు భుజాలున్న అన్ని ఆకారాలు చతురస్రాలే అనే అపోహను తొలగిస్తుంది.",
+      "treatment_te": "cue"
+    }
+  ],
+  "realLife": {
+    "points": [
+      {
+        "text": "Rangoli shapes in festivals",
+        "detail": "Explain that during festivals like Diwali or Pongal, people draw beautiful rangolis (or muggus) on the ground using different shapes. Ask students if they have seen rangolis with circles, squares, or triangles.",
+        "detail_te": "దీపావళి లేదా సంక్రాంతి వంటి పండుగల సమయంలో, ప్రజలు వివిధ ఆకారాలను ఉపయోగించి నేలపై అందమైన రంగోలీలు (లేదా ముగ్గులు) వేస్తారని వివరించండి. వృత్తాలు, చతురస్రాలు లేదా త్రిభుజాలతో రంగోలీలు చూశారా అని విద్యార్థులను అడగండి.",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "Match-sticks for shape making",
+        "detail": "Describe how match-sticks can be used to make various shapes, just like Suresh does in the book. Explain that each stick forms a side of the shape, and where sticks meet, they form corners.",
+        "detail_te": "పుస్తకంలో సురేష్ చేసినట్లుగా, అగ్గిపుల్లలను ఉపయోగించి వివిధ ఆకారాలను ఎలా తయారు చేయవచ్చో వివరించండి. ప్రతి పుల్ల ఆకారానికి ఒక భుజంగా ఏర్పడుతుందని, పుల్లలు కలిసే చోట మూలలు ఏర్పడతాయని వివరించండి.",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "Flooring patterns and shapes",
+        "detail": "Mention that many houses have floors made of tiles, and these tiles often form patterns with different shapes. Explain that these shapes have specific numbers of sides and corners that allow them to fit together.",
+        "detail_te": "చాలా ఇళ్లలో నేలలు పలకలతో తయారు చేయబడతాయని, ఈ పలకలు తరచుగా వివిధ ఆకారాలతో నమూనాలను ఏర్పరుస్తాయని చెప్పండి. ఈ ఆకారాలకు నిర్దిష్ట సంఖ్యలో భుజాలు మరియు మూలలు ఉంటాయని, అవి ఒకదానికొకటి సరిగ్గా సరిపోయేలా చేస్తాయని వివరించండి.",
+        "treatment_te": "cue"
+      }
+    ]
+  },
+  "challenge": {
+    "activity": "Introduces observing shapes in a rangoli made",
+    "points": [
+      {
+        "text": "PLAY: Identify and color rangoli shapes",
+        "detail": "Direct students to the rangoli picture in their books. In pairs, they should identify the given shapes (circles, squares, triangles, etc.) within the rangoli and color them according to the instructions. Give them three minutes.",
+        "detail_te": "విద్యార్థులను వారి పుస్తకాలలోని రంగోలీ చిత్రానికి నిర్దేశించండి. జంటలుగా, వారు రంగోలీలోని ఇచ్చిన ఆకారాలను (వృత్తాలు, చతురస్రాలు, త్రిభుజాలు మొదలైనవి) గుర్తించి, సూచనల ప్రకారం రంగులు వేయాలి. వారికి మూడు నిమిషాలు ఇవ్వండి.",
+        "treatment_te": "full"
+      },
+      {
+        "text": "REFLECT: Discuss match-stick shapes",
+        "detail": "Ask pairs to share which shapes they found most often in the rangoli. Then, introduce the match-stick activity. Ask them to imagine making a square with 4 sticks, then a triangle with 3 sticks. Have them discuss how many sticks they would need for other shapes.",
+        "detail_te": "రంగోలీలో వారు తరచుగా కనుగొన్న ఆకారాలను పంచుకోవాలని జంటలను అడగండి. ఆపై, అగ్గిపుల్లల కార్యాచరణను పరిచయం చేయండి. 4 పుల్లలతో ఒక చతురస్రం, ఆపై 3 పుల్లలతో ఒక త్రిభుజం తయారుచేయడం ఊహించుకోమని వారిని అడగండి. ఇతర ఆకారాలకు ఎన్ని పుల్లలు అవసరమో చర్చించమని చెప్పండి.",
+        "treatment_te": "full"
+      },
+      {
+        "text": "ACT: Make shapes with match-sticks",
+        "detail": "Distribute small bundles of loose match-sticks to each pair. Instruct them to try making a square using 8 sticks as shown in the book, then a triangle using 5 sticks. Observe their attempts and guide them to count sides and corners.",
+        "detail_te": "ప్రతి జంటకు చిన్న అగ్గిపుల్లల కట్టలను పంపిణీ చేయండి. పుస్తకంలో చూపిన విధంగా 8 పుల్లలను ఉపయోగించి ఒక చతురస్రం, ఆపై 5 పుల్లలను ఉపయోగించి ఒక త్రిభుజం తయారుచేయడానికి ప్రయత్నించమని వారికి సూచించండి. వారి ప్రయత్నాలను గమనించి, భుజాలను మరియు మూలలను లెక్కించడానికి వారికి మార్గనిర్దేశం చేయండి.",
+        "treatment_te": "full"
+      }
+    ]
+  },
+  "levelSet": {
+    "points": [
+      {
+        "text": "Recap: Sides and corners define shapes",
+        "detail": "Recap that shapes are defined by their sides and corners. Ask pairs to decide if all shapes with four sides are squares, or if some four-sided shapes can be different. Listen for students who understand that squares are specific types of four-sided shapes.",
+        "detail_te": "ఆకారాలు వాటి భుజాలు మరియు మూలల ద్వారా నిర్వచించబడతాయని పునశ్చరణ చేయండి. నాలుగు భుజాలున్న అన్ని ఆకారాలు చతురస్రాలేనా, లేదా కొన్ని నాలుగు భుజాలున్న ఆకారాలు భిన్నంగా ఉండవచ్చా అని నిర్ణయించమని జంటలను అడగండి. చతురస్రాలు నిర్దిష్ట రకాల నాలుగు భుజాలున్న ఆకారాలని అర్థం చేసుకున్న విద్యార్థుల కోసం వినండి.",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "One new thing learned today",
+        "detail": "Ask students to share with a partner one new thing they learned or found interesting about shapes today. Encourage them to use words like 'sides' and 'corners'.",
+        "detail_te": "ఈ రోజు ఆకారాల గురించి వారు నేర్చుకున్న ఒక కొత్త విషయాన్ని లేదా ఆసక్తికరంగా అనిపించిన ఒక విషయాన్ని భాగస్వామితో పంచుకోమని విద్యార్థులను అడగండి. 'sides' మరియు 'corners' వంటి పదాలను ఉపయోగించమని వారిని ప్రోత్సహించండి.",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "Find shapes in your surroundings",
+        "detail": "Invite students to look for different shapes with clear sides and corners on their way home or in their house. Tell them to notice how many sides and corners each shape has, like a window, a door, or a book.",
+        "detail_te": "ఇంటికి వెళ్ళేటప్పుడు లేదా వారి ఇంట్లో స్పష్టమైన భుజాలు మరియు మూలలు ఉన్న వివిధ ఆకారాలను వెతకమని విద్యార్థులను ఆహ్వానించండి. కిటికీ, తలుపు లేదా పుస్తకం వంటి ప్రతి ఆకారానికి ఎన్ని భుజాలు మరియు మూలలు ఉన్నాయో గమనించమని వారికి చెప్పండి.",
+        "treatment_te": "cue"
+      }
+    ]
+  },
+  "explore": {
+    "points": [
+      {
+        "text": "Observe a tiled floor",
+        "detail": "Tell students that on their way home, they should look at a tiled floor or a brick wall and notice whether the tiles or bricks fit together with no empty space between them.",
+        "image": {
+          "url": "/api/textbook-catalog/image/ts_scert_class3_maths_en/1/img_ts_scert_class3_maths_en_ch01_08",
+          "caption": "Three items are shown, potentially representing a side view, top view, and another angled view of an object, possibly a humidifier or similar device, and a cup. The first image on the left is a light blue and grey object with a wide base and narrower top. The middle image is a circular, light blue object with concentric rings in the center. The rightmost image is a light blue cup or bowl viewed from the top, showing the interior with faint lines radiating from the center."
+        },
+        "detail_te": "ఇంటికి వెళ్ళేటప్పుడు, పలకలు వేసిన నేల లేదా ఇటుక గోడను చూసి, పలకలు లేదా ఇటుకలు వాటి మధ్య ఖాళీ స్థలం లేకుండా ఒకదానికొకటి సరిపోతాయో లేదో గమనించమని విద్యార్థులకు చెప్పండి.",
+        "treatment_te": "full"
+      },
+      {
+        "text": "Look at bangles stacked together",
+        "detail": "Tell students to observe bangles (chudiyan) in a shop or at home. Ask them to notice if bangles can be placed next to each other without leaving any gaps.",
+        "detail_te": "ఒక దుకాణంలో లేదా ఇంట్లో గాజుల (chudiyan) కుప్పలను గమనించమని విద్యార్థులకు చెప్పండి. గాజులను ఎటువంటి ఖాళీలు లేకుండా ఒకదాని పక్కన ఒకటి ఉంచవచ్చో లేదో గమనించమని వారిని అడగండి.",
+        "treatment_te": "full"
+      },
+      {
+        "text": "Find objects that fit perfectly",
+        "detail": "Tell students to find one object at home that can be placed next to another identical object without leaving any gaps, like two books side-by-side or two matchboxes. They should be ready to describe it tomorrow.",
+        "detail_te": "ఇంట్లో ఒక వస్తువును కనుగొనమని విద్యార్థులకు చెప్పండి, దానిని మరొక సారూప్య వస్తువు పక్కన ఎటువంటి ఖాళీలు లేకుండా ఉంచవచ్చు, ఉదాహరణకు రెండు పుస్తకాలు పక్కపక్కన లేదా రెండు అగ్గిపెట్టెలు. రేపు దాని గురించి వివరించడానికి వారు సిద్ధంగా ఉండాలి.",
+        "treatment_te": "full"
+      }
+    ],
+    "imageFocus": "match-stick shapes"
+  },
+  "sectionWatch": {
+    "refresher": {
+      "text": "Connecting views to shapes",
+      "detail": "Ensure students make the connection between observing different views of objects and identifying the 2D shapes that make up those views. Watch for any confusion about 3D objects versus 2D outlines."
+    },
+    "concept": {
+      "text": "Counting sides and corners",
+      "detail": "Observe if students can accurately count the sides and corners of the shapes drawn. Pay attention to their understanding that shapes with the same number of sides can be different, addressing the misconception that all 4-sided shapes are squares."
+    },
+    "realLife": {
+      "text": "Recognizing shapes in context",
+      "detail": "Check if students can identify the shapes mentioned in the real-life examples. Listen for their understanding of how match-sticks form sides and corners."
+    },
+    "challenge": {
+      "text": "Match-stick shape formation",
+      "detail": "Watch for students who struggle to create shapes with the given number of match-sticks. Ensure they understand that the sticks form the sides and the meeting points are the corners."
+    },
+    "levelSet": {
+      "text": "Understanding shape properties",
+      "detail": "Listen for students who still confuse 'four sides' with 'square'. Reinforce that squares are specific, but there are other shapes with four sides."
+    },
+    "explore": {
+      "text": "Observing gaps in arrangements",
+      "detail": "Ensure students understand that they are looking for whether objects fit together perfectly or leave spaces. This is the core idea for the next lesson."
+    }
+  },
+  "materialsUsed": [
+    "matchbox",
+    "loose match-sticks"
+  ],
+  "pagesCited": [],
+  "figureRefs": [
+    "img_ts_scert_class3_maths_en_ch01_08"
+  ],
+  "timings": {
+    "refresher": 5,
+    "concept": 9,
+    "realLife": 5,
+    "challenge": 9,
+    "levelSet": 5,
+    "explore": 12
+  },
+  "index": 2,
+  "topic": "4. Let us observe the shapes in a rangoli.",
+  "subtopic": "",
+  "pageRange": [
+    null,
+    null
+  ],
+  "bookMoves": [
+    {
+      "ord": 1,
+      "type": "activity",
+      "gist": "Introduces observing shapes in a rangoli made by Sita and Gita.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "4. Let us observe the shapes in a rangoli. Sita and Gita are very interested in making rangoli. They are making rangolis on a festival. Let us observe this lovely rangoli."
+    },
+    {
+      "ord": 2,
+      "type": "activity",
+      "gist": "Asks to identify and color specific shapes within the rangoli.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "Identify these shapes , , , , , in the rangoli. (i) Identify the shape and colour it. Black, Green, Red, Yellow, Blue Identify the above shapes in the picture given below. Fill in those shapes with the same colours."
+    },
+    {
+      "ord": 3,
+      "type": "activity",
+      "gist": "Introduces making shapes with match-sticks, showing examples.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "5. Let's play with match-sticks. Suresh made these shapes using match-sticks."
+    },
+    {
+      "ord": 4,
+      "type": "activity",
+      "gist": "Asks to make various shapes using a specified number of match-sticks.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "(i) Make shapes using match-sticks (A) Make a using 8 sticks (B) Make a using 8 sticks (C) Make a using 5 sticks (D) Make a using 12 sticks (E) Make a using 12 sticks (F) Make a using 12 sticks"
+    },
+    {
+      "ord": 5,
+      "type": "activity",
+      "gist": "Asks to determine how many different shapes can be formed with various stick counts.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "(ii) (A) How many diﬀ erent shapes can be formed using 8 sticks? Write the answer in the box. (B) How many diﬀ erent shapes can be formed using 5 sticks? Write the answer in the box. (C) How many diﬀ erent shapes can be formed using 12 sticks? Write the answer in the box. (D) How many diﬀ erent shapes can be formed using 6 sticks? Write the answer in the box."
+    },
+    {
+      "ord": 6,
+      "type": "activity",
+      "gist": "Asks to observe different floorings, identify shapes, and draw them.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "6. See the three types of ﬂ ooring in diﬀ erent houses. Identify the shapes in it. Draw the shapes in the given blanks."
+    }
+  ],
+  "_meta": {
+    "masteryTarget": "shapes are made of sides and corners, and can be different even with the same number of sides",
+    "selectedActivity": "Count The Class Itself",
+    "activitySource": "library",
+    "selectedContext": "School",
+    "formats": {
+      "refresher": "one-question quick round on the previous scene",
+      "realLife": "festival preparation scene",
+      "challenge": "pair race against a shared target",
+      "levelSet": "one-thing-I-can-now-do share",
+      "explore": "what-would-happen-if question"
+    },
+    "plannedMinutes": {
+      "refresher": 5,
+      "concept": 9,
+      "realLife": 5,
+      "challenge": 9,
+      "levelSet": 5,
+      "explore": 12
+    },
+    "plannedHook": {},
+    "plannedBridge": null,
+    "provenance": {
+      "pages": [
+        null,
+        null
+      ],
+      "textbookExcerptChars": 1490,
+      "knowledgeExtracted": {
+        "concepts": 2,
+        "competencies": 6,
+        "vocabulary": 4,
+        "contexts": 4
+      },
+      "canonicalLibraryIdsUsed": {},
+      "canonicalEntriesSeededHere": {},
+      "activity": {
+        "name": "Count The Class Itself",
+        "source": "library",
+        "id": "84a4213d-3368-4b4c-8a84-6cfd762d7030"
+      },
+      "context": "School",
+      "sectionFormats": {
+        "refresher": "one-question quick round on the previous scene",
+        "realLife": "festival preparation scene",
+        "challenge": "pair race against a shared target",
+        "levelSet": "one-thing-I-can-now-do share",
+        "explore": "what-would-happen-if question"
+      },
+      "plannedMinutes": {
+        "refresher": 5,
+        "concept": 9,
+        "realLife": 5,
+        "challenge": 9,
+        "levelSet": 5,
+        "explore": 12
+      }
+    },
+    "sectionCitations": {
+      "concept": "Textbook, no ingested textbook pages (context assembly) — concepts: Geometric shapes, Properties of shapes; vocabulary: rangoli, shapes, match-sticks, flooring. Resolved against the shared canonical library.",
+      "realLife": "Textbook-named context(s) (context assembly): rangoli, match-sticks, houses, flooring.",
+      "levelSet": "Free (generation) — the misconception this section is meant to surface: \"all shapes with four sides are squares\".",
+      "explore": "Free — built to hand off to the next topic's Refresher (generation); opens on one of the textbook's own named things where possible",
+      "refresher": "Built entirely from the previous topic's Explore (planning + generation) — no new textbook or library lookup for this section.",
+      "challenge": "Activity \"Count The Class Itself\" — Pedagogy Library (activity selection), matched on 0 competenc(ies)."
+    },
+    "teluguReview": "unreviewed-draft",
+    "teluguBulletsApplied": 18,
+    "teluguBulletsTotal": 18
+  },
+  "figures": [],
+  "figureImages": {
+    "img_ts_scert_class3_maths_en_ch01_08": {
+      "url": "https://imnidyunrleqewcnoxng.supabase.co/storage/v1/object/public/textbook-images/ts_scert_class3_maths_en/ch01/img_ts_scert_class3_maths_en_ch01_08.jpg",
+      "caption": "Three items are shown, potentially representing a side view, top view, and another angled view of an object, possibly a humidifier or similar device, and a cup. The first image on the left is a light blue and grey object with a wide base and narrower top. The middle image is a circular, light blue object with concentric rings in the center. The rightmost image is a light blue cup or bowl viewed from the top, showing the interior with faint lines radiating from the center."
+    },
+    "img_ts_scert_class3_maths_en_ch01_09": {
+      "url": "https://imnidyunrleqewcnoxng.supabase.co/storage/v1/object/public/textbook-images/ts_scert_class3_maths_en/ch01/img_ts_scert_class3_maths_en_ch01_09.jpg",
+      "caption": "An illustration of a young boy sitting on the floor, holding a pencil and tracing the outline of a matchbox placed on a piece of paper. His left hand holds the matchbox in place while his right hand guides the pencil."
+    },
+    "img_ts_scert_class3_maths_en_ch01_10": {
+      "url": "https://imnidyunrleqewcnoxng.supabase.co/storage/v1/object/public/textbook-images/ts_scert_class3_maths_en/ch01/img_ts_scert_class3_maths_en_ch01_10.jpg",
+      "caption": "Three identical illustrations of a hand holding a pencil and tracing the outline of a matchbox. The matchbox has a yellow circle with a red dot in the middle on its top surface."
+    },
+    "img_ts_scert_class3_maths_en_ch01_12": {
+      "url": "https://imnidyunrleqewcnoxng.supabase.co/storage/v1/object/public/textbook-images/ts_scert_class3_maths_en/ch01/img_ts_scert_class3_maths_en_ch01_12.jpg",
+      "caption": "The image shows three different views of a matchbox: first, a closed matchbox with a red circle design on its face; second, the same matchbox opened to reveal the inner tray and the outer sleeve spread out, with some text-like squiggles on the inside of the sleeve; and third, the matchbox completely unfolded into a flat, cross-shaped net."
+    },
+    "img_ts_scert_class3_maths_en_ch01_13": {
+      "url": "https://imnidyunrleqewcnoxng.supabase.co/storage/v1/object/public/textbook-images/ts_scert_class3_maths_en/ch01/img_ts_scert_class3_maths_en_ch01_13.jpg",
+      "caption": "The image shows two examples of objects (a book and a box) in different states: one closed and two open. For the book, one open state shows both pages with content and the other shows only one page with content. For the box, one open state shows it fully unfolded into a flat net. There are also empty checkboxes below each open state."
+    },
+    "img_ts_scert_class3_maths_en_ch01_15": {
+      "url": "https://imnidyunrleqewcnoxng.supabase.co/storage/v1/object/public/textbook-images/ts_scert_class3_maths_en/ch01/img_ts_scert_class3_maths_en_ch01_15.jpg",
+      "caption": "Two girls are making a rangoli design on the floor. One girl, in a red dress, is kneeling and working on the design, while the other, in a blue polka-dotted dress, holds a bowl of red powder, with several other bowls of colored powder on the floor around them. The rangoli is a colorful, geometric pattern with a central circle surrounded by other shapes."
+    }
+  },
+  "_needsReview": true,
+  "_reviewReasons": [
+    "The sheet asks for a matchbox to trace on the blackboard, but matchboxes are not listed as free and to hand materials. Fix: Change the material to something readily available like a slate or a book, or specify that children should bring a matchbox from home.",
+    "The sheet asks for 'loose match-sticks' to be distributed to each pair, which implies a large quantity not listed as free and to hand. Fix: Specify that children should bring matchsticks from home, or use readily available sticks/twigs instead.",
+    "Distributing small bundles of match-sticks to each pair and observing their attempts with 30-60 children will be impossible for one teacher. Fix: Change to a whole-class demonstration and guided practice, or have children work individually with materials they brought.",
+    "The 'chair views' and 'cup views' refresher assumes children have access to and experience with these specific objects in a way that allows for abstract viewing exercises. Fix: Replace with a more contextually relevant refresher using common village objects like a pot or a stone, focusing on their basic shape.",
+    "The entire 'Refresher' section on 'chair views' and 'cup views' is a tangent from the objective of sorting shapes by number of sides. Fix: Remove the refresher and start directly with the concept of identifying shapes and their sides."
+  ],
+  "sectionImages": {
+    "concept": [
+      "img_ts_scert_class3_maths_en_ch01_09",
+      "img_ts_scert_class3_maths_en_ch01_10",
+      "img_ts_scert_class3_maths_en_ch01_12",
+      "img_ts_scert_class3_maths_en_ch01_13"
+    ],
+    "realLife": [
+      "img_ts_scert_class3_maths_en_ch01_15"
+    ]
+  }
+}
+  </script>
+  <script type="application/json" id="realrun-2">
+{
+  "materials": [
+    "matchboxes",
+    "bangles"
+  ],
+  "teachingOrder": [
+    "refresher",
+    "challenge",
+    "concept",
+    "realLife",
+    "levelSet",
+    "explore"
+  ],
+  "planningNote": "This period focuses on the concept of tiling, specifically which shapes fit together without gaps and which do not. It builds on the understanding of shape properties from the previous lesson and prepares children to recognize tessellating patterns in their environment.",
+  "objective": "Identify shapes that tile a surface",
+  "floor": "Given two matchboxes, a child can place them side-by-side and correctly state that they fit together without leaving a gap.",
+  "previousTopicRefresher": {
+    "previousTopic": "4. Let us observe the shapes in a rangoli.",
+    "recap": [
+      {
+        "text": "Recall tiled floors and walls",
+        "detail": "Ask students to recall what they observed about tiled floors or brick walls on their way home. Have them discuss in pairs for 30 seconds. Call on a few students to share if the tiles or bricks fit perfectly.",
+        "detail_te": "విద్యార్థులను ఇంటికి వెళ్ళే దారిలో చూసిన టైల్స్ వేసిన ఫ్లోర్స్ లేదా బ్రిక్ వాల్స్ గురించి గుర్తుచేసుకోమని అడగండి. 30 సెకన్ల పాటు జంటలుగా చర్చించమని చెప్పండి. టైల్స్ లేదా బ్రిక్స్ సరిగ్గా సరిపోయాయో లేదో చెప్పమని కొద్దిమంది విద్యార్థులను అడగండి.",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "Bangles and gaps",
+        "detail": "Ask students what they noticed about bangles placed next to each other. Did they leave gaps or fit perfectly? Wait for a few responses, guiding them to remember the spaces between round objects.",
+        "detail_te": "పక్కపక్కన పెట్టిన బ్యాంగిల్స్ గురించి ఏమి గమనించారో విద్యార్థులను అడగండి. అవి గ్యాప్స్ వదిలాయా లేదా సరిగ్గా సరిపోయాయా? గుండ్రని వస్తువుల మధ్య ఖాళీలను గుర్తుంచుకోవడానికి వారికి మార్గనిర్దేశం చేస్తూ, కొన్ని ప్రతిస్పందనల కోసం వేచి ఉండండి.",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "Objects that fit perfectly",
+        "detail": "Ask students to name the object they found at home that fit perfectly next to another identical object. Listen for examples like books or matchboxes, which have straight edges. This connects to today's topic of shapes fitting together.",
+        "detail_te": "ఇంట్లో ఒకేలాంటి మరో వస్తువు పక్కన సరిగ్గా సరిపోయే వస్తువు పేరు చెప్పమని విద్యార్థులను అడగండి. స్ట్రెయిట్ ఎడ్జెస్ ఉన్న బుక్స్ లేదా మ్యాచ్‌బాక్స్‌లు వంటి ఉదాహరణల కోసం వినండి. ఇది ఈరోజు మనం నేర్చుకునే షేప్స్ సరిపోవడానికి సంబంధించినది.",
+        "treatment_te": "cue"
+      }
+    ]
+  },
+  "concept": [
+    {
+      "text": "Matchboxes fit without gaps",
+      "detail": "Hold up two matchboxes. Place them side-by-side on the blackboard. Ask students if there is any space left between them. Emphasize that their straight edges touch flush, leaving no gap.",
+      "detail_te": "రెండు మ్యాచ్‌బాక్స్‌లను పట్టుకోండి. వాటిని బ్లాక్‌బోర్డ్‌పై పక్కపక్కన ఉంచండి. వాటి మధ్య ఏదైనా ఖాళీ ఉందా అని విద్యార్థులను అడగండి. వాటి స్ట్రెయిట్ ఎడ్జెస్ సరిగ్గా కలిసి, గ్యాప్ లేకుండా ఉంటాయని నొక్కి చెప్పండి.",
+      "treatment_te": "cue"
+    },
+    {
+      "text": "Bangles leave gaps",
+      "detail": "Hold up two bangles. Place them side-by-side on the blackboard. Ask students if there is any space left between them. Point out the curved edges create empty spaces.",
+      "detail_te": "రెండు బ్యాంగిల్స్‌ను పట్టుకోండి. వాటిని బ్లాక్‌బోర్డ్‌పై పక్కపక్కన ఉంచండి. వాటి మధ్య ఏదైనా ఖాళీ ఉందా అని విద్యార్థులను అడగండి. కర్వ్డ్ ఎడ్జెస్ ఖాళీ స్థలాలను సృష్టిస్తాయని చెప్పండి.",
+      "treatment_te": "cue"
+    },
+    {
+      "text": "Shapes that tile vs. shapes that don't",
+      "detail": "Explain that some shapes, like the matchbox faces (rectangles), can fit together perfectly without gaps, covering a surface completely. Other shapes, like bangles (circles), always leave gaps when placed next to each other.",
+      "detail_te": "కొన్ని షేప్స్, మ్యాచ్‌బాక్స్ ఫేసెస్ (రెక్టాంగిల్స్) వంటివి, గ్యాప్స్ లేకుండా సరిగ్గా కలిసి, ఒక ఉపరితలాన్ని పూర్తిగా కవర్ చేయగలవని వివరించండి. బ్యాంగిల్స్ (సర్కిల్స్) వంటి ఇతర షేప్స్, పక్కపక్కన ఉంచినప్పుడు ఎల్లప్పుడూ గ్యాప్స్ వదులుతాయని వివరించండి.",
+      "treatment_te": "cue"
+    }
+  ],
+  "realLife": {
+    "points": [
+      {
+        "text": "Floor tiles and wall bricks",
+        "detail": "Explain that the floors in many houses or the walls of buildings are covered with tiles or bricks. These are often rectangular or square shapes because they fit together without leaving gaps, making the surface strong and smooth.",
+        "detail_te": "చాలా ఇళ్లలో ఫ్లోర్స్ లేదా భవనాల గోడలు టైల్స్ లేదా బ్రిక్స్ తో కప్పబడి ఉంటాయని వివరించండి. ఇవి తరచుగా రెక్టాంగ్యులర్ లేదా స్క్వేర్ షేప్స్ లో ఉంటాయి, ఎందుకంటే అవి గ్యాప్స్ లేకుండా సరిగ్గా కలిసిపోతాయి, ఉపరితలాన్ని బలంగా మరియు నునుపుగా చేస్తాయి.",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "Arranging matchboxes on paper",
+        "detail": "Describe how Pooja and her brother arrange matchboxes on paper. Explain that they can arrange them closely because the matchboxes have straight sides that allow them to fit together without empty spaces.",
+        "detail_te": "పూజ మరియు ఆమె సోదరుడు పేపర్‌పై మ్యాచ్‌బాక్స్‌లను ఎలా అమర్చుతారో వివరించండి. మ్యాచ్‌బాక్స్‌లకు స్ట్రెయిట్ సైడ్స్ ఉన్నందున అవి ఖాళీ స్థలాలు లేకుండా కలిసిపోతాయని వివరించండి.",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "Bangles on a paper",
+        "detail": "Refer to the book's example of bangles on paper. Explain that because bangles are round, no matter how you arrange them, there will always be small gaps between them. This is why you don't see floors made of circular tiles.",
+        "detail_te": "పుస్తకంలోని బ్యాంగిల్స్ ఆన్ పేపర్ ఉదాహరణను చూడండి. బ్యాంగిల్స్ గుండ్రంగా ఉన్నందున, మీరు వాటిని ఎలా అమర్చినా, వాటి మధ్య ఎల్లప్పుడూ చిన్న గ్యాప్స్ ఉంటాయని వివరించండి. అందుకే మీరు సర్క్యులర్ టైల్స్ తో చేసిన ఫ్లోర్స్ చూడరు.",
+        "treatment_te": "cue"
+      }
+    ]
+  },
+  "challenge": {
+    "activity": "Identify the shapes used to form different floors",
+    "points": [
+      {
+        "text": "PLAY: Arrange matchboxes or bangles",
+        "detail": "Divide the class into pairs. Give each pair two matchboxes and two bangles. Ask them to choose either the matchboxes OR the bangles and try to arrange them on their desk to cover as much space as possible without gaps. Give them two minutes.",
+        "detail_te": "క్లాస్‌ను జంటలుగా విభజించండి. ప్రతి జతకు రెండు మ్యాచ్‌బాక్స్‌లు మరియు రెండు బ్యాంగిల్స్ ఇవ్వండి. మ్యాచ్‌బాక్స్‌లు లేదా బ్యాంగిల్స్‌లో ఏదో ఒకటి ఎంచుకొని, వాటిని తమ డెస్క్‌పై వీలైనంత ఎక్కువ స్థలాన్ని గ్యాప్స్ లేకుండా కవర్ చేయడానికి ప్రయత్నించమని అడగండి. వారికి రెండు నిమిషాలు ఇవ్వండి.",
+        "treatment_te": "full"
+      },
+      {
+        "text": "REFLECT: Discuss fitting without gaps",
+        "detail": "Ask pairs who chose matchboxes to share what they observed. Then ask pairs who chose bangles to share their observations. Listen for descriptions of gaps or no gaps. Ask which object was easier to arrange without leaving space.",
+        "detail_te": "మ్యాచ్‌బాక్స్‌లను ఎంచుకున్న జంటలను వారు ఏమి గమనించారో పంచుకోమని అడగండి. ఆపై బ్యాంగిల్స్‌ను ఎంచుకున్న జంటలను వారి పరిశీలనలను పంచుకోమని అడగండి. గ్యాప్స్ ఉన్నాయా లేదా గ్యాప్స్ లేవా అనే వివరణల కోసం వినండి. ఖాళీ లేకుండా అమర్చడానికి ఏ వస్తువు సులభంగా ఉందని అడగండి.",
+        "treatment_te": "full"
+      },
+      {
+        "text": "ACT: Identify shapes forming floors",
+        "detail": "Direct students to the floor patterns in their books. Guide them to identify the shapes used to form the floor. For the matchbox example, confirm that matchboxes can be arranged without leaving any gap because of their straight sides. For the bangles, confirm that they cannot be arranged without gaps due to their curved edges.",
+        "detail_te": "విద్యార్థులను వారి పుస్తకాలలోని ఫ్లోర్ పాటర్న్స్‌ను చూడమని చెప్పండి. ఫ్లోర్‌ను రూపొందించడానికి ఉపయోగించిన షేప్స్‌ను గుర్తించమని వారికి మార్గనిర్దేశం చేయండి. మ్యాచ్‌బాక్స్ ఉదాహరణకు, మ్యాచ్‌బాక్స్‌లను వాటి స్ట్రెయిట్ సైడ్స్ కారణంగా ఎటువంటి గ్యాప్ లేకుండా అమర్చవచ్చని నిర్ధారించండి. బ్యాంగిల్స్‌కు, వాటి కర్వ్డ్ ఎడ్జెస్ కారణంగా వాటిని గ్యాప్స్ లేకుండా అమర్చలేమని నిర్ధారించండి.",
+        "treatment_te": "full"
+      }
+    ]
+  },
+  "levelSet": {
+    "points": [
+      {
+        "text": "Recap: Some shapes tile, some don't",
+        "detail": "Recap that some shapes fit together perfectly, and some leave gaps. Ask pairs to discuss if the gaps in the floor patterns shown in the book are also shapes, or if they are just empty spaces. Listen for understanding that gaps are not shapes themselves.",
+        "detail_te": "కొన్ని షేప్స్ సరిగ్గా కలిసిపోతాయని, కొన్ని గ్యాప్స్ వదులుతాయని పునరావృతం చేయండి. పుస్తకంలో చూపిన ఫ్లోర్ పాటర్న్స్‌లోని గ్యాప్స్ కూడా షేప్స్ లేదా అవి కేవలం ఖాళీ స్థలాలా అని చర్చించమని జంటలను అడగండి. గ్యాప్స్ షేప్స్ కాదని అర్థం చేసుకున్నారని వినండి.",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "Share one tiling example",
+        "detail": "Ask students to share with a partner one example of a shape they saw today that fits together without gaps. Encourage them to name the object or the shape.",
+        "detail_te": "ఈరోజు వారు చూసిన గ్యాప్స్ లేకుండా కలిసిపోయే షేప్ ఉదాహరణను ఒక భాగస్వామితో పంచుకోమని విద్యార్థులను అడగండి. వస్తువు లేదా షేప్ పేరు చెప్పమని వారిని ప్రోత్సహించండి.",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "Look for tiling patterns at home",
+        "detail": "Invite students to look for patterns on floors, walls, or even clothes at home. Ask them to notice which shapes fit together perfectly to make a pattern, and which shapes would leave gaps if they tried to arrange them.",
+        "detail_te": "ఇంట్లో ఫ్లోర్స్, గోడలు లేదా బట్టలపై పాటర్న్స్‌ను చూడమని విద్యార్థులను ఆహ్వానించండి. ఏ షేప్స్ ఒక పాటర్న్‌ను చేయడానికి సరిగ్గా కలిసిపోతాయో, మరియు ఏ షేప్స్ అమర్చడానికి ప్రయత్నిస్తే గ్యాప్స్ వదులుతాయో గమనించమని వారిని అడగండి.",
+        "treatment_te": "cue"
+      }
+    ]
+  },
+  "explore": {
+    "points": [
+      {
+        "text": "Observe a honeycomb or brick wall",
+        "detail": "Tell students that on their way home, they should look at a brick wall or, if they see one, a honeycomb. Ask them to notice if there are any gaps between the bricks or the cells of the honeycomb.",
+        "image": {
+          "url": "/api/textbook-catalog/image/ts_scert_class3_maths_en/1/img_ts_scert_class3_maths_en_ch01_16",
+          "caption": "An outline drawing of a butterfly made from geometric shapes. The butterfly's body is formed by three stacked rectangles, topped with a circle for the head and two antennae. Its wings are triangular shapes, with the upper wings containing a circle and the lower wings containing a star and a smaller circle each. This image is directly referenced by the lesson text for an activity involving identifying and coloring shapes."
+        },
+        "detail_te": "ఇంటికి వెళ్ళే దారిలో, బ్రిక్ వాల్ లేదా, ఒకవేళ చూస్తే, తేనెపట్టును చూడమని విద్యార్థులకు చెప్పండి. బ్రిక్స్ లేదా తేనెపట్టులోని గదుల మధ్య ఏదైనా గ్యాప్స్ ఉన్నాయో లేదో గమనించమని వారిని అడగండి.",
+        "treatment_te": "full"
+      },
+      {
+        "text": "Find objects that cannot tile",
+        "detail": "Tell students to find an object at home that, if they tried to arrange many of them together, would always leave gaps. An example could be a spoon or a round fruit.",
+        "detail_te": "ఇంట్లో ఒక వస్తువును కనుగొనమని విద్యార్థులకు చెప్పండి, దానిని చాలా వాటిని కలిపి అమర్చడానికి ప్రయత్నిస్తే, ఎల్లప్పుడూ గ్యాప్స్ వదులుతుంది. ఉదాహరణకు ఒక స్పూన్ లేదా గుండ్రని పండు కావచ్చు.",
+        "treatment_te": "full"
+      },
+      {
+        "text": "Think about why shapes fit",
+        "detail": "Tell students to think about why some shapes fit together perfectly without gaps, while others do. They should consider the edges of the shapes they observe.",
+        "detail_te": "కొన్ని షేప్స్ గ్యాప్స్ లేకుండా సరిగ్గా ఎందుకు కలిసిపోతాయి, మరికొన్ని ఎందుకు కలిసిపోవు అని ఆలోచించమని విద్యార్థులకు చెప్పండి. వారు గమనించిన షేప్స్ యొక్క ఎడ్జెస్ గురించి ఆలోచించాలి.",
+        "treatment_te": "full"
+      }
+    ],
+    "imageFocus": "matchboxes arranged without gaps"
+  },
+  "sectionWatch": {
+    "refresher": {
+      "text": "Connecting previous observations",
+      "detail": "Ensure students remember their observations about gaps (or lack thereof) from the previous day's Explore. This confirms their readiness for the tiling concept."
+    },
+    "concept": {
+      "text": "Understanding gaps vs. no gaps",
+      "detail": "Observe if students clearly differentiate between the matchboxes fitting perfectly and the bangles leaving gaps. Pay attention to whether they attribute this to straight versus curved edges."
+    },
+    "realLife": {
+      "text": "Relating tiling to everyday objects",
+      "detail": "Check if students can connect the abstract idea of shapes fitting together to concrete examples like floor tiles and the book's matchbox/bangle scenarios."
+    },
+    "challenge": {
+      "text": "Hands-on tiling experience",
+      "detail": "Watch for students who struggle to arrange the matchboxes without gaps, or who try to force bangles to fit. This indicates a need to revisit the properties of straight vs. curved edges."
+    },
+    "levelSet": {
+      "text": "Clarifying 'gaps are not shapes'",
+      "detail": "Listen carefully during the recap for students who still consider the empty spaces as shapes. Reinforce that gaps are simply the absence of material."
+    },
+    "explore": {
+      "text": "Preparing for next topic on tiling",
+      "detail": "Ensure students understand they are looking for real-world examples of shapes that tile perfectly and those that do not, focusing on the reason behind it (edges)."
+    }
+  },
+  "materialsUsed": [
+    "matchboxes",
+    "bangles"
+  ],
+  "pagesCited": [],
+  "figureRefs": [
+    "img_ts_scert_class3_maths_en_ch01_16"
+  ],
+  "timings": {
+    "refresher": 5,
+    "concept": 6,
+    "realLife": 8,
+    "challenge": 8,
+    "levelSet": 4,
+    "explore": 14
+  },
+  "index": 3,
+  "topic": "This floor is formed using ___ shapes.",
+  "subtopic": "",
+  "pageRange": [
+    null,
+    null
+  ],
+  "bookMoves": [
+    {
+      "ord": 1,
+      "type": "activity",
+      "gist": "Asks to identify the shapes used to form different floors.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "This floor is formed using ___ shapes. This floor is formed using ___ shapes."
+    },
+    {
+      "ord": 2,
+      "type": "activity",
+      "gist": "Asks if match-boxes can be arranged without gaps.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "This floor is formed using ___ shapes. Pooja and her brother are arranging some match-boxes on a paper. Can they arrange them without leaving any gap?"
+    },
+    {
+      "ord": 3,
+      "type": "activity",
+      "gist": "Asks if bangles can be arranged without gaps and instructs to make a paper boat.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "Now they took some bangles and placed them on a white paper. Is it possible to arrange them without any gaps on the paper? Take a paper. Fold it as shown in the picture and make a boat."
+    },
+    {
+      "ord": 4,
+      "type": "activity",
+      "gist": "Instructs to make a paper boat and a rocket without looking at previous pictures.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "Take another piece of paper and try making a boat without looking at the above pictures. Then, try to make a rocket."
+    },
+    {
+      "ord": 5,
+      "type": "practice",
+      "gist": "Asks to identify and color shapes in a picture with given colors.",
+      "section": "levelSet",
+      "fidelity": "verbatim",
+      "verbatim": "1. Some shapes are given below with diﬀ erent colours. Identify the shapes in the picture and colour them with the same colour."
+    },
+    {
+      "ord": 6,
+      "type": "practice",
+      "gist": "Asks to count specific shapes in a peacock picture from the previous page.",
+      "section": "levelSet",
+      "fidelity": "verbatim",
+      "verbatim": "2. Look at the picture of the peacock given in the previous page and answer the following. (A) How many s are there ? ———— (B) How many s are there ? ———— (C) How many s are there ? ———— (D) How many s are there ? ————"
+    },
+    {
+      "ord": 7,
+      "type": "practice",
+      "gist": "Asks to count specific shapes in each picture.",
+      "section": "levelSet",
+      "fidelity": "verbatim",
+      "verbatim": "3. How many are there in each picture? Count them and write in the blank. 4. How many are there in each picture? Count them and write in the blank."
+    },
+    {
+      "ord": 8,
+      "type": "practice",
+      "gist": "Asks to count and write the number of specific shapes.",
+      "section": "levelSet",
+      "fidelity": "verbatim",
+      "verbatim": "5. Count and write. (A) —— s are there. (B) —— s are there (C) —— s are there"
+    }
+  ],
+  "_meta": {
+    "masteryTarget": "some shapes fit together without gaps, and some do not",
+    "selectedActivity": "Count Around the Classroom",
+    "activitySource": "library",
+    "selectedContext": "Classroom",
+    "formats": {
+      "refresher": "partner re-tell in one breath",
+      "realLife": "cricket or playground scene",
+      "challenge": "build-and-check with local materials",
+      "levelSet": "partner tick-list self-check",
+      "explore": "measure-something-outside dare"
+    },
+    "plannedMinutes": {
+      "refresher": 5,
+      "concept": 6,
+      "realLife": 8,
+      "challenge": 8,
+      "levelSet": 4,
+      "explore": 14
+    },
+    "plannedHook": {},
+    "plannedBridge": null,
+    "provenance": {
+      "pages": [
+        null,
+        null
+      ],
+      "textbookExcerptChars": 1615,
+      "knowledgeExtracted": {
+        "concepts": 3,
+        "competencies": 4,
+        "vocabulary": 8,
+        "contexts": 7
+      },
+      "canonicalLibraryIdsUsed": {},
+      "canonicalEntriesSeededHere": {},
+      "activity": {
+        "name": "Count Around the Classroom",
+        "source": "library",
+        "id": "2787a173-1078-4ac9-9ca1-71b9e8955968"
+      },
+      "context": "Classroom",
+      "sectionFormats": {
+        "refresher": "partner re-tell in one breath",
+        "realLife": "cricket or playground scene",
+        "challenge": "build-and-check with local materials",
+        "levelSet": "partner tick-list self-check",
+        "explore": "measure-something-outside dare"
+      },
+      "plannedMinutes": {
+        "refresher": 5,
+        "concept": 6,
+        "realLife": 8,
+        "challenge": 8,
+        "levelSet": 4,
+        "explore": 14
+      }
+    },
+    "sectionCitations": {
+      "concept": "Textbook, no ingested textbook pages (context assembly) — concepts: Shapes, Tiling/Tessellation, Gaps; vocabulary: shapes, floor, gap, bangles, boat, rocket (+2 more). Resolved against the shared canonical library.",
+      "realLife": "Textbook-named context(s) (context assembly): floor, match-boxes, paper, bangles, boat, peacock (+1 more).",
+      "levelSet": "Free (generation) — the misconception this section is meant to surface: \"the gaps in the floor are also shapes\".",
+      "explore": "Free — built to hand off to the next topic's Refresher (generation); opens on one of the textbook's own named things where possible",
+      "refresher": "Built entirely from the previous topic's Explore (planning + generation) — no new textbook or library lookup for this section.",
+      "challenge": "Activity \"Count Around the Classroom\" — Pedagogy Library (activity selection), matched on 0 competenc(ies)."
+    },
+    "teluguReview": "unreviewed-draft",
+    "teluguBulletsApplied": 18,
+    "teluguBulletsTotal": 18
+  },
+  "figures": [],
+  "figureImages": {
+    "img_ts_scert_class3_maths_en_ch01_16": {
+      "url": "https://imnidyunrleqewcnoxng.supabase.co/storage/v1/object/public/textbook-images/ts_scert_class3_maths_en/ch01/img_ts_scert_class3_maths_en_ch01_16.jpg",
+      "caption": "An outline drawing of a butterfly made from geometric shapes. The butterfly's body is formed by three stacked rectangles, topped with a circle for the head and two antennae. Its wings are triangular shapes, with the upper wings containing a circle and the lower wings containing a star and a smaller circle each. This image is directly referenced by the lesson text for an activity involving identifying and coloring shapes."
+    },
+    "img_ts_scert_class3_maths_en_ch01_18": {
+      "url": "https://imnidyunrleqewcnoxng.supabase.co/storage/v1/object/public/textbook-images/ts_scert_class3_maths_en/ch01/img_ts_scert_class3_maths_en_ch01_18.jpg",
+      "caption": "A 3x6 grid of alternating brown and white squares, resembling a checkerboard pattern. This is one of three flooring patterns students need to observe to identify the shapes used in them."
+    },
+    "img_ts_scert_class3_maths_en_ch01_19": {
+      "url": "https://imnidyunrleqewcnoxng.supabase.co/storage/v1/object/public/textbook-images/ts_scert_class3_maths_en/ch01/img_ts_scert_class3_maths_en_ch01_19.jpg",
+      "caption": "An image showing a 3x3 grid of squares, alternating between green and white in a checkerboard pattern. The top row has green, white, green squares. The middle row has white, green, white squares. The bottom row has green, white, green squares. The image appears to be a pattern for a floor tile arrangement."
+    },
+    "img_ts_scert_class3_maths_en_ch01_20": {
+      "url": "https://imnidyunrleqewcnoxng.supabase.co/storage/v1/object/public/textbook-images/ts_scert_class3_maths_en/ch01/img_ts_scert_class3_maths_en_ch01_20.jpg",
+      "caption": "A rectangular pattern of alternating red and white equilateral triangles. The triangles in each row alternate in color, and each row is offset so that red triangles sit below white triangles and vice-versa, creating a tessellating pattern."
+    },
+    "img_ts_scert_class3_maths_en_ch01_21": {
+      "url": "https://imnidyunrleqewcnoxng.supabase.co/storage/v1/object/public/textbook-images/ts_scert_class3_maths_en/ch01/img_ts_scert_class3_maths_en_ch01_21.jpg",
+      "caption": "An illustration of a girl and a boy arranging matchboxes on a rectangular paper. The girl is sitting and placing a matchbox, while the boy is kneeling beside her, observing. Some matchboxes are already arranged in a row and column, and others are scattered around the paper."
+    }
+  },
+  "_needsReview": true,
+  "_reviewReasons": [
+    "The sheet asks for two matchboxes and two bangles per pair, which means 60-120 matchboxes and bangles for a class of 30-60 children. Fix: Change the activity to a demonstration with the teacher using a few items, or ask children to bring one matchbox or bangle from home.",
+    "Dividing the class into pairs and having them arrange matchboxes or bangles on their desks simultaneously will be unmanageable for one teacher with 60 children. Fix: Conduct this as a whole-class demonstration with the teacher manipulating the objects on the blackboard or a central table."
+  ],
+  "sectionImages": {
+    "realLife": [
+      "img_ts_scert_class3_maths_en_ch01_18",
+      "img_ts_scert_class3_maths_en_ch01_19",
+      "img_ts_scert_class3_maths_en_ch01_20",
+      "img_ts_scert_class3_maths_en_ch01_21"
+    ]
+  }
+}
+  </script>
+  <script type="application/json" id="realrun-3">
+{
+  "index": 1,
+  "teachingOrder": [
+    "refresher",
+    "realLife",
+    "challenge",
+    "concept",
+    "levelSet",
+    "explore"
+  ],
+  "planningNote": "This is the first lesson of the chapter, introducing students to the concept of agriculture and the farmer's role. It focuses on the sequential steps involved in farming and the tools used, setting the foundation for understanding different farming methods later.",
+  "objective": "Identify steps and tools in farming.",
+  "floor": "Given an empty seed packet, a child can point to it and say it is for planting, connecting it to the first step of farming.",
+  "previousTopicRefresher": null,
+  "concept": [
+    {
+      "text": "Agriculture is growing crops for food.",
+      "detail": "Explain that agriculture means growing food like grains, vegetables, and fruits. Ask students to name some foods they eat daily and point out that these foods come from agriculture. (Page 26)",
+      "image": {
+        "url": "/api/textbook-catalog/image/ts_scert_class5_environmental_studies_en/2/img_c5ch2_07",
+        "caption": "A farmer is using a plough pulled by two oxen to till a field. This image shows the traditional method of tilling land."
+      },
+      "detail_te": "వ్యవసాయం అంటే ధాన్యాలు, కూరగాయలు, పండ్లు వంటి ఆహారాన్ని పండించడం అని వివరించండి. విద్యార్థులు ప్రతిరోజూ తినే కొన్ని ఆహార పదార్థాల పేర్లు చెప్పమని అడిగి, అవి వ్యవసాయం నుండి వస్తాయని చెప్పండి. (Page 26)",
+      "treatment_te": "cue"
+    },
+    {
+      "text": "Farming involves a series of steps.",
+      "detail": "Describe that farming is not just one action but many steps, from preparing the soil to getting the food ready to eat. Show how each step builds on the last, using a simple example like planting a small seed. (Page 26)",
+      "detail_te": "వ్యవసాయం అనేది ఒకే పని కాదని, నేల సిద్ధం చేయడం నుండి ఆహారాన్ని తినడానికి సిద్ధం చేయడం వరకు అనేక దశలు ఉంటాయని వివరించండి. ఒక చిన్న విత్తనాన్ని నాటడం వంటి సాధారణ ఉదాహరణను ఉపయోగించి, ప్రతి దశ మునుపటి దానిపై ఎలా ఆధారపడి ఉంటుందో చూపండి. (Page 26)",
+      "treatment_te": "cue"
+    },
+    {
+      "text": "Tools help farmers with each step.",
+      "detail": "Explain that different tasks in farming need different tools. If a child suggests a tool can do any job, demonstrate by trying to 'dig' with a flat hand versus a cupped hand, showing how shape matters for the job. (Page 27)",
+      "detail_te": "వ్యవసాయంలో వివిధ పనులకు వివిధ రకాల పనిముట్లు అవసరమని వివరించండి. ఒక పిల్లవాడు ఏదైనా పనికి ఒక పనిముట్టు సరిపోతుందని చెబితే, చదునైన చేతితో 'తవ్వడానికి' ప్రయత్నించి, ఆపై గుప్పెటతో తవ్వడానికి ప్రయత్నించి, పనికి ఆకారం ఎలా ముఖ్యమో చూపించండి. (Page 27)",
+      "treatment_te": "cue"
+    }
+  ],
+  "realLife": {
+    "points": [
+      {
+        "text": "Farmers work hard to grow our food.",
+        "detail": "Explain that the food grains, vegetables, and fruits we eat come from farmers' hard work. Point to a picture of people working in a field (img_c5ch2_06) and explain that these are farmers. (Page 26)",
+        "image": {
+          "url": "/api/textbook-catalog/image/ts_scert_class5_environmental_studies_en/2/img_c5ch2_01",
+          "caption": "Several people are working in a field, holding bundles of harvested crops and using a machine to separate the grain from the stalks. This picture is labeled as `img_c5ch2_06`."
+        },
+        "detail_te": "మనం తినే ఆహార ధాన్యాలు, కూరగాయలు, పండ్లు రైతుల కష్టార్జితం నుండి వస్తాయని వివరించండి. పొలంలో పనిచేస్తున్న వ్యక్తుల చిత్రాన్ని (img_c5ch2_06) చూపించి, వీరే రైతులు అని చెప్పండి. (Page 26)",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "Many people depend on farmers for food.",
+        "detail": "Ask students who gives them their food. After a few guesses, explain that everyone, whether in villages or cities, relies on farmers for their food. Farmers grow crops and send them to markets for everyone. (Page 26)",
+        "detail_te": "విద్యార్థులను వారికి ఆహారం ఎవరు ఇస్తారు అని అడగండి. కొన్ని ఊహల తర్వాత, గ్రామాలు లేదా నగరాల్లో ఉన్న ప్రతి ఒక్కరూ ఆహారం కోసం రైతులపై ఆధారపడతారని వివరించండి. రైతులు పంటలు పండించి, అందరి కోసం మార్కెట్లకు పంపుతారు. (Page 26)",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "Different tools are used for different farm tasks.",
+        "detail": "Show pictures of different agricultural tools like a plough or a sickle (img_c5ch2_07, img_c5ch2_09). Explain that a plough prepares the soil, while a sickle helps cut crops, just like a spoon is for eating and a knife is for cutting.",
+        "detail_te": "నాగలి లేదా కొడవలి వంటి వివిధ వ్యవసాయ పనిముట్ల చిత్రాలను (img_c5ch2_07, img_c5ch2_09) చూపించండి. నాగలి నేలను సిద్ధం చేస్తుందని, కొడవలి పంటలను కోయడానికి సహాయపడుతుందని వివరించండి, స్పూన్ తినడానికి, కత్తి కోయడానికి ఉపయోగపడినట్లే. (Page 27)",
+        "treatment_te": "cue"
+      }
+    ]
+  },
+  "challenge": {
+    "activity": "Group discussion on impact of farmers stopping cultivation",
+    "points": [
+      {
+        "text": "PLAY: Discuss farmer's role and local crops.",
+        "detail": "Divide the class into pairs. Ask each pair to discuss two questions from the textbook: 'What happens if farmers stop cultivation?' AND 'What are the different crops grown in your village/city?' (Page 26). Give pairs 5 minutes to discuss and write down their answers.",
+        "image": {
+          "url": "/api/textbook-catalog/image/ts_scert_class5_environmental_studies_en/2/img_c5ch2_08",
+          "caption": "This picture shows a crowbar, which is a tool used in agriculture."
+        },
+        "detail_te": "తరగతిని జతలుగా విభజించండి. పాఠ్యపుస్తకం నుండి రెండు ప్రశ్నలను చర్చించమని ప్రతి జతను అడగండి: 'రైతులు సాగు ఆపేస్తే ఏమి జరుగుతుంది?' మరియు 'మీ గ్రామం/నగరంలో పండించే వివిధ పంటలు ఏమిటి?' (Page 26). చర్చించి, వారి సమాధానాలను వ్రాయడానికి జతలకు 5 నిమిషాలు ఇవ్వండి.",
+        "treatment_te": "full"
+      },
+      {
+        "text": "REFLECT: Share findings on farmers' impact.",
+        "detail": "Bring the class back together. Ask a few pairs to share one thing they discussed about what happens if farmers stop cultivating. Encourage them to briefly explain why they think that would happen. Allow 2 minutes for this sharing.",
+        "detail_te": "తరగతిని తిరిగి ఒకచోట చేర్చండి. రైతులు సాగు ఆపేస్తే ఏమి జరుగుతుందో వారు చర్చించిన ఒక విషయాన్ని పంచుకోమని కొన్ని జతలను అడగండి. అది ఎందుకు జరుగుతుందని వారు అనుకుంటున్నారో క్లుప్తంగా వివరించమని వారిని ప్రోత్సహించండి. ఈ భాగస్వామ్యం కోసం 2 నిమిషాలు అనుమతించండి.",
+        "treatment_te": "full"
+      },
+      {
+        "text": "ACT: Identify who depends on agriculture.",
+        "detail": "Ask pairs to identify who depends on agriculture and how. Explain that everyone depends on farmers for food, and without farmers, there would be no food in markets. This is the same idea as how a cup holds water for drinking. (Page 26)",
+        "detail_te": "వ్యవసాయంపై ఎవరు ఆధారపడతారు మరియు ఎలా ఆధారపడతారో గుర్తించమని జతలను అడగండి. ఆహారం కోసం ప్రతి ఒక్కరూ రైతులపై ఆధారపడతారని, రైతులు లేకపోతే మార్కెట్లలో ఆహారం ఉండదని వివరించండి. ఇది ఒక కప్పు నీటిని తాగడానికి ఎలా పట్టుకుంటుందో అదే ఆలోచన. (Page 26)",
+        "treatment_te": "full"
+      }
+    ]
+  },
+  "levelSet": {
+    "points": [
+      {
+        "text": "Farming is a series of steps with tools.",
+        "detail": "Recap that agriculture is growing food, and it involves many steps, each needing specific tools. Ask pairs to name one step and one tool they remember from today's lesson. If a child thinks all seeds grow the same way, ask them to consider if a tiny mustard seed needs the same care as a large mango seed.",
+        "detail_te": "వ్యవసాయం ఆహారాన్ని పండించడం అని, దానికి అనేక దశలు ఉంటాయని, ప్రతి దశకు నిర్దిష్ట పనిముట్లు అవసరమని గుర్తుచేయండి. ఈ రోజు పాఠం నుండి గుర్తుంచుకున్న ఒక దశ మరియు ఒక పనిముట్టు పేరు చెప్పమని జతలను అడగండి. అన్ని విత్తనాలు ఒకే విధంగా పెరుగుతాయని ఒక పిల్లవాడు అనుకుంటే, చిన్న ఆవాల గింజకు పెద్ద మామిడి గింజకు ఒకే రకమైన సంరక్షణ అవసరమా అని ఆలోచించమని అడగండి.",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "Share one interesting fact learned today.",
+        "detail": "Have students turn to a partner and share one thing they found most interesting or easiest to understand about farming or farmers today. Give them 30 seconds to share with each other.",
+        "detail_te": "ఈ రోజు వ్యవసాయం లేదా రైతుల గురించి వారు చాలా ఆసక్తికరంగా లేదా సులభంగా అర్థం చేసుకున్న ఒక విషయాన్ని భాగస్వామితో పంచుకోమని విద్యార్థులను అడగండి. ఒకరితో ఒకరు పంచుకోవడానికి వారికి 30 సెకన్లు ఇవ్వండి.",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "Notice farm tools in the village.",
+        "detail": "Invite students to look for any farming tools they might see in their village or on the way home. Ask them to think about what job that tool does and why its shape is good for that job.",
+        "detail_te": "విద్యార్థులు తమ గ్రామంలో లేదా ఇంటికి వెళ్ళేటప్పుడు చూసే ఏదైనా వ్యవసాయ పనిముట్ల కోసం చూడమని ఆహ్వానించండి. ఆ పనిముట్టు ఏ పని చేస్తుందో మరియు ఆ పనికి దాని ఆకారం ఎందుకు మంచిదో ఆలోచించమని వారిని అడగండి.",
+        "treatment_te": "cue"
+      }
+    ]
+  },
+  "explore": {
+    "points": [
+      {
+        "text": "Observe people working in fields.",
+        "detail": "Tell students to look for people working in fields near their homes or on their way to school. Ask them to notice what the people are doing and what tools they are using.",
+        "detail_te": "తమ ఇళ్ల దగ్గర లేదా పాఠశాలకు వెళ్ళే దారిలో పొలాల్లో పనిచేస్తున్న వ్యక్తుల కోసం చూడమని విద్యార్థులకు చెప్పండి. ప్రజలు ఏమి చేస్తున్నారో మరియు వారు ఏ పనిముట్లను ఉపయోగిస్తున్నారో గమనించమని వారిని అడగండి.",
+        "treatment_te": "full"
+      },
+      {
+        "text": "Identify different crops growing.",
+        "detail": "Tell students to try and identify different types of crops growing in fields they pass. Ask them to think about whether these crops look like food grains, vegetables, or fruits.",
+        "detail_te": "వారు వెళ్ళే పొలాల్లో పెరుగుతున్న వివిధ రకాల పంటలను గుర్తించడానికి ప్రయత్నించమని విద్యార్థులకు చెప్పండి. ఈ పంటలు ఆహార ధాన్యాలు, కూరగాయలు లేదా పండ్లలా ఉన్నాయా అని ఆలోచించమని వారిని అడగండి.",
+        "treatment_te": "full"
+      },
+      {
+        "text": "Notice sources of water for fields.",
+        "detail": "Tell students to observe how fields are watered. Ask them to look for borewells or wells that farmers might use to get water for their crops.",
+        "detail_te": "పొలాలకు ఎలా నీరు పెడతారో గమనించమని విద్యార్థులకు చెప్పండి. రైతులు తమ పంటలకు నీటిని పొందడానికి ఉపయోగించే బోరుబావులు లేదా బావుల కోసం చూడమని వారిని అడగండి.",
+        "treatment_te": "full"
+      }
+    ],
+    "imageFocus": "people working in fields"
+  },
+  "sectionWatch": {
+    "refresher": null,
+    "concept": {
+      "text": "Ensure understanding of sequential farming steps.",
+      "detail": "Watch for students who only focus on one part of farming. Emphasize that agriculture is a connected series of actions, not just individual tasks. Use the 'digging' demonstration to highlight tool-task specificity."
+    },
+    "realLife": {
+      "text": "Connect farming to daily food consumption.",
+      "detail": "Observe if students make the connection between farmers and their own food. Reinforce that all food, not just some, comes from farmers. Correct any assumptions that food magically appears in markets."
+    },
+    "challenge": {
+      "text": "Check participation in group discussion.",
+      "detail": "Monitor pairs to ensure both students are participating in the discussion. Listen for ideas about the impact of farmers stopping work and the variety of local crops. Guide them if they struggle to generate ideas."
+    },
+    "levelSet": {
+      "text": "Verify understanding of farming as a process.",
+      "detail": "Check if students can articulate that farming is a process with multiple steps and tools. Listen for the misconception that all seeds are the same and address it by highlighting different needs of seeds."
+    },
+    "explore": {
+      "text": "Encourage specific observations of local agriculture.",
+      "detail": "Ensure students understand they need to look for specific details (what people are doing, types of crops, water sources) rather than just generally 'looking at fields'. Remind them this is not homework to be checked."
+    }
+  },
+  "materialsUsed": [
+    "empty seed packets",
+    "small stones",
+    "soil samples"
+  ],
+  "pagesCited": [
+    26,
+    27
+  ],
+  "timings": {
+    "concept": 7,
+    "realLife": 4,
+    "challenge": 12,
+    "levelSet": 14,
+    "explore": 5
+  },
+  "topic": "AGRICULTURE - CROPS 2",
+  "subtopic": "",
+  "pageRange": [
+    25,
+    28
+  ],
+  "bookMoves": [
+    {
+      "ord": 1,
+      "type": "observe",
+      "gist": "look at pictures of people working in fields and discuss",
+      "page": 25,
+      "section": "realLife",
+      "fidelity": "staged"
+    },
+    {
+      "ord": 2,
+      "type": "recall",
+      "gist": "reminds that growing crops is agriculture and stages involved",
+      "page": 26,
+      "section": "refresher",
+      "fidelity": "staged"
+    },
+    {
+      "ord": 3,
+      "type": "activity",
+      "gist": "group discussion on impact of farmers stopping cultivation and local crops",
+      "page": 26,
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "What happens if farmers stop cultivation? Who are the people dependent on agriculture? How? What are the different crops grown in your village/city? Do your villagers utilise the entire crop yield produced in your village? What do the farmers do with their yield?"
+    },
+    {
+      "ord": 4,
+      "type": "activity",
+      "gist": "collect details from a nearby farmer about their cultivation practices",
+      "page": 26,
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "Visit nearby farmer and get the following details: 1. Name of the farmer 2. Name of the crop he/she is cultivating at present 3. What is the source of water for field? 4. What are the different equipments/ tools they use? 5. Where do they get the seedlings or seeds from? 6. Name the different fertilisers they use 7. What do they do with the yield? 8. How many acres are being cultivated and what is"
+    },
+    {
+      "ord": 5,
+      "type": "concept",
+      "gist": "introduces the importance of equipment in cultivation",
+      "page": 27,
+      "section": "concept",
+      "fidelity": "faithful"
+    },
+    {
+      "ord": 6,
+      "type": "observe",
+      "gist": "look at pictures of agricultural tools and machinery",
+      "page": 27,
+      "section": "realLife",
+      "fidelity": "staged"
+    },
+    {
+      "ord": 7,
+      "type": "concept",
+      "gist": "explains the evolution of farming tools from plough to modern machinery",
+      "page": 27,
+      "section": "concept",
+      "fidelity": "faithful"
+    },
+    {
+      "ord": 8,
+      "type": "activity",
+      "gist": "group discussion on machinery use, drawing tools, and comparing past/present equipment",
+      "page": 27,
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "Is it good or bad to use machinery for cultivation? Give reasons. Draw the pictures of other tools that farmers use in cultivation. List out the equipment/ tools that farmers used in the past and those being used presently."
+    }
+  ],
+  "_meta": {
+    "masteryTarget": "agriculture is a series of connected steps, each with its own tools and needs",
+    "selectedActivity": "What Does This Chart Not Tell Us?",
+    "activitySource": "library",
+    "selectedContext": "Sports Day Results",
+    "formats": {
+      "refresher": "hands-up recall of the previous object",
+      "realLife": "cricket or playground scene",
+      "challenge": "estimate-then-verify",
+      "levelSet": "partner tick-list self-check",
+      "explore": "spot-the-odd-one-out hunt"
+    },
+    "plannedMinutes": {
+      "refresher": 3,
+      "concept": 7,
+      "realLife": 4,
+      "challenge": 12,
+      "levelSet": 14,
+      "explore": 5
+    },
+    "plannedHook": {
+      "scene": "The class has just finished acting out the steps of farming, and each student is holding an empty seed packet.",
+      "object": "empty seed packets",
+      "question": "Do all these seeds grow into the same food, or do farmers use different seeds for different plants?",
+      "answeredNextLesson": "by comparing different types of seeds and their growing needs"
+    },
+    "plannedBridge": null,
+    "provenance": {
+      "pages": [
+        25,
+        28
+      ],
+      "textbookExcerptChars": 7447,
+      "knowledgeExtracted": {
+        "concepts": 5,
+        "competencies": 16,
+        "vocabulary": 18,
+        "contexts": 12
+      },
+      "canonicalLibraryIdsUsed": {},
+      "canonicalEntriesSeededHere": {},
+      "activity": {
+        "name": "What Does This Chart Not Tell Us?",
+        "source": "library",
+        "id": "99f85f62-495c-4faf-8455-4d4a1b4122af"
+      },
+      "context": "Sports Day Results",
+      "sectionFormats": {
+        "refresher": "hands-up recall of the previous object",
+        "realLife": "cricket or playground scene",
+        "challenge": "estimate-then-verify",
+        "levelSet": "partner tick-list self-check",
+        "explore": "spot-the-odd-one-out hunt"
+      },
+      "plannedMinutes": {
+        "refresher": 3,
+        "concept": 7,
+        "realLife": 4,
+        "challenge": 12,
+        "levelSet": 14,
+        "explore": 5
+      }
+    },
+    "sectionCitations": {
+      "concept": "Textbook, pages 25-28 (context assembly) — concepts: Agriculture, Crop cultivation stages, Interdependence on farmers, Agricultural equipment evolution, Importance of seeds; vocabulary: Agriculture, Cultivation, Ploughing, Harvesting, Tractor, Plough (+12 more). Resolved against the shared canonical library.",
+      "realLife": "Textbook-named context(s) (context assembly): Farmers, Food grains, Vegetables, Fruits, Cotton, Jute (+6 more).",
+      "levelSet": "Free (generation) — the misconception this section is meant to surface: \"Farmers just put seeds in the ground and food grows.\".",
+      "explore": "Free (generation) — planned to open on: \"The class has just finished acting out the steps of farming, and each student is holding an empty seed packet.\".",
+      "refresher": "Built entirely from the previous topic's Explore (planning + generation) — no new textbook or library lookup for this section.",
+      "challenge": "Activity \"What Does This Chart Not Tell Us?\" — Pedagogy Library (activity selection), matched on 0 competenc(ies)."
+    },
+    "teluguReview": "unreviewed-draft",
+    "teluguBulletsApplied": 15,
+    "teluguBulletsTotal": 15
+  },
+  "flexMinutes": 0,
+  "figures": [
+    {
+      "id": "img_c5ch2_06",
+      "page": 25,
+      "caption": "",
+      "path": null
+    },
+    {
+      "id": "img_c5ch2_07",
+      "page": 27,
+      "caption": "A farmer is using a plough pulled by two oxen to till a field. This image shows the traditional method of tilling land.",
+      "path": null
+    },
+    {
+      "id": "img_c5ch2_09",
+      "page": 27,
+      "caption": "A sickle is shown, which is a hand tool with a curved blade and a short handle.",
+      "path": null
+    }
+  ],
+  "figureImages": {
+    "img_c5ch2_07": {
+      "url": "../grade5-evs-ch2-full-pipeline/images/img_c5ch2_07.png",
+      "caption": "A farmer is using a plough pulled by two oxen to till a field. This image shows the traditional method of tilling land."
+    },
+    "img_c5ch2_01": {
+      "url": "../grade5-evs-ch2-full-pipeline/images/img_c5ch2_01.png",
+      "caption": "Several people are working in a field, holding bundles of harvested crops and using a machine to separate the grain from the stalks."
+    },
+    "img_c5ch2_08": {
+      "url": "../grade5-evs-ch2-full-pipeline/images/img_c5ch2_08.png",
+      "caption": "This picture shows a crowbar, which is a tool used in agriculture."
+    }
+  },
+  "sectionImages": {
+    "concept": [
+      "img_c5ch2_07"
+    ],
+    "realLife": [
+      "img_c5ch2_01"
+    ],
+    "challenge": [
+      "img_c5ch2_08"
+    ]
+  }
+}
+  </script>
+  <script type="application/json" id="realrun-4">
+{
+  "index": 2,
+  "teachingOrder": [
+    "refresher",
+    "challenge",
+    "concept",
+    "realLife",
+    "levelSet",
+    "explore"
+  ],
+  "planningNote": "This lesson builds on the previous one by delving into the specifics of seeds and different farming practices. It introduces traditional methods and modern challenges, preparing students to compare various approaches to agriculture.",
+  "objective": "Compare different ways farmers grow crops.",
+  "floor": "Given two different empty seed packets, a child can say that farmers use different kinds of seeds for different crops.",
+  "previousTopicRefresher": {
+    "previousTopic": "AGRICULTURE - CROPS 2",
+    "recap": [
+      {
+        "text": "Recall what farmers do in fields.",
+        "detail": "Ask students to recall what they observed about people working in fields on their way home or in their village. Have them share one action they saw farmers doing. Wait for a few hands to go up and call on 2-3 students.",
+        "detail_te": "విద్యార్థులు ఇంటికి వెళ్ళేటప్పుడు లేదా వాళ్ళ ఊళ్ళో పొలాల్లో పనిచేసే వాళ్ళని చూసింది గుర్తుచేసుకోమని అడగండి. రైతులు చేసే ఒక పనిని చెప్పమనండి. కొద్దిమంది చేతులు పైకి లేపిన తర్వాత 2-3 మంది విద్యార్థులను చెప్పమని అడగండి.",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "Name crops growing in local fields.",
+        "detail": "Ask students to name any crops they identified growing in nearby fields. Have pairs quickly share with each other for 30 seconds. Listen for a variety of responses to gauge their observation skills.",
+        "detail_te": "దగ్గర్లోని పొలాల్లో పండే పంటల పేర్లు చెప్పమని విద్యార్థులను అడగండి. 30 సెకన్ల పాటు ఒకరికొకరు త్వరగా పంచుకోమని జతలకు చెప్పండి. వాళ్ళ పరిశీలనా నైపుణ్యాలను అంచనా వేయడానికి వివిధ రకాల సమాధానాల కోసం వినండి.",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "Identify water sources for farming.",
+        "detail": "Ask students to describe how fields in their area get water. Listen for mentions of borewells or wells, connecting to the idea that water is essential for crops.",
+        "detail_te": "వాళ్ళ ప్రాంతంలోని పొలాలకు నీరు ఎలా వస్తుందో వివరించమని విద్యార్థులను అడగండి. బోరుబావులు లేదా బావుల ప్రస్తావనల కోసం వినండి, నీరు పంటలకు అవసరం అనే ఆలోచనకు దీన్ని కనెక్ట్ చేయండి.",
+        "treatment_te": "cue"
+      }
+    ]
+  },
+  "concept": [
+    {
+      "text": "Farmers choose seeds based on needs.",
+      "detail": "Explain that farmers select seeds carefully, not just picking any seed. Emphasize that different seeds grow into different crops, and each crop has specific needs, just like different clothes are for different weather. (Page 28)",
+      "image": {
+        "url": "/api/textbook-catalog/image/ts_scert_class5_environmental_studies_en/2/img_c5ch2_17",
+        "caption": "A crowd of people, many of them women, are gathered around a vehicle on which two bags of seeds are placed. The bags are labelled \"SEED\"."
+      },
+      "detail_te": "రైతులు కేవలం ఏ విత్తనాన్ని పడితే ఆ విత్తనాన్ని తీసుకోకుండా, జాగ్రత్తగా విత్తనాలను ఎంచుకుంటారని వివరించండి. వేర్వేరు విత్తనాలు వేర్వేరు పంటలుగా పెరుగుతాయని, ప్రతి పంటకు నిర్దిష్ట అవసరాలు ఉంటాయని నొక్కి చెప్పండి, సరిగ్గా వేర్వేరు దుస్తులు వేర్వేరు వాతావరణానికి ఎలాగో అలాగే. (పేజీ 28)",
+      "treatment_te": "cue"
+    },
+    {
+      "text": "Some seeds grow fast, others need less water.",
+      "detail": "Discuss how some seeds, like High Yielding Varieties (HYV), grow quickly and produce a lot but need more water and care. Others, like traditional seeds, might grow slower but need less water and are hardier. (Page 28)",
+      "detail_te": "కొన్ని విత్తనాలు, 'High Yielding Varieties' (HYV) వంటివి, త్వరగా పెరిగి ఎక్కువ దిగుబడిని ఇస్తాయని, కానీ వాటికి ఎక్కువ నీరు, సంరక్షణ అవసరమని చర్చించండి. సాంప్రదాయ విత్తనాలు వంటివి నెమ్మదిగా పెరగవచ్చు కానీ తక్కువ నీరు అవసరం మరియు మరింత దృఢంగా ఉంటాయి. (పేజీ 28)",
+      "treatment_te": "cue"
+    },
+    {
+      "text": "Traditional seed sharing helped farmers.",
+      "detail": "Introduce the concept of 'Nagulu' (Page 28). Explain that in the past, farmers would borrow seeds from neighbors and return more after harvest, ensuring everyone had seeds without depending on markets. This was a way of helping each other.",
+      "detail_te": "'నాగులు' (పేజీ 28) అనే భావనను పరిచయం చేయండి. గతంలో, రైతులు పొరుగువారి నుండి విత్తనాలను అప్పుగా తీసుకొని, పంట కోసిన తర్వాత ఎక్కువ తిరిగి ఇచ్చేవారని వివరించండి, తద్వారా మార్కెట్లపై ఆధారపడకుండా అందరికీ విత్తనాలు ఉండేవి. ఇది ఒకరికొకరు సహాయం చేసుకునే మార్గం.",
+      "treatment_te": "cue"
+    }
+  ],
+  "realLife": {
+    "points": [
+      {
+        "text": "Ramulu's story: good crop, poor yield.",
+        "detail": "Read the story of Ramulu buying cotton seeds (Page 28). Ask students to think about why his crop was good but the yield was not. Explain that sometimes seeds from the market can be 'substandard' and not grow well, even if the plant looks healthy.",
+        "image": {
+          "url": "/api/textbook-catalog/image/ts_scert_class5_environmental_studies_en/2/img_c5ch2_18",
+          "caption": "A large number of white chickens are gathered in a poultry farm, with feeders visible in the background."
+        },
+        "detail_te": "రాములు పత్తి విత్తనాలు కొన్న కథను (పేజీ 28) చదవండి. అతని పంట బాగా ఉన్నా దిగుబడి ఎందుకు రాలేదని ఆలోచించమని విద్యార్థులను అడగండి. కొన్నిసార్లు మార్కెట్ నుండి వచ్చే విత్తనాలు 'substandard' అయి ఉండవచ్చని, మొక్క ఆరోగ్యంగా కనిపించినా సరిగ్గా పెరగకపోవచ్చని వివరించండి.",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "Crowds for seeds show farmer dependence.",
+        "detail": "Point to the picture of people in queues for seeds (img_c5ch2_17). Explain that this crowd shows how many farmers depend on markets for seeds now, rather than saving their own. This can lead to shortages and problems if seeds are not good quality. (Page 28)",
+        "detail_te": "విత్తనాల కోసం క్యూలలో ఉన్న ప్రజల చిత్రాన్ని (img_c5ch2_17) చూపండి. ఈ గుంపు ఇప్పుడు ఎంతమంది రైతులు తమ సొంత విత్తనాలను నిల్వ చేసుకోకుండా మార్కెట్లపై ఆధారపడుతున్నారో చూపిస్తుందని వివరించండి. విత్తనాలు మంచి నాణ్యత లేకపోతే ఇది కొరతకు మరియు సమస్యలకు దారితీయవచ్చు. (పేజీ 28)",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "Local crops vary by village/city.",
+        "detail": "Ask students to name crops grown in their village or city. Explain that different places grow different crops depending on the soil, water, and weather, just like some regions are known for rice and others for wheat.",
+        "detail_te": "వాళ్ళ గ్రామంలో లేదా నగరంలో పండించే పంటల పేర్లు చెప్పమని విద్యార్థులను అడగండి. నేల, నీరు మరియు వాతావరణాన్ని బట్టి వేర్వేరు ప్రదేశాలలో వేర్వేరు పంటలు పండుతాయని వివరించండి, కొన్ని ప్రాంతాలు వరి కోసం, మరికొన్ని గోధుమల కోసం ప్రసిద్ధి చెందినట్లుగా.",
+        "treatment_te": "cue"
+      }
+    ]
+  },
+  "challenge": {
+    "activity": "Group discussion questions about crop yield, seed shortages,",
+    "points": [
+      {
+        "text": "PLAY: Discuss reasons for poor yield and seed problems.",
+        "detail": "Divide the class into pairs. Ask each pair to choose ONE of these questions from the textbook to discuss: 'What could be the reason for Ramulu not getting a good yield?' OR 'Why is there a shortage of seeds?' (Page 28). Give them 5 minutes to discuss and note down their ideas.",
+        "detail_te": "తరగతిని జతలుగా విభజించండి. పాఠ్యపుస్తకం నుండి ఈ ప్రశ్నలలో ఒకదాన్ని చర్చించడానికి ప్రతి జతను ఎంచుకోమని అడగండి: 'రాములుకు మంచి దిగుబడి రాకపోవడానికి కారణం ఏమిటి?' లేదా 'విత్తనాల కొరత ఎందుకు ఉంది?' (పేజీ 28). చర్చించడానికి మరియు వారి ఆలోచనలను వ్రాసుకోవడానికి వారికి 5 నిమిషాలు ఇవ్వండి.",
+        "treatment_te": "full"
+      },
+      {
+        "text": "REFLECT: Share chosen problem and ideas.",
+        "detail": "Bring the class back together. Ask a few pairs to share which question they chose and what they discussed. Encourage them to explain their reasoning briefly. Allow 2 minutes for sharing, focusing on their chosen problem.",
+        "detail_te": "తరగతిని తిరిగి ఒకచోట చేర్చండి. కొన్ని జతలను వారు ఏ ప్రశ్నను ఎంచుకున్నారో మరియు వారు ఏమి చర్చించారో పంచుకోమని అడగండి. వారి తార్కికతను క్లుప్తంగా వివరించమని ప్రోత్సహించండి. వారి ఎంచుకున్న సమస్యపై దృష్టి సారించి, పంచుకోవడానికి 2 నిమిషాలు అనుమతించండి.",
+        "treatment_te": "full"
+      },
+      {
+        "text": "ACT: Explain how farmers got seeds in the past.",
+        "detail": "Ask pairs to discuss how farmers got seeds in the past. Explain that farmers used to preserve good quality seeds from their own harvest or borrow through 'Nagulu' (Page 28). This is like how we save seeds from a good brinjal to plant next season, instead of buying new ones every time.",
+        "detail_te": "గతంలో రైతులు విత్తనాలను ఎలా పొందేవారో చర్చించమని జతలను అడగండి. రైతులు గతంలో తమ సొంత పంట నుండి మంచి నాణ్యత గల విత్తనాలను నిల్వ చేసుకునేవారని లేదా 'నాగులు' (పేజీ 28) ద్వారా అప్పుగా తీసుకునేవారని వివరించండి. ఇది మనం ప్రతిసారీ కొత్తవి కొనే బదులు, తదుపరి సీజన్‌లో నాటడానికి మంచి వంకాయ నుండి విత్తనాలను ఎలా నిల్వ చేసుకుంటామో అలాగే.",
+        "treatment_te": "full"
+      }
+    ]
+  },
+  "levelSet": {
+    "points": [
+      {
+        "text": "Seeds are chosen for specific needs.",
+        "detail": "Recap that farmers choose seeds based on what they need and what is available, not just any seed. Ask pairs to discuss if all seeds are the same and grow the same way. If a child thinks they are, ask them to consider if a mango tree grows from a rice grain.",
+        "detail_te": "రైతులు కేవలం ఏ విత్తనాన్ని పడితే ఆ విత్తనాన్ని కాకుండా, తమకు అవసరమైన వాటిని మరియు అందుబాటులో ఉన్న వాటిని బట్టి విత్తనాలను ఎంచుకుంటారని తిరిగి చెప్పండి. అన్ని విత్తనాలు ఒకేలా ఉంటాయా మరియు ఒకే విధంగా పెరుగుతాయా అని చర్చించమని జతలను అడగండి. ఒక పిల్లవాడు అలా అనుకుంటే, మామిడి చెట్టు వరి ధాన్యం నుండి పెరుగుతుందా అని ఆలోచించమని అడగండి.",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "Identify different crops and their needs.",
+        "detail": "Have students turn to a partner and name two different crops and one thing each needs to grow well (e.g., water, sunlight, good soil). Give them 30 seconds to share their ideas.",
+        "detail_te": "విద్యార్థులు ఒక భాగస్వామితో కలిసి రెండు వేర్వేరు పంటల పేర్లు మరియు ప్రతి పంట బాగా పెరగడానికి అవసరమైన ఒక విషయాన్ని (ఉదాహరణకు, నీరు, సూర్యరశ్మి, మంచి నేల) చెప్పమని చెప్పండి. వారి ఆలోచనలను పంచుకోవడానికి వారికి 30 సెకన్లు ఇవ్వండి.",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "Look for different seeds at home.",
+        "detail": "Invite students to look for different types of seeds at home or in their kitchen (e.g., rice, dal, mustard seeds). Ask them to notice how they are different in size, shape, and color, and to think about what kind of plant each might grow into.",
+        "detail_te": "విద్యార్థులు ఇంట్లో లేదా వారి వంటగదిలో వేర్వేరు రకాల విత్తనాల కోసం చూడమని ఆహ్వానించండి (ఉదాహరణకు, బియ్యం, పప్పు, ఆవాలు). అవి పరిమాణం, ఆకారం మరియు రంగులో ఎలా విభిన్నంగా ఉన్నాయో గమనించమని మరియు ప్రతి ఒక్కటి ఏ రకమైన మొక్కగా మారవచ్చో ఆలోచించమని అడగండి.",
+        "treatment_te": "cue"
+      }
+    ]
+  },
+  "explore": {
+    "points": [
+      {
+        "text": "Observe different types of crops.",
+        "detail": "Tell students to observe different types of crops they see growing in fields or being sold in the market. Ask them to notice if some crops look like they need more water than others.",
+        "detail_te": "పొలాల్లో లేదా మార్కెట్‌లో కనిపించే వివిధ రకాల పంటలను గమనించమని విద్యార్థులకు చెప్పండి. కొన్ని పంటలకు ఇతరులకన్నా ఎక్కువ నీరు అవసరమని అనిపిస్తుందో లేదో గమనించమని వారిని అడగండి.",
+        "treatment_te": "full"
+      },
+      {
+        "text": "Ask about seed sources in their village.",
+        "detail": "Tell students to ask an elder or a farmer in their village where they get their seeds from. Ask them to listen if the farmer saves seeds or buys them from the market.",
+        "detail_te": "తమ గ్రామంలోని పెద్దవారిని లేదా రైతును వారు విత్తనాలను ఎక్కడ నుండి పొందుతారో అడగమని విద్యార్థులకు చెప్పండి. రైతు విత్తనాలను నిల్వ చేసుకుంటాడా లేదా మార్కెట్ నుండి కొంటాడా అని వినమని వారిని అడగండి.",
+        "treatment_te": "full"
+      },
+      {
+        "text": "Notice how different crops are grown.",
+        "detail": "Tell students to look at how different crops are planted. Ask them to notice if some are planted in straight rows, or if different plants are grown together in the same field.",
+        "detail_te": "వివిధ పంటలను ఎలా నాటుతారో గమనించమని విద్యార్థులకు చెప్పండి. కొన్ని వరుసలలో నాటుతారా, లేదా ఒకే పొలంలో వేర్వేరు మొక్కలను కలిసి పెంచుతారా అని గమనించమని వారిని అడగండి.",
+        "treatment_te": "full"
+      }
+    ],
+    "imageFocus": "different crops"
+  },
+  "sectionWatch": {
+    "refresher": {
+      "text": "Check for specific observations from Explore.",
+      "detail": "Ensure students are recalling specific observations from the previous Explore, not just general ideas. Prompt them to remember details like 'what tools were used' or 'which crops were seen'."
+    },
+    "concept": {
+      "text": "Clarify difference between HYV and traditional seeds.",
+      "detail": "Watch for confusion between HYV and traditional seeds. Emphasize that HYV often means higher yield but also higher resource needs, while traditional seeds might be more resilient with fewer inputs."
+    },
+    "realLife": {
+      "text": "Connect textbook examples to local context.",
+      "detail": "Observe if students can relate Ramulu's story and the seed crowd to potential issues in their own community. Encourage them to think about their local farmers' challenges."
+    },
+    "challenge": {
+      "text": "Ensure balanced discussion in pairs.",
+      "detail": "Monitor that both partners are contributing to the discussion. Guide pairs to think beyond just 'bad seeds' for Ramulu's problem, considering other factors like soil or water. Ensure they understand the concept of 'Nagulu'."
+    },
+    "levelSet": {
+      "text": "Confirm understanding of seed diversity.",
+      "detail": "Check if students recognize that different seeds lead to different crops with varied needs. Address any lingering belief that all seeds are interchangeable or have identical growth requirements."
+    },
+    "explore": {
+      "text": "Encourage detailed observation of farming practices.",
+      "detail": "Emphasize looking for 'how' crops are grown (e.g., rows, mixed) and 'where' seeds come from, rather than just identifying crops. Remind them this is for personal observation, not a graded task."
+    }
+  },
+  "materialsUsed": [
+    "pictures of different crops"
+  ],
+  "pagesCited": [
+    28
+  ],
+  "timings": {
+    "refresher": 4,
+    "concept": 6,
+    "realLife": 8,
+    "challenge": 10,
+    "levelSet": 12,
+    "explore": 5
+  },
+  "topic": "Group work",
+  "subtopic": "",
+  "pageRange": [
+    28,
+    30
+  ],
+  "bookMoves": [
+    {
+      "ord": 1,
+      "type": "activity",
+      "gist": "group discussion questions about crop yield, seed shortages, and farmer problems",
+      "page": 28,
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "What could be the reason for Ramulu not getting a good yield? What is the reason for the crowd in the picture? Why did it happen? Why is there a shortage of seeds? What are the other problems that the farmers face? How did the farmers get the seeds in the past? Where do farmers of your village get seeds from?"
+    },
+    {
+      "ord": 2,
+      "type": "concept",
+      "gist": "explains issues with substandard seeds and farmers' dependence on markets",
+      "page": 28,
+      "section": "concept",
+      "fidelity": "faithful"
+    },
+    {
+      "ord": 3,
+      "type": "definition",
+      "gist": "defines 'Nagulu' as a traditional seed borrowing and returning method",
+      "page": 28,
+      "section": "concept",
+      "fidelity": "faithful"
+    },
+    {
+      "ord": 4,
+      "type": "concept",
+      "gist": "informs about the loss of traditional crop varieties and seed preservation efforts",
+      "page": 28,
+      "section": "concept",
+      "fidelity": "faithful"
+    },
+    {
+      "ord": 5,
+      "type": "activity",
+      "gist": "think and say questions about avoiding seed dependence and naming crop varieties",
+      "page": 28,
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "What can the farmers do to avoid dependence on the government or market for seeds? Name some varieties of rice you know. Name the famous varieties of mango."
+    },
+    {
+      "ord": 6,
+      "type": "hook",
+      "gist": "introduces Mallesham's sustained farming practices as an example",
+      "page": 29,
+      "section": "realLife",
+      "fidelity": "staged"
+    },
+    {
+      "ord": 7,
+      "type": "definition",
+      "gist": "defines intercropping as growing multiple crops in the same place and time",
+      "page": 29,
+      "section": "concept",
+      "fidelity": "faithful"
+    },
+    {
+      "ord": 8,
+      "type": "concept",
+      "gist": "explains Mallesham's use of organic fertilizers and pesticides like Panchagavya",
+      "page": 29,
+      "section": "concept",
+      "fidelity": "faithful"
+    }
+  ],
+  "_meta": {
+    "masteryTarget": "farmers choose seeds based on what they need and what is available",
+    "selectedActivity": "Everything on Mallesham's Farm Is Connected",
+    "activitySource": "library",
+    "selectedContext": "Village",
+    "formats": {
+      "refresher": "partner re-tell in one breath",
+      "realLife": "farm or field scene",
+      "challenge": "team relay at the board",
+      "levelSet": "one-thing-I-can-now-do share",
+      "explore": "measure-something-outside dare"
+    },
+    "plannedMinutes": {
+      "refresher": 4,
+      "concept": 6,
+      "realLife": 8,
+      "challenge": 10,
+      "levelSet": 12,
+      "explore": 5
+    },
+    "plannedHook": {
+      "scene": "The class has just discussed how different crops need different care, and each student is looking at pictures of various crops.",
+      "object": "pictures of different crops",
+      "question": "If farmers grow crops in different ways, does that change the land they grow on?",
+      "answeredNextLesson": "by examining how farming practices affect soil health"
+    },
+    "plannedBridge": null,
+    "provenance": {
+      "pages": [
+        28,
+        30
+      ],
+      "textbookExcerptChars": 7663,
+      "knowledgeExtracted": {
+        "concepts": 9,
+        "competencies": 7,
+        "vocabulary": 16,
+        "contexts": 31
+      },
+      "canonicalLibraryIdsUsed": {},
+      "canonicalEntriesSeededHere": {},
+      "activity": {
+        "name": "Everything on Mallesham's Farm Is Connected",
+        "source": "library",
+        "id": "46f1cc79-f227-4833-adec-e3837c2f16e2"
+      },
+      "context": "Village",
+      "sectionFormats": {
+        "refresher": "partner re-tell in one breath",
+        "realLife": "farm or field scene",
+        "challenge": "team relay at the board",
+        "levelSet": "one-thing-I-can-now-do share",
+        "explore": "measure-something-outside dare"
+      },
+      "plannedMinutes": {
+        "refresher": 4,
+        "concept": 6,
+        "realLife": 8,
+        "challenge": 10,
+        "levelSet": 12,
+        "explore": 5
+      }
+    },
+    "sectionCitations": {
+      "concept": "Textbook, pages 28-30 (context assembly) — concepts: Traditional seed preservation, High Yielding Varieties (HYV), Seed dependence on market, Sustainable farming, Intercropping, Organic farming (+3 more); vocabulary: Nagulu, High Yielding Varieties, National Bureau of Plant Genetics, Sustainable Farming, Intercropping, Compost (+10 more). Resolved against the shared canonical library.",
+      "realLife": "Textbook-named context(s) (context assembly): Ramulu (farmer), Seeds, Rice varieties, Mango varieties, Brinjal varieties, Mallesham (farmer) (+25 more).",
+      "levelSet": "Free (generation) — the misconception this section is meant to surface: \"All seeds are the same and grow the same way.\".",
+      "explore": "Free (generation) — planned to open on: \"The class has just discussed how different crops need different care, and each student is looking at pictures of various crops.\".",
+      "refresher": "Built entirely from the previous topic's Explore (planning + generation) — no new textbook or library lookup for this section.",
+      "challenge": "Activity \"Everything on Mallesham's Farm Is Connected\" — Pedagogy Library (activity selection), matched on 0 competenc(ies)."
+    },
+    "teluguReview": "unreviewed-draft",
+    "teluguBulletsApplied": 18,
+    "teluguBulletsTotal": 18
+  },
+  "flexMinutes": 0,
+  "figures": [
+    {
+      "id": "img_c5ch2_17",
+      "page": 28,
+      "caption": "A crowd of people, many of them women, are gathered around a vehicle on which two bags of seeds are placed. The bags are labelled \"SEED\".",
+      "path": null
+    }
+  ],
+  "figureImages": {
+    "img_c5ch2_17": {
+      "url": "../grade5-evs-ch2-full-pipeline/images/img_c5ch2_17.png",
+      "caption": "A crowd of people, many of them women, are gathered around a vehicle on which two bags of seeds are placed. The bags are labelled \"SEED\"."
+    },
+    "img_c5ch2_18": {
+      "url": "../grade5-evs-ch2-full-pipeline/images/img_c5ch2_18.png",
+      "caption": "A large number of white chickens are gathered in a poultry farm, with feeders visible in the background."
+    }
+  },
+  "sectionImages": {
+    "concept": [
+      "img_c5ch2_17"
+    ],
+    "realLife": [
+      "img_c5ch2_18"
+    ]
+  }
+}
+  </script>
+  <script type="application/json" id="realrun-5">
+{
+  "index": 3,
+  "teachingOrder": [
+    "refresher",
+    "realLife",
+    "concept",
+    "challenge",
+    "levelSet",
+    "explore"
+  ],
+  "planningNote": "This lesson focuses on sustainable and traditional farming methods, contrasting them with modern practices and their environmental impact. It highlights the benefits of organic approaches and the role of women farmers.",
+  "objective": "Explain how traditional farming helps the earth.",
+  "floor": "Given two different soil samples, a child can say that one looks healthier for growing plants than the other, without needing to explain why.",
+  "previousTopicRefresher": {
+    "previousTopic": "Group work",
+    "recap": [
+      {
+        "text": "Share observations on crop growth.",
+        "detail": "Ask students to share one thing they noticed about how different crops are grown in their village or nearby fields. Allow a few students to share their observations aloud. Wait for 1-2 minutes.",
+        "detail_te": "విద్యార్థులను వారి గ్రామంలో లేదా సమీప పొలాల్లో వివిధ పంటలను ఎలా పండిస్తున్నారో గమనించిన ఒక విషయాన్ని పంచుకోమని అడగండి. కొద్దిమంది విద్యార్థులను వారి పరిశీలనలను బిగ్గరగా పంచుకోవడానికి అనుమతించండి. 1-2 నిమిషాలు వేచి ఉండండి.",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "Recall where farmers get seeds.",
+        "detail": "Ask students what they learned about where farmers in their village get their seeds from. Have them discuss in pairs for 30 seconds, then call on one or two pairs to share.",
+        "detail_te": "రైతులు తమ విత్తనాలను ఎక్కడ నుండి పొందుతారో వారు ఏమి నేర్చుకున్నారో విద్యార్థులను అడగండి. 30 సెకన్ల పాటు జంటలుగా చర్చించమని చెప్పండి, ఆపై ఒకటి లేదా రెండు జంటలను పంచుకోమని పిలవండి.",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "Discuss different crop needs.",
+        "detail": "Ask students to recall how different crops might have different needs, like water or soil. Listen for examples of crops they observed and what they thought those crops needed.",
+        "detail_te": "వివిధ పంటలకు నీరు లేదా నేల వంటి విభిన్న అవసరాలు ఎలా ఉంటాయో గుర్తుచేసుకోమని విద్యార్థులను అడగండి. వారు గమనించిన పంటల ఉదాహరణలు మరియు ఆ పంటలకు ఏమి అవసరమని వారు భావించారో వినండి.",
+        "treatment_te": "cue"
+      }
+    ]
+  },
+  "concept": [
+    {
+      "text": "Traditional farming uses natural methods.",
+      "detail": "Explain that traditional farming means using natural ways to grow crops, like preparing bio-fertilisers from cow dung and neem leaves instead of artificial chemicals. This is like using homemade remedies instead of store-bought medicines. (Page 30)",
+      "image": {
+        "url": "/api/textbook-catalog/image/ts_scert_class5_environmental_studies_en/2/img_c5ch2_20",
+        "caption": "Gangawar Manemma, a woman farmer, is shown standing in a field of jowar plants. She is holding a stalk of jowar in her hand."
+      },
+      "detail_te": "సాంప్రదాయ వ్యవసాయం అంటే పంటలను పండించడానికి సహజ పద్ధతులను ఉపయోగించడం అని వివరించండి, ఉదాహరణకు కృత్రిమ రసాయనాలకు బదులుగా ఆవు పేడ మరియు వేప ఆకుల నుండి సేంద్రీయ ఎరువులను తయారు చేయడం. ఇది దుకాణంలో కొన్న మందులకు బదులుగా ఇంట్లో తయారుచేసిన నివారణలను ఉపయోగించడం లాంటిది. (Page 30)",
+      "treatment_te": "cue"
+    },
+    {
+      "text": "Bio-pesticides are safer than chemical ones.",
+      "detail": "Introduce bio-pesticides as natural ways to keep insects away from crops, using things like neem oil or garlic. Contrast this with chemical pesticides, which can harm people and helpful insects. (Page 31)",
+      "detail_te": "పంటల నుండి కీటకాలను దూరంగా ఉంచడానికి వేప నూనె లేదా వెల్లుల్లి వంటి వాటిని ఉపయోగించి, bio-pesticides సహజ మార్గాలని పరిచయం చేయండి. రసాయన పురుగుమందులతో దీనిని పోల్చండి, అవి ప్రజలకు మరియు సహాయపడే కీటకాలకు హానికరంగా ఉంటాయి. (Page 31)",
+      "treatment_te": "cue"
+    },
+    {
+      "text": "Healthy soil grows healthy food.",
+      "detail": "Explain that traditional farming helps keep the soil healthy and fertile over time. Demonstrate with two soil samples: one dark and crumbly (healthy), one sandy and light (depleted), explaining that healthy soil leads to better, safer food. (Page 32)",
+      "detail_te": "సాంప్రదాయ వ్యవసాయం నేలను కాలక్రమేణా ఆరోగ్యంగా మరియు సారవంతంగా ఉంచడంలో సహాయపడుతుందని వివరించండి. రెండు నేల నమూనాలతో ప్రదర్శించండి: ఒకటి ముదురు మరియు పొడిపొడిగా (ఆరోగ్యకరమైనది), ఒకటి ఇసుకతో కూడినది మరియు తేలికైనది (క్షీణించినది), ఆరోగ్యకరమైన నేల మంచి, సురక్షితమైన ఆహారానికి దారితీస్తుందని వివరించండి. (Page 32)",
+      "treatment_te": "cue"
+    }
+  ],
+  "realLife": {
+    "points": [
+      {
+        "text": "Manemma's success with traditional farming.",
+        "detail": "Tell the story of Gangawar Manemma (Page 30), a woman farmer who used traditional methods like bio-fertilisers and mixed cropping to make her barren land fertile. Explain that her success shows how these methods can work.",
+        "image": {
+          "url": "/api/textbook-catalog/image/ts_scert_class5_environmental_studies_en/2/img_c5ch2_21",
+          "caption": "Two farmers are spraying pesticides on crops in a field. They are wearing protective masks and carrying tanks of pesticide on their backs."
+        },
+        "detail_te": "గంగావర్ మనేమ్మ (Page 30) అనే మహిళా రైతు కథను చెప్పండి, ఆమె తన బీడు భూమిని సారవంతం చేయడానికి bio-fertilisers మరియు mixed cropping వంటి సాంప్రదాయ పద్ధతులను ఉపయోగించింది. ఆమె విజయం ఈ పద్ధతులు ఎలా పని చేస్తాయో చూపిస్తుందని వివరించండి.",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "Washing fruits removes harmful chemicals.",
+        "detail": "Discuss Vasantha's story (Page 31) about washing grapes. Explain that fruits and vegetables must be washed because farmers might use chemical pesticides that can be harmful if eaten. This is why we wash our hands before eating.",
+        "detail_te": "ద్రాక్ష కడగడం గురించి వసంత కథ (Page 31) చర్చించండి. పండ్లు మరియు కూరగాయలను కడగాలి ఎందుకంటే రైతులు రసాయన పురుగుమందులను ఉపయోగించవచ్చు, అవి తింటే హానికరం కావచ్చు. అందుకే మనం తినడానికి ముందు చేతులు కడుక్కుంటాము.",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "Different crops grow in different regions.",
+        "detail": "Point to the map of Telangana (img_c5ch2_22) and explain that different districts grow different crops like rice, jowar, or cotton. This is because each crop needs specific weather and soil conditions to grow well. (Page 33)",
+        "detail_te": "తెలంగాణ మ్యాప్ (img_c5ch2_22) వైపు చూపించి, వివిధ జిల్లాల్లో వరి, జొన్న లేదా పత్తి వంటి వివిధ పంటలు పండుతాయని వివరించండి. ఎందుకంటే ప్రతి పంటకు బాగా పెరగడానికి నిర్దిష్ట వాతావరణం మరియు నేల పరిస్థితులు అవసరం. (Page 33)",
+        "treatment_te": "cue"
+      }
+    ]
+  },
+  "challenge": {
+    "activity": "Group discussion on Manemma's good practices and the help",
+    "points": [
+      {
+        "text": "PLAY: Discuss Manemma's good farming practices.",
+        "detail": "Divide the class into pairs. Ask each pair to discuss ONE of these questions from the textbook: 'What good practices of cultivations did Manemma follow?' OR 'Should we appreciate Manemma? Why?' (Page 31). Give them 5 minutes to discuss and write down key points.",
+        "detail_te": "తరగతిని జంటలుగా విభజించండి. పాఠ్యపుస్తకం నుండి ఈ ప్రశ్నలలో ఒకదానిని చర్చించమని ప్రతి జంటను అడగండి: 'మనేమ్మ అనుసరించిన మంచి సాగు పద్ధతులు ఏమిటి?' లేదా 'మనం మనేమ్మను అభినందించాలా? ఎందుకు?' (Page 31). చర్చించడానికి మరియు ముఖ్యమైన అంశాలను వ్రాయడానికి వారికి 5 నిమిషాలు ఇవ్వండి.",
+        "treatment_te": "full"
+      },
+      {
+        "text": "REFLECT: Share Manemma's practices and reasons.",
+        "detail": "Bring the class back together. Ask a few pairs to share which question they chose and what good practices they identified or why they think Manemma should be appreciated. Allow 2 minutes for sharing.",
+        "detail_te": "తరగతిని తిరిగి ఒకచోట చేర్చండి. కొన్ని జంటలను వారు ఏ ప్రశ్నను ఎంచుకున్నారో మరియు వారు గుర్తించిన మంచి పద్ధతులు ఏమిటో లేదా మనేమ్మను ఎందుకు అభినందించాలో పంచుకోమని అడగండి. పంచుకోవడానికి 2 నిమిషాలు అనుమతించండి.",
+        "treatment_te": "full"
+      },
+      {
+        "text": "ACT: Identify who helped Manemma and how.",
+        "detail": "Ask pairs to discuss who helped Manemma and how. Explain that the Deccan Development Society (DDS) helped her by providing seeds and knowledge about traditional farming (Page 31). This is like how a teacher helps students learn new things.",
+        "detail_te": "మనేమ్మకు ఎవరు సహాయం చేసారు మరియు ఎలా సహాయం చేసారు అని చర్చించమని జంటలను అడగండి. Deccan Development Society (DDS) ఆమెకు విత్తనాలు మరియు సాంప్రదాయ వ్యవసాయం గురించి జ్ఞానాన్ని అందించడం ద్వారా సహాయం చేసిందని వివరించండి (Page 31). ఇది ఒక ఉపాధ్యాయుడు విద్యార్థులకు కొత్త విషయాలు నేర్చుకోవడానికి ఎలా సహాయం చేస్తారో అలా ఉంటుంది.",
+        "treatment_te": "full"
+      }
+    ]
+  },
+  "levelSet": {
+    "points": [
+      {
+        "text": "Traditional farming helps soil and yield.",
+        "detail": "Recap that traditional farming methods can improve soil health and yield with fewer resources. Ask pairs to discuss if more food always means better food for everyone. If a child thinks it does, ask them to consider if food grown with many chemicals is as good as natural food.",
+        "detail_te": "సాంప్రదాయ వ్యవసాయ పద్ధతులు తక్కువ వనరులతో నేల ఆరోగ్యాన్ని మరియు దిగుబడిని మెరుగుపరుస్తాయని పునరావృతం చేయండి. ఎక్కువ ఆహారం ఎల్లప్పుడూ అందరికీ మంచి ఆహారం అవుతుందా అని చర్చించమని జంటలను అడగండి. ఒక పిల్లవాడు అలా అనుకుంటే, చాలా రసాయనాలతో పండించిన ఆహారం సహజ ఆహారం వలె మంచిదా అని ఆలోచించమని వారిని అడగండి.",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "Share one benefit of traditional farming.",
+        "detail": "Have students turn to a partner and share one benefit of traditional farming that they found interesting today. Give them 30 seconds to share with each other, focusing on positive impacts.",
+        "detail_te": "విద్యార్థులు ఒక భాగస్వామి వైపు తిరిగి, ఈ రోజు వారికి ఆసక్తికరంగా అనిపించిన సాంప్రదాయ వ్యవసాయం యొక్క ఒక ప్రయోజనాన్ని పంచుకోమని చెప్పండి. సానుకూల ప్రభావాలపై దృష్టి సారించి, ఒకరితో ఒకరు పంచుకోవడానికి వారికి 30 సెకన్లు ఇవ్వండి.",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "Find examples of natural fertilizers.",
+        "detail": "On the way home or at home, invite students to look for natural things that could be used to make soil healthy, like fallen leaves, cow dung, or ash. Ask them to think about how these things could help plants grow.",
+        "detail_te": "ఇంటికి వెళ్లేటప్పుడు లేదా ఇంట్లో, నేల ఆరోగ్యంగా ఉండటానికి ఉపయోగపడే సహజ వస్తువుల కోసం చూడమని విద్యార్థులను ఆహ్వానించండి, ఉదాహరణకు రాలిన ఆకులు, ఆవు పేడ లేదా బూడిద. ఈ వస్తువులు మొక్కలు పెరగడానికి ఎలా సహాయపడతాయో ఆలోచించమని వారిని అడగండి.",
+        "treatment_te": "cue"
+      }
+    ]
+  },
+  "explore": {
+    "points": [
+      {
+        "text": "Notice different ways fields are managed.",
+        "detail": "Tell students to observe fields and notice if farmers are growing only one type of crop or many different crops together (mixed cropping). Ask them to think about why a farmer might choose one way over another.",
+        "detail_te": "పొలాలను ఎలా నిర్వహిస్తున్నారో గమనించమని విద్యార్థులకు చెప్పండి, రైతులు ఒకే రకమైన పంటను పండిస్తున్నారా లేదా అనేక విభిన్న పంటలను కలిపి (mixed cropping) పండిస్తున్నారా అని చూడండి. ఒక రైతు ఒక పద్ధతిని ఎందుకు ఎంచుకోవచ్చో ఆలోచించమని వారిని అడగండి.",
+        "treatment_te": "full"
+      },
+      {
+        "text": "Identify natural materials used in farming.",
+        "detail": "Tell students to look for natural materials farmers might use around their fields, like neem leaves, cow dung, or compost pits. Ask them to consider how these materials might be helping the crops.",
+        "detail_te": "రైతులు తమ పొలాల చుట్టూ ఉపయోగించే సహజ వస్తువుల కోసం చూడమని విద్యార్థులకు చెప్పండి, ఉదాహరణకు వేప ఆకులు, ఆవు పేడ లేదా కంపోస్ట్ గుంటలు. ఈ వస్తువులు పంటలకు ఎలా సహాయపడతాయో ఆలోచించమని వారిని అడగండి.",
+        "treatment_te": "full"
+      },
+      {
+        "text": "Ask about pesticide use in local farms.",
+        "detail": "Tell students to ask an elder or a farmer if they use pesticides, and if so, what kind (chemical or natural). Ask them to listen for reasons why farmers choose certain pesticides.",
+        "detail_te": "పెద్దవారిని లేదా రైతును పురుగుమందులు ఉపయోగిస్తున్నారా అని అడగమని విద్యార్థులకు చెప్పండి, ఉపయోగిస్తే, ఏ రకమైనవి (రసాయన లేదా సహజ) అని అడగండి. రైతులు కొన్ని పురుగుమందులను ఎందుకు ఎంచుకుంటారో కారణాల కోసం వినమని వారిని అడగండి.",
+        "treatment_te": "full"
+      }
+    ],
+    "imageFocus": "Gangawar Manemma in a field"
+  },
+  "sectionWatch": {
+    "refresher": {
+      "text": "Ensure specific recall of previous Explore.",
+      "detail": "Watch for students giving vague answers. Prompt them to recall specific observations from the previous Explore, such as 'what kinds of seeds did farmers get?' or 'how were fields watered?'."
+    },
+    "concept": {
+      "text": "Distinguish between chemical and bio-pesticides.",
+      "detail": "Observe if students clearly understand the difference between chemical and bio-pesticides, and the implications of each. Emphasize the long-term benefits of healthy soil from traditional methods."
+    },
+    "realLife": {
+      "text": "Connect Manemma's story to traditional practices.",
+      "detail": "Check if students understand that Manemma's success is linked to her traditional farming practices. Ensure they grasp the importance of washing produce due to pesticide use."
+    },
+    "challenge": {
+      "text": "Guide discussion on Manemma's choices.",
+      "detail": "Monitor discussions to ensure students are focusing on Manemma's specific practices and the role of support systems. Encourage them to articulate 'why' her practices were good or why she should be appreciated."
+    },
+    "levelSet": {
+      "text": "Verify understanding of traditional farming benefits.",
+      "detail": "Check if students can articulate how traditional farming benefits the earth and provides healthier food. Address the misconception that pesticides are always good by linking them to potential health risks."
+    },
+    "explore": {
+      "text": "Encourage observation of farming diversity.",
+      "detail": "Ensure students are looking for variations in farming practices (mixed vs. single crops, natural materials) and asking about pesticide choices, not just generally observing fields. Remind them this is for personal learning."
+    }
+  },
+  "materialsUsed": [
+    "soil samples"
+  ],
+  "pagesCited": [
+    30,
+    31,
+    32,
+    33
+  ],
+  "timings": {
+    "refresher": 5,
+    "concept": 6,
+    "realLife": 8,
+    "challenge": 10,
+    "levelSet": 11,
+    "explore": 5
+  },
+  "topic": "2.5 The Success Story of a Woman Farmer",
+  "subtopic": "",
+  "pageRange": [
+    30,
+    33
+  ],
+  "bookMoves": [
+    {
+      "ord": 1,
+      "type": "hook",
+      "gist": "introduces Gangawar Manemma, a successful woman farmer, and her story",
+      "page": 30,
+      "section": "realLife",
+      "fidelity": "staged"
+    },
+    {
+      "ord": 2,
+      "type": "concept",
+      "gist": "explains Manemma's journey from barren land to successful traditional farming",
+      "page": 30,
+      "section": "concept",
+      "fidelity": "faithful"
+    },
+    {
+      "ord": 3,
+      "type": "concept",
+      "gist": "highlights the role of Deccan Development Society in supporting traditional farming",
+      "page": 31,
+      "section": "concept",
+      "fidelity": "faithful"
+    },
+    {
+      "ord": 4,
+      "type": "activity",
+      "gist": "group discussion on Manemma's good practices and the help she received",
+      "page": 31,
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "What good practices of cultivations did Manemma follow? Who helped Manemma? How did they help her? Should we appreciate Manemma? Why?"
+    },
+    {
+      "ord": 5,
+      "type": "hook",
+      "gist": "opens with a story about Vasantha and her grandmother discussing washing fruits",
+      "page": 31,
+      "section": "realLife",
+      "fidelity": "staged"
+    },
+    {
+      "ord": 6,
+      "type": "activity",
+      "gist": "think and say questions about washing fruits and other items before eating",
+      "page": 31,
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "Why should we wash fruits? What are the other items we should wash before eating?"
+    },
+    {
+      "ord": 7,
+      "type": "concept",
+      "gist": "explains the problems of pesticide overuse, resistance, and health risks",
+      "page": 31,
+      "section": "concept",
+      "fidelity": "faithful"
+    },
+    {
+      "ord": 8,
+      "type": "concept",
+      "gist": "introduces biopesticides as an alternative to chemical pesticides",
+      "page": 31,
+      "section": "concept",
+      "fidelity": "faithful"
+    },
+    {
+      "ord": 9,
+      "type": "concept",
+      "gist": "discusses the negative impacts of chemical pesticides on useful insects, soil, and pollution",
+      "page": 32,
+      "section": "concept",
+      "fidelity": "faithful"
+    },
+    {
+      "ord": 10,
+      "type": "activity",
+      "gist": "think and say question about other disadvantages of chemical pesticides",
+      "page": 32,
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "What are the other disadvantages of using chemical pesticides?"
+    }
+  ],
+  "_meta": {
+    "masteryTarget": "traditional farming methods can improve soil and yield with fewer resources",
+    "selectedActivity": "Ask a Question Worth Testing",
+    "activitySource": "library",
+    "selectedContext": "Pond",
+    "formats": {
+      "refresher": "act out what the class did last time",
+      "realLife": "home-kitchen scene",
+      "challenge": "build-and-check with local materials",
+      "levelSet": "thumbs and reasons round",
+      "explore": "story stopped at the interesting moment"
+    },
+    "plannedMinutes": {
+      "refresher": 5,
+      "concept": 6,
+      "realLife": 8,
+      "challenge": 10,
+      "levelSet": 11,
+      "explore": 5
+    },
+    "plannedHook": {
+      "scene": "The class has just observed different soil samples and discussed how farming affects soil health.",
+      "object": "soil samples",
+      "question": "Are there other ways farmers can grow food that helps the earth even more, beyond just healthy soil?",
+      "answeredNextLesson": "by exploring broader sustainable farming practices"
+    },
+    "plannedBridge": null,
+    "provenance": {
+      "pages": [
+        30,
+        33
+      ],
+      "textbookExcerptChars": 6567,
+      "knowledgeExtracted": {
+        "concepts": 5,
+        "competencies": 7,
+        "vocabulary": 13,
+        "contexts": 49
+      },
+      "canonicalLibraryIdsUsed": {},
+      "canonicalEntriesSeededHere": {},
+      "activity": {
+        "name": "Ask a Question Worth Testing",
+        "source": "library",
+        "id": "782d4ca9-7075-4f52-9251-9589b3931416"
+      },
+      "context": "Pond",
+      "sectionFormats": {
+        "refresher": "act out what the class did last time",
+        "realLife": "home-kitchen scene",
+        "challenge": "build-and-check with local materials",
+        "levelSet": "thumbs and reasons round",
+        "explore": "story stopped at the interesting moment"
+      },
+      "plannedMinutes": {
+        "refresher": 5,
+        "concept": 6,
+        "realLife": 8,
+        "challenge": 10,
+        "levelSet": 11,
+        "explore": 5
+      }
+    },
+    "sectionCitations": {
+      "concept": "Textbook, pages 30-33 (context assembly) — concepts: Sustainable farming practices, Traditional farming methods, Bio-diversity in agriculture, Impact of pesticides, Types of crops; vocabulary: Agriculturist, Barren, Deccan Development Society (DDS), Conventional methods, Bio fertilisers, Mixed crop cultivation (+7 more). Resolved against the shared canonical library.",
+      "realLife": "Textbook-named context(s) (context assembly): Gangawar Manemma, Gangawar village, Nyalkal Mandal, Sangareddy district, Deccan Development Society (DDS), Jowar (+43 more).",
+      "levelSet": "Free (generation) — the misconception this section is meant to surface: \"More food means better food for everyone.\".",
+      "explore": "Free (generation) — planned to open on: \"The class has just observed different soil samples and discussed how farming affects soil health.\".",
+      "refresher": "Built entirely from the previous topic's Explore (planning + generation) — no new textbook or library lookup for this section.",
+      "challenge": "Activity \"Ask a Question Worth Testing\" — Pedagogy Library (activity selection), matched on 0 competenc(ies)."
+    },
+    "teluguReview": "unreviewed-draft",
+    "teluguBulletsApplied": 18,
+    "teluguBulletsTotal": 18
+  },
+  "flexMinutes": 0,
+  "figures": [
+    {
+      "id": "img_c5ch2_20",
+      "page": 30,
+      "caption": "Gangawar Manemma, a woman farmer, is shown standing in a field of jowar plants. She is holding a stalk of jowar in her hand.",
+      "path": null
+    },
+    {
+      "id": "img_c5ch2_22",
+      "page": 33,
+      "caption": "The map of Telangana shows the different crops cultivated in its various districts. The crops represented are Rice, Chillies, Mangoes, Wheat, Maize, Jowar, and Cotton.",
+      "path": null
+    }
+  ],
+  "figureImages": {
+    "img_c5ch2_20": {
+      "url": "../grade5-evs-ch2-full-pipeline/images/img_c5ch2_20.png",
+      "caption": "Gangawar Manemma, a woman farmer, is shown standing in a field of jowar plants. She is holding a stalk of jowar in her hand."
+    },
+    "img_c5ch2_21": {
+      "url": "../grade5-evs-ch2-full-pipeline/images/img_c5ch2_21.png",
+      "caption": "Two farmers are spraying pesticides on crops in a field. They are wearing protective masks and carrying tanks of pesticide on their backs."
+    }
+  },
+  "sectionImages": {
+    "concept": [
+      "img_c5ch2_20"
+    ],
+    "realLife": [
+      "img_c5ch2_21"
+    ]
+  }
+}
+  </script>
 
   <script>
     (function () {
@@ -939,12 +3358,21 @@
       var EXAMPLE = {
         planningNote: "This lesson builds tens-and-ones understanding directly from counting skills students already have — since there's no prior topic on record, the concept section starts from ones and bundles them into a ten in front of the class, so grouping-by-ten feels discovered rather than announced.",
         objective: "Identify tens and ones in two-digit numbers",
+        floor: "Given 14 loose counters, a child can bundle them into one group of ten and correctly say how many are left over, without needing to name the bundle as \"ten\" out loud.",
         previousTopicRefresher: null,
         concept: [
-          { text: "Pairs build a pile of 14 loose sticks", detail: "Say: \"Grab 14 matchsticks with your partner — don't count one by one yet.\" Give 30 seconds. Watch whether any pair starts grouping automatically." },
+          { text: "Pairs build a pile of 14 loose sticks", detail: "Say: \"Grab 14 matchsticks with your partner — don't count one by one yet.\" Give 30 seconds. Watch whether any pair starts grouping automatically.",
+            detail_te: "\"14 అగ్గిపుల్లలను మీ భాగస్వామితో తీసుకోండి — ఇంకా ఒక్కొక్కటి లెక్కించకండి\" అని చెప్పండి. 30 సెకన్లు ఇవ్వండి. ఏ జంట అయినా స్వయంచాలకంగా గుంపులు చేయడం మొదలుపెడుతుందో గమనించండి." },
           { text: "Pairs try bundling sticks into a group of ten", detail: "Say: \"Can you make ONE bundle of ten, and see what's left over?\" Wait 45 seconds; most pairs will land on 1 bundle + 4 loose." },
           { text: "Class names the bundle a 'ten' and the rest 'ones'", detail: "Ask: \"What do we call that bundle, and what do we call the leftovers?\" Confirm aloud: 14 = 1 ten + 4 ones, once a few pairs answer." }
         ],
+        realLife: {
+          points: [
+            { text: "A shopkeeper bundles bangles in tens", detail: "Explain that a bangle seller in the market ties bangles into bundles of ten to count them quickly, and counts loose ones separately — same idea as the matchstick bundle just demonstrated.",
+              detail_te: "మార్కెట్‌లో గాజుల వ్యాపారి వాటిని త్వరగా లెక్కించడానికి పదింటి కట్టలుగా కడతారని, విడిగా ఉన్నవాటిని వేరుగా లెక్కిస్తారని వివరించండి — ఇప్పుడే చూపిన అగ్గిపుల్లల కట్ట లాంటిదే." },
+            { text: "Eggs sold by the ten at the market", detail: "State plainly that eggs are often sold in trays of ten, so a vendor with 23 eggs has 2 full trays and 3 loose — the same split the class just built." }
+          ]
+        },
         explore: {
           points: [
             { text: "A sabzi seller counts 23 onions for a customer", detail: "Say: \"The sabzi seller has 23 onions and only has bags of 10. How many bags does she fill, and how many stay loose?\" Let the question hang — don't answer it yet." },
@@ -976,7 +3404,21 @@
             { text: "Pairs choose a number to bundle at home or in class", detail: "Invite: \"Pick any two-digit number you see today — a bus number, a page number — and bundle it into tens and ones if you'd like.\" Framed as an invitation, not homework." }
           ]
         },
-        timings: { concept: 5, explore: 10, challenge: 10, levelSet: 5 }
+        // The pipeline's own JSON only ever carries the figure ID in
+        // `figureRefs` — never a resolved URL. `figureImages` is this
+        // viewer's own convenience lookup (id -> {url, caption}), not
+        // something the pipeline produces; a real, working textbook image is
+        // used here so "Load example" actually demonstrates the image
+        // rendering, not just a broken-link placeholder.
+        figureRefs: ["img_ts_scert_class3_maths_en_ch01_01"],
+        figureImages: {
+          img_ts_scert_class3_maths_en_ch01_01: {
+            url: "https://imnidyunrleqewcnoxng.supabase.co/storage/v1/object/public/textbook-images/ts_scert_class3_maths_en/ch01/img_ts_scert_class3_maths_en_ch01_01.jpg",
+            caption: "A real chapter illustration from the textbook's own image catalog — shown here only to demonstrate figure rendering; it has nothing to do with this example's tens-and-ones content."
+          }
+        },
+        timings: { concept: 5, realLife: 4, explore: 10, challenge: 10, levelSet: 5 },
+        flexMinutes: 6
       };
       var EXAMPLE_TOPIC = "Numbers from 10 to 99";
       var EXAMPLE_SUBTOPIC = "Understanding tens and ones";
@@ -1012,9 +3454,41 @@
             li.appendChild(document.createTextNode(" — "));
             li.appendChild(el("span", { className: "detail", text: b.detail }));
           }
+          // Bilingual layer: `detail_te` sits alongside `detail`, never
+          // replacing it — see generation/language_layer.py. Always an
+          // unreviewed draft, so it's labelled as one every time it's shown.
+          if (b.detail_te) {
+            li.appendChild(el("div", { className: "detail-te", text: b.detail_te }));
+          }
           ol.appendChild(li);
         });
         return ol;
+      }
+
+      // A lesson-level image, keyed by the figure id the model referenced
+      // (`figureRefs`). The pipeline's own JSON only carries the id — never a
+      // resolved URL — so this stays empty unless the caller supplies one via
+      // `material.figureImages` (an id -> {url, caption} convenience map this
+      // viewer understands but the pipeline itself does not produce). Real
+      // ids with no matching entry render as plain text, same as before.
+      function renderFigures(figureRefs, figureImages) {
+        if (!Array.isArray(figureRefs) || figureRefs.length === 0) return null;
+        var wrap = el("div", { className: "figures" });
+        figureRefs.forEach(function (id) {
+          var known = (figureImages || {})[id];
+          if (known && known.url) {
+            var fig = el("figure", { className: "figure-card" });
+            var img = document.createElement("img");
+            img.src = known.url;
+            img.alt = known.caption || id;
+            fig.appendChild(img);
+            fig.appendChild(el("figcaption", { text: (known.caption || id) }));
+            wrap.appendChild(fig);
+          } else {
+            wrap.appendChild(el("p", { className: "empty-note", text: "Figure referenced but not resolved to an image here: " + id }));
+          }
+        });
+        return wrap;
       }
 
       function sectionHeader(eyebrow, title, pillText) {
@@ -1025,21 +3499,57 @@
         return h;
       }
 
+      // Whole-sheet toggle state — module-level so it survives re-renders
+      // (e.g. clicking "Load example" again) instead of resetting to hidden
+      // every time. Scoped to the primary sheet only; compare cards don't
+      // get a toggle of their own.
+      var showTeluguGlobal = false;
+
+      function materialHasTelugu(material) {
+        try {
+          return JSON.stringify(material).indexOf('"detail_te":') !== -1;
+        } catch (e) {
+          return false;
+        }
+      }
+
       // targetEl defaults to the primary sheet — pass a compare card's sheet to render
       // the same shape into the comparison panel instead.
       function render(material, meta, targetEl) {
         var target = targetEl || sheet;
+        var isPrimary = target === sheet;
         meta = meta || {};
         var topic = meta.topic || "";
         var subtopic = meta.subtopic || "";
         target.classList.remove("placeholder");
         target.innerHTML = "";
+        if (isPrimary) target.classList.toggle("show-telugu", showTeluguGlobal);
 
         var title = material.objective || topic || "Prep Material";
         target.appendChild(el("h1", { className: "sheet-title", text: title }));
         if (topic || subtopic) {
           var subText = topic + (subtopic ? " — " + subtopic : "");
           target.appendChild(el("p", { className: "sheet-sub", text: subText }));
+        }
+
+        if (isPrimary && materialHasTelugu(material)) {
+          var teluguToggle = el("button", { className: "telugu-toggle" });
+          teluguToggle.type = "button";
+          function paintTeluguToggle() {
+            teluguToggle.classList.toggle("active", showTeluguGlobal);
+            teluguToggle.textContent = showTeluguGlobal ? "Hide తెలుగు" : "Show తెలుగు";
+          }
+          paintTeluguToggle();
+          teluguToggle.addEventListener("click", function () {
+            showTeluguGlobal = !showTeluguGlobal;
+            target.classList.toggle("show-telugu", showTeluguGlobal);
+            paintTeluguToggle();
+          });
+          target.appendChild(teluguToggle);
+        }
+
+        if (material.floor) {
+          target.appendChild(el("p", { className: "floor-note", html: "<strong>Floor — the weakest-child path:</strong> " + material.floor }));
         }
 
         if (material.planningNote) {
@@ -1050,45 +3560,85 @@
         if (refresherRaw) {
           var refresher = Array.isArray(refresherRaw) ? { recap: refresherRaw } : refresherRaw;
           var block = el("div", { className: "section-block" });
-          block.appendChild(sectionHeader("Recap", "Refresher — " + (refresher.previousTopic || "")));
+          block.appendChild(sectionHeader("01", "Refresher — " + (refresher.previousTopic || "")));
           block.appendChild(renderBullets(refresher.recap));
           target.appendChild(block);
         }
 
+        // `sectionImages` (this viewer's own convenience field, like
+        // `figureImages` — the pipeline's own JSON never carries it) maps a
+        // section name to every figure id that actually illustrates
+        // something in THAT section, so real chapter images that support
+        // Concept or Real Life show up there instead of every image being
+        // dumped under Explore regardless of what it depicts.
+        var sectionImages = material.sectionImages || {};
+        function appendSectionFigures(block, section) {
+          var fig = renderFigures(sectionImages[section], material.figureImages);
+          if (fig) block.appendChild(fig);
+        }
+
         var conceptBlock = el("div", { className: "section-block" });
-        conceptBlock.appendChild(sectionHeader("01", "Concept"));
+        conceptBlock.appendChild(sectionHeader("02", "Concept"));
         conceptBlock.appendChild(renderBullets(material.concept));
+        appendSectionFigures(conceptBlock, "concept");
         target.appendChild(conceptBlock);
 
-        var explore = asSectionDict(material.explore);
-        var exploreBlock = el("div", { className: "section-block" });
-        exploreBlock.appendChild(sectionHeader("02", "Explore"));
-        if (explore.imageFocus) {
-          exploreBlock.appendChild(el("p", { className: "board-sketch", text: "Board sketch: " + explore.imageFocus }));
-        }
-        exploreBlock.appendChild(renderBullets(explore.points));
-        target.appendChild(exploreBlock);
+        var realLife = asSectionDict(material.realLife);
+        var realLifeBlock = el("div", { className: "section-block" });
+        realLifeBlock.appendChild(sectionHeader("03", "Real Life"));
+        realLifeBlock.appendChild(renderBullets(realLife.points));
+        appendSectionFigures(realLifeBlock, "realLife");
+        target.appendChild(realLifeBlock);
 
         var challenge = asSectionDict(material.challenge);
         var challengeBlock = el("div", { className: "section-block" });
-        challengeBlock.appendChild(sectionHeader("03", "Challenge", challenge.activity || null));
+        challengeBlock.appendChild(sectionHeader("04", "Challenge", challenge.activity || null));
         challengeBlock.appendChild(renderBullets(challenge.points));
+        appendSectionFigures(challengeBlock, "challenge");
         target.appendChild(challengeBlock);
 
         var levelSet = asSectionDict(material.levelSet);
         var levelSetBlock = el("div", { className: "section-block" });
-        levelSetBlock.appendChild(sectionHeader("04", "Level Set"));
+        levelSetBlock.appendChild(sectionHeader("05", "Level Set"));
         levelSetBlock.appendChild(renderBullets(levelSet.points));
+        appendSectionFigures(levelSetBlock, "levelSet");
         target.appendChild(levelSetBlock);
 
+        var explore = asSectionDict(material.explore);
+        var exploreBlock = el("div", { className: "section-block" });
+        exploreBlock.appendChild(sectionHeader("06", "Explore"));
+        if (explore.imageFocus) {
+          exploreBlock.appendChild(el("p", { className: "board-sketch", text: "Board sketch: " + explore.imageFocus }));
+        }
+        exploreBlock.appendChild(renderBullets(explore.points));
+        // Explore keeps its original figureRefs-driven figure (unchanged
+        // behaviour) PLUS anything additionally mapped via sectionImages.
+        var figuresEl = renderFigures(material.figureRefs, material.figureImages);
+        if (figuresEl) exploreBlock.appendChild(figuresEl);
+        appendSectionFigures(exploreBlock, "explore");
+        target.appendChild(exploreBlock);
+
         var watch = material.sectionWatch || {};
-        var watchOrder = ["refresher", "concept", "explore", "challenge", "levelSet"];
-        var watchLabels = { refresher: "Refresher", concept: "Concept", explore: "Explore", challenge: "Challenge", levelSet: "Level Set" };
+        var watchOrder = ["refresher", "concept", "realLife", "challenge", "levelSet", "explore"];
+        var watchLabels = { refresher: "Refresher", concept: "Concept", realLife: "Real Life", explore: "Explore", challenge: "Challenge", levelSet: "Level Set" };
         var watchItems = watchOrder.filter(function (k) { return watch[k]; });
         if (watchItems.length) {
+          // Hidden until tapped open — matches the real app's PrepSheetView:
+          // Watch For no longer shows by default, only once the reader asks
+          // for it (there, by opening a section's Deck view; here, by
+          // tapping this header, since this template has no per-section
+          // deck of its own).
           var watchBlock = el("div", { className: "section-block" });
-          watchBlock.appendChild(sectionHeader("—", "Watch For"));
+          var watchHeader = sectionHeader("—", "Watch For (tap to show)");
+          watchHeader.style.cursor = "pointer";
+          watchBlock.appendChild(watchHeader);
           var ul = el("ul", { className: "watch-list" });
+          ul.hidden = true;
+          watchHeader.addEventListener("click", function () {
+            ul.hidden = !ul.hidden;
+            var titleSpan = watchHeader.querySelector("span:not(.eyebrow)");
+            if (titleSpan) titleSpan.textContent = ul.hidden ? "Watch For (tap to show)" : "Watch For (tap to hide)";
+          });
           watchItems.forEach(function (k) {
             var w = watch[k];
             var li = el("li");
@@ -1122,13 +3672,17 @@
           timingsBlock.appendChild(sectionHeader("—", "Timings"));
           var row = el("div", { className: "timings-row" });
           var total = 0;
-          var labels = { levelSet: "Level Set" };
+          var labels = { levelSet: "Level Set", realLife: "Real Life" };
           timingKeys.forEach(function (k) {
             var v = timings[k];
             if (typeof v === "number") total += v;
             var label = labels[k] || (k.charAt(0).toUpperCase() + k.slice(1));
             row.appendChild(el("span", { className: "timing-pill", text: label + ": " + v + " min" }));
           });
+          if (typeof material.flexMinutes === "number" && material.flexMinutes > 0) {
+            total += material.flexMinutes;
+            row.appendChild(el("span", { className: "timing-pill flex", text: "Flex time (teacher's own): " + material.flexMinutes + " min" }));
+          }
           row.appendChild(el("span", { className: "timing-total", text: "Total: " + total + " min" }));
           timingsBlock.appendChild(row);
           target.appendChild(timingsBlock);
@@ -1677,6 +4231,49 @@
           runCompareModel(model, key, prompt, targetSheet);
         });
       });
+
+      // ── Real runs, baked in ──────────────────────────────────────────────
+      // Grade 3 Maths Ch.1 (indices 0-2) from grade3-maths-ch1-full-pipeline-bilingual/,
+      // Grade 5 EVS Ch.2 / Agriculture (indices 3-5) from grade5-evs-ch2-full-pipeline/ —
+      // both parsed once from the <script type="application/json"> blocks above.
+      // Real Gemini 2.5 Flash output, real bilingual layer, real images (Grade 3's
+      // are public URLs; Grade 5's are local files in that folder's images/, since
+      // that book's catalog only signs URLs for 6 hours) — shown immediately on
+      // open, no paste/load step needed.
+      var REAL_RUN_META = [
+        { topic: "Shalini and Rajani like drawing pictures.", subtopic: "" },
+        { topic: "4. Let us observe the shapes in a rangoli.", subtopic: "" },
+        { topic: "This floor is formed using ___ shapes.", subtopic: "" },
+        { topic: "AGRICULTURE - CROPS", subtopic: "" },
+        { topic: "Compare different ways farmers grow crops", subtopic: "" },
+        { topic: "2.5 The Success Story of a Woman Farmer", subtopic: "" }
+      ];
+      var realRunData = [0, 1, 2, 3, 4, 5].map(function (i) {
+        try {
+          return JSON.parse(document.getElementById("realrun-" + i).textContent);
+        } catch (e) {
+          return null;
+        }
+      });
+      var realRunButtons = Array.from(document.querySelectorAll(".real-run-btn"));
+
+      function loadRealRun(i) {
+        var material = realRunData[i];
+        if (!material) return;
+        clearError();
+        topicInput.value = REAL_RUN_META[i].topic;
+        subtopicInput.value = REAL_RUN_META[i].subtopic;
+        jsonInput.value = JSON.stringify(material, null, 2);
+        render(material, collectMeta());
+        realRunButtons.forEach(function (b, j) { b.classList.toggle("active", j === i); });
+      }
+
+      realRunButtons.forEach(function (btn, i) {
+        btn.addEventListener("click", function () { loadRealRun(i); });
+      });
+
+      // Open on Topic 1 immediately — real content, real image, on load.
+      if (realRunData[0]) loadRealRun(0);
 
       // Keep the command in sync with manual edits to any field it reads from.
       document.querySelector(".input-panel").addEventListener("input", refreshCliCommand);

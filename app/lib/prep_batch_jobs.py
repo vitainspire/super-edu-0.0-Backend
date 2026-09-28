@@ -10,14 +10,35 @@ process, unlike the PDF-ingestion job registry (syllabus_pdf_jobs.py), which
 is single-admin and can afford to live only in that process's memory. The
 in-memory _PROGRESS dict here is purely a nicer live message for a poll; the
 durable prep_batches row is the source of truth for "is one already running."
+
+Topics whose grade+subject has a published textbook chapter covering them are
+generated through the newer agentic pipeline (prep_pipeline_bridge.py) instead
+of generate_lesson_core — richer, better-grounded material, run once per
+matched chapter rather than once per topic. context_flow (per-classroom
+adaptation) is never invoked here: shared/opt_in material is pooled across
+every section by design, with no one classroom to adapt to. Any topic that
+pipeline can't confidently cover (no published textbook for this grade+
+subject, no confident title match to one of its chapters, or the pipeline
+itself failing) falls straight through to the original engine below — a
+school with no textbook ingested for a subject must keep working exactly as
+it does today.
+
+save_published_chapter_lessons() is a separate, on-demand entry point: given
+just a school_id plus a published-catalog book_id/chapter_number, it runs
+that one chapter through the same agentic pipeline and persists the result
+directly — no prep_batches row, no backlog draining, no fallback to the old
+engine. Use it to seed material for one specific chapter right away rather
+than waiting for ensure_stock()'s automatic top-up to reach it.
 """
 import asyncio
 import datetime
 import threading
+import time
 import uuid
 from typing import Optional
 
 from .supabase_clients import create_admin_client
+from .textbook_grounding import MIN_TITLE_OVERLAP, title_score
 
 _PROGRESS: dict[str, dict] = {}
 _LOCK = threading.Lock()
@@ -143,6 +164,286 @@ def ensure_stock(school_id: str, grade: str, subject: str, from_order_index: int
     return batch_id
 
 
+def _fetch_published_chapters(ac, school_id: str, grade: str, subject: str) -> list[dict]:
+    """Every real chapter available for this grade+subject, whole (not a
+    matched slice -- the pipeline bridge wants a whole chapter).
+
+    Sourced the same way textbook_grounding.py's own catalog-mirror fallback
+    is: syllabus_chapters (the real state curriculum's chapter list -- not
+    scoped by school_id, since it's shared curriculum, not a per-school
+    ingestion) joined against textbook_catalog.py's local mirror of the
+    published-textbook API for each chapter's actual content. school_id is
+    accepted (kept for signature/call-site parity) but unused for the same
+    reason. Never raises past this function -- a grade+subject with no
+    syllabus_chapters rows, or no matching catalog book, just yields []."""
+    from .textbook_catalog import find_textbook_chapter, get_chapter_content
+
+    try:
+        rows = (
+            ac.table("syllabus_chapters").select("chapter_number, title, page_start, page_end")
+            .eq("grade", str(grade)).ilike("subject", subject).execute()
+        ).data or []
+    except Exception as e:
+        print(f"[prep-batch] syllabus_chapters lookup failed: {e}")
+        return []
+
+    chapters = []
+    for r in rows:
+        catalog_chapter = find_textbook_chapter(grade, subject, r.get("chapter_number"), r.get("title"), ac)
+        if not catalog_chapter:
+            continue
+        content = get_chapter_content(catalog_chapter["book_id"], catalog_chapter["chapter_number"], ac)
+        if not content or not content.get("content"):
+            continue
+        chapters.append({
+            "id": f"{catalog_chapter['book_id']}:{catalog_chapter['chapter_number']}",
+            "chapter_number": catalog_chapter["chapter_number"],
+            "chapter_title": content.get("chapter_title") or catalog_chapter.get("chapter_title"),
+            "page_start": content.get("page_start") or catalog_chapter.get("page_start"),
+            "page_end": content.get("page_end") or catalog_chapter.get("page_end"),
+            "content_markdown": content["content"],
+        })
+    return sorted(chapters, key=lambda c: c["chapter_number"])
+
+
+def _pipeline_lessons_for_todo(ac, school_id: str, grade: str, subject: str, todo: list[dict]) -> dict[str, dict]:
+    """Best-effort: {definitionId: lesson} for whichever of `todo` the new
+    agentic pipeline could confidently cover. Never raises -- a chapter that
+    fails, or a school with no textbook ingested for this grade+subject, just
+    means an empty (or partial) dict, and the caller falls back to the
+    original engine for anything missing."""
+    import asyncio as _asyncio
+
+    from .prep_pipeline_bridge import PipelineError, generate_chapter_lessons
+
+    try:
+        chapters = _fetch_published_chapters(ac, school_id, grade, subject)
+    except Exception as e:
+        # textbook_books/textbook_chapters aren't provisioned in every
+        # deployment (this one included -- see textbook_grounding.py's own
+        # catalog-mirror fallback for the same gap). That must not fail the
+        # whole batch; it just means the pipeline can't cover anything this
+        # round, same as "no textbook ingested for this grade+subject".
+        print(f"[prep-batch] local textbook lookup unavailable, skipping agentic pipeline: {e}")
+        return {}
+    if not chapters:
+        return {}
+
+    # Which chapter each todo topic best matches, by the same title-overlap
+    # scoring textbook_grounding already uses for live grounding -- one
+    # consistent matching scheme across the app rather than a second one.
+    by_chapter: dict[str, list[dict]] = {}
+    for t in todo:
+        best_chapter, best_score = None, 0.0
+        for chapter in chapters:
+            score = title_score(t["topic"], chapter["chapter_title"])
+            if score > best_score:
+                best_chapter, best_score = chapter, score
+        if best_chapter is not None and best_score >= MIN_TITLE_OVERLAP:
+            by_chapter.setdefault(best_chapter["id"], []).append(t)
+
+    covered: dict[str, dict] = {}
+    for chapter in chapters:
+        matched_topics = by_chapter.get(chapter["id"])
+        if not matched_topics:
+            continue
+        try:
+            result = _asyncio.run(generate_chapter_lessons(
+                grade=grade, subject=subject, chapter_title=chapter["chapter_title"],
+                chapter_markdown=chapter["content_markdown"],
+                chapter_number=chapter.get("chapter_number"),
+                page_start=chapter.get("page_start"), page_end=chapter.get("page_end"),
+            ))
+        except PipelineError as e:
+            print(f"[prep-batch] agentic pipeline skipped chapter '{chapter['chapter_title']}': {e}")
+            continue
+        except Exception as e:  # noqa: BLE001 -- one chapter's failure must not cost the others
+            print(f"[prep-batch] agentic pipeline failed on chapter '{chapter['chapter_title']}': {e}")
+            continue
+
+        pipeline_lessons = result.get("lessons") or []
+        used_pipeline_indices: set[int] = set()
+        for t in matched_topics:
+            best_i, best_score = None, 0.0
+            for i, entry in enumerate(pipeline_lessons):
+                if i in used_pipeline_indices:
+                    continue
+                score = title_score(t["topic"], entry["topic"])
+                if score > best_score:
+                    best_i, best_score = i, score
+            if best_i is not None and best_score >= MIN_TITLE_OVERLAP:
+                used_pipeline_indices.add(best_i)
+                covered[t["definitionId"]] = pipeline_lessons[best_i]["lesson"]
+
+    return covered
+
+
+async def save_published_chapter_lessons(
+    school_id: str, book_id: str, chapter_number: int, teacher_id: Optional[str] = None,
+) -> dict:
+    """On-demand counterpart to _run_batch's per-topic loop: fetches one
+    published-catalog chapter, runs it through the agentic pipeline
+    (prep_pipeline_bridge.generate_lessons_from_published_book), and persists
+    every shippable lesson into shared_prep_materials right away — no
+    prep_batches row, no background thread, since this targets one chosen
+    book/chapter directly rather than draining a school's syllabus backlog.
+
+    A generated topic that title-matches (>= MIN_TITLE_OVERLAP, the same
+    scheme _pipeline_lessons_for_todo uses) an existing syllabus_topics
+    definition_id for this school+grade+subject is saved under that
+    definition_id, extending a topic that's already on the syllabus. A topic
+    with no confident match gets a brand new syllabus_topics row, fanned
+    across every class of this grade in this school — the same one-row-per-
+    section/shared-definition_id pattern admin_schools.post_syllabus_topic
+    and syllabus_persist.persist_extraction both use — so the shared material
+    has a topic to hang off of at all. This is exactly what manual seeding
+    did by hand earlier in this project; here it's the reusable version.
+
+    Raises ValueError if this school has no classes for the chapter's grade
+    (nothing to fan a new topic out to). Propagates PublishedBookNotFound /
+    PipelineError from the bridge for a bad book_id/chapter_number or a
+    chapter the pipeline couldn't generate usable material from.
+    """
+    from .prep_pipeline_bridge import generate_lessons_from_published_book
+
+    result = await generate_lessons_from_published_book(book_id, chapter_number)
+    grade, subject = result["grade"], result["subject"]
+    lessons = result.get("lessons") or []
+
+    ac = create_admin_client()
+    existing_topics = _grade_subject_topics(ac, school_id, grade, subject)
+    order_by_def = {t["definitionId"]: t["orderIndex"] for t in existing_topics}
+    next_order = max(order_by_def.values(), default=-1) + 1
+    used_definition_ids: set[str] = set()
+
+    class_ids = [
+        c["id"] for c in
+        (ac.table("classes").select("id").eq("school_id", school_id).eq("grade", grade).execute().data or [])
+    ]
+
+    saved = created_topics = matched_topics = 0
+    for entry in lessons:
+        title, lesson = entry["topic"], entry["lesson"]
+
+        best_def_id, best_score = None, 0.0
+        for t in existing_topics:
+            if t["definitionId"] in used_definition_ids:
+                continue
+            score = title_score(title, t["topic"])
+            if score > best_score:
+                best_def_id, best_score = t["definitionId"], score
+
+        if best_def_id is not None and best_score >= MIN_TITLE_OVERLAP:
+            definition_id = best_def_id
+            order_index = order_by_def[best_def_id]
+            matched_topics += 1
+        else:
+            if not class_ids:
+                raise ValueError(f"School {school_id} has no Grade {grade} classes to attach a new topic to")
+            definition_id = str(uuid.uuid4())
+            order_index = next_order
+            next_order += 1
+            now = _now_iso()
+            ac.table("syllabus_topics").insert([{
+                "id": str(uuid.uuid4()), "class_id": class_id, "teacher_id": teacher_id,
+                "grade": grade, "subject": subject, "definition_id": definition_id,
+                "topic": title, "description": "", "order_index": order_index,
+                "is_completed": False, "page_start": result.get("pageStart"),
+                "page_end": result.get("pageEnd"), "created_at": now,
+            } for class_id in class_ids]).execute()
+            created_topics += 1
+
+        used_definition_ids.add(definition_id)
+        ac.table("shared_prep_materials").upsert({
+            "school_id": school_id, "grade": grade, "subject": subject,
+            "topic_definition_id": definition_id, "topic": title, "subtopic": None,
+            "order_index": order_index, "lesson": lesson, "batch_id": None,
+        }, on_conflict="school_id,grade,subject,topic_definition_id").execute()
+        saved += 1
+
+    return {
+        "saved": saved, "createdTopics": created_topics, "matchedTopics": matched_topics,
+        "grade": grade, "subject": subject, "chapterTitle": result.get("chapterTitle"),
+        # `shipped` is what validation positively vouched for; `needsReview` is
+        # saved too but flagged (see prep_pipeline_bridge's docstring for why a
+        # flagged period beats a missing one), and `refused` never reaches here.
+        "shipped": result.get("shipped"), "needsReview": result.get("needsReview"),
+        "refused": result.get("refused"), "total": result.get("total"),
+        "figureCount": result.get("figureCount"),
+    }
+
+
+# ─── On-demand admin trigger (Admin > Prep Materials > Generate from Textbook) ──
+#
+# save_published_chapter_lessons() above is a real LLM pipeline run -- a few
+# minutes on a paid model, sometimes much longer on OPENROUTER_MODEL's current
+# free tier (shared-capacity 502s and slow responses under load) -- too long
+# either way for a request/response cycle a browser or gateway will hold
+# open. This in-memory job registry is the same pattern syllabus_pdf_jobs.py
+# already uses for the same reason: single-admin, one-off, acceptable to lose
+# on a server restart (the admin just retries) -- unlike prep_batches above,
+# which must survive across worker processes because ensure_stock() can be
+# triggered by any teacher's request at any time. Deliberately its own dict
+# rather than reusing _PROGRESS/prep_batches: those are keyed and deduped by
+# (school, grade, subject) for the background top-up system, and a manual
+# one-chapter trigger has no business colliding with that dedup logic.
+_CHAPTER_JOBS: dict[str, dict] = {}
+_CHAPTER_JOB_TTL_SECONDS = 3600  # prune finished jobs after an hour, same as syllabus_pdf_jobs.py
+
+
+def _prune_chapter_jobs_locked():
+    """Caller holds _LOCK. Same shape as syllabus_pdf_jobs._prune_locked."""
+    cutoff = time.time() - _CHAPTER_JOB_TTL_SECONDS
+    stale = [
+        jid for jid, j in _CHAPTER_JOBS.items()
+        if j["status"] in ("done", "error") and j.get("_finishedAtEpoch", 0) < cutoff
+    ]
+    for jid in stale:
+        _CHAPTER_JOBS.pop(jid, None)
+
+
+def get_chapter_job(job_id: str) -> Optional[dict]:
+    with _LOCK:
+        job = _CHAPTER_JOBS.get(job_id)
+        if not job:
+            return None
+        return {k: v for k, v in job.items() if k != "_finishedAtEpoch"}
+
+
+def start_chapter_generation(school_id: str, book_id: str, chapter_number: int,
+                              teacher_id: Optional[str] = None) -> str:
+    """Kicks off save_published_chapter_lessons() in a background thread and
+    returns a job id immediately; the admin panel polls get_chapter_job()."""
+    job_id = uuid.uuid4().hex
+    with _LOCK:
+        _prune_chapter_jobs_locked()
+        _CHAPTER_JOBS[job_id] = {
+            "status": "running", "bookId": book_id, "chapterNumber": chapter_number,
+            "startedAt": _now_iso(), "result": None, "error": None,
+        }
+
+    thread = threading.Thread(
+        target=_run_chapter_job, args=(job_id, school_id, book_id, chapter_number, teacher_id),
+        daemon=True, name=f"chapter-gen-{job_id[:8]}",
+    )
+    thread.start()
+    return job_id
+
+
+def _run_chapter_job(job_id: str, school_id: str, book_id: str, chapter_number: int,
+                      teacher_id: Optional[str]):
+    try:
+        result = asyncio.run(save_published_chapter_lessons(school_id, book_id, chapter_number, teacher_id))
+        with _LOCK:
+            _CHAPTER_JOBS[job_id].update(
+                status="done", result=result, finishedAt=_now_iso(), _finishedAtEpoch=time.time())
+    except Exception as e:
+        print(f"[prep-batch] chapter job {job_id} ({book_id}#{chapter_number}) failed: {e}")
+        with _LOCK:
+            _CHAPTER_JOBS[job_id].update(
+                status="error", error=str(e), finishedAt=_now_iso(), _finishedAtEpoch=time.time())
+
+
 async def _pool_feedback(ac, school_id: str, grade: str, subject: str) -> Optional[str]:
     """Fold every class-session feedback for this grade+subject into one
     shared tendency profile — the same idea as classes.feedback_profile
@@ -259,6 +560,11 @@ def _run_batch(batch_id: str, school_id: str, grade: str, subject: str, teacher_
             _set_progress(batch_id, message="Nothing to generate — already fully stocked")
             return
 
+        _set_progress(batch_id, message="Checking for a matching textbook…")
+        pipeline_lessons = _pipeline_lessons_for_todo(ac, school_id, grade, subject, todo)
+        if pipeline_lessons:
+            print(f"[prep-batch] agentic pipeline covered {len(pipeline_lessons)}/{len(todo)} topic(s)")
+
         pooled_profile = asyncio.run(_pool_feedback(ac, school_id, grade, subject))
 
         teaching_profile = None
@@ -274,15 +580,20 @@ def _run_batch(batch_id: str, school_id: str, grade: str, subject: str, teacher_
         avoid_activities: list = []
         completed = 0
         for i, t in enumerate(todo):
-            _set_progress(batch_id, message=f"Generating {t['topic']}… ({i + 1}/{len(todo)})")
-            try:
-                lesson = asyncio.run(_generate_one(
-                    ac, school_id, grade, subject, t, teaching_profile, previous_topic, avoid_activities, pooled_profile,
-                ))
-            except Exception as e:
-                print(f"[prep-batch] topic '{t['topic']}' failed, skipping: {e}")
-                previous_topic = t["topic"]
-                continue
+            pipeline_lesson = pipeline_lessons.get(t["definitionId"])
+            if pipeline_lesson is not None:
+                _set_progress(batch_id, message=f"Generating {t['topic']}… ({i + 1}/{len(todo)}, textbook-grounded)")
+                lesson = pipeline_lesson
+            else:
+                _set_progress(batch_id, message=f"Generating {t['topic']}… ({i + 1}/{len(todo)})")
+                try:
+                    lesson = asyncio.run(_generate_one(
+                        ac, school_id, grade, subject, t, teaching_profile, previous_topic, avoid_activities, pooled_profile,
+                    ))
+                except Exception as e:
+                    print(f"[prep-batch] topic '{t['topic']}' failed, skipping: {e}")
+                    previous_topic = t["topic"]
+                    continue
 
             ac.table("shared_prep_materials").upsert({
                 "school_id": school_id, "grade": grade, "subject": subject,

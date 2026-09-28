@@ -1,0 +1,304 @@
+{
+  "index": 3,
+  "teachingOrder": [
+    "refresher",
+    "challenge",
+    "concept",
+    "realLife",
+    "levelSet",
+    "explore"
+  ],
+  "planningNote": "This period focuses on the concept of tiling and gaps, building on students' understanding of shape properties from the previous lesson. It uses familiar objects like matchboxes and bangles to demonstrate how some shapes fit together perfectly while others leave gaps.",
+  "objective": "Identify shapes that fit without gaps",
+  "previousTopicRefresher": {
+    "previousTopic": "4. Let us observe the shapes in a rangoli.",
+    "recap": [
+      {
+        "text": "Door and table have straight sides",
+        "detail": "Ask students what they noticed about the sides and corners of a door or table at home. Listen for descriptions of straight sides and clear corners."
+      },
+      {
+        "text": "Round objects have no corners",
+        "detail": "Ask students what they found about the round objects at home. Confirm that they have no straight sides or corners, unlike doors and tables."
+      },
+      {
+        "text": "Shapes have specific properties",
+        "detail": "Remind students that shapes like squares, triangles, and circles are defined by their specific properties, like having straight sides and corners, or being round."
+      }
+    ]
+  },
+  "concept": [
+    {
+      "text": "Identify shapes in classroom floor patterns",
+      "detail": "Point to a tiled section of the classroom floor. Ask students to identify the shapes they see. Give them 10 seconds to look and think."
+    },
+    {
+      "text": "Matchboxes fit without leaving gaps",
+      "detail": "Hold up two matchboxes and place them flush against each other on the blackboard. Draw the outline of the two matchboxes, showing no gaps. Explain that their straight edges allow them to touch perfectly."
+    },
+    {
+      "text": "Bangles leave gaps when placed together",
+      "detail": "Hold up two bangles and place them next to each other on the blackboard. Draw the outline of the two bangles, showing the space between them. Explain that their curved edges mean they cannot touch perfectly everywhere, leaving gaps."
+    }
+  ],
+  "realLife": {
+    "points": [
+      {
+        "text": "Floor tiles fit with no gaps",
+        "detail": "Ask students to look at the classroom floor. Point out how the tiles fit together without any spaces. Explain that this is why the floor is smooth and even. Allow students to observe quietly."
+      },
+      {
+        "text": "Brick walls show no gaps",
+        "detail": "Describe a brick wall. Explain that bricks, like matchboxes, have straight edges and fit together tightly to make a strong wall without gaps. This is why houses are sturdy."
+      },
+      {
+        "text": "Arranging bangles leaves spaces",
+        "detail": "Imagine arranging many bangles on a table. Explain that no matter how you arrange them, there will always be small spaces between them because of their curved shape. This is different from how bricks or tiles fit."
+      }
+    ]
+  },
+  "challenge": {
+    "activity": "Identify the shapes used to form different floors",
+    "points": [
+      {
+        "text": "Arrange matchboxes without gaps",
+        "detail": "Students work in pairs with matchboxes. They try to arrange them on their slate to cover as much area as possible without leaving any gaps, as shown in the book (Page None). Give them a few minutes to experiment."
+      },
+      {
+        "text": "Arrange bangles, observe gaps",
+        "detail": "Pairs then take bangles or coins and try to arrange them on their slate. They should observe and discuss how bangles leave gaps, unlike the matchboxes (Page None). Encourage them to try different arrangements."
+      },
+      {
+        "text": "Identify shapes in floor patterns",
+        "detail": "Direct students to the floor patterns in the book (Page None). In pairs, they identify the shapes used to form the floor and discuss why these shapes fit together without gaps. Confirm the shapes and the reason."
+      }
+    ]
+  },
+  "levelSet": {
+    "points": [
+      {
+        "text": "Floor gaps: wrong shapes or arrangement?",
+        "detail": "Ask students if a floor has gaps because the shapes are wrong, or because they are arranged in a way that creates gaps. Have them discuss with a partner. Listen for students who might blame the shape itself."
+      },
+      {
+        "text": "Tick-list for fitting shapes",
+        "detail": "Have partners list two shapes that fit without gaps and two that leave gaps. They should check each other's lists. Watch for correct identification of tiling vs. non-tiling shapes."
+      },
+      {
+        "text": "Find tiling patterns on the way home",
+        "detail": "On the way home, or at home, look for patterns where shapes fit together without any gaps. This could be floor tiles, brick walls, or even a woven mat. Notice what shapes are used."
+      }
+    ]
+  },
+  "explore": {
+    "points": [
+      {
+        "text": "Look at a wall, notice brick shapes",
+        "detail": "Look closely at a brick wall in your village. Notice the shape of the bricks and how they fit together without leaving spaces."
+      },
+      {
+        "text": "Find patterns on a footpath",
+        "detail": "When walking on a footpath, look for any patterns made by stones or tiles. See if those shapes fit together perfectly or if there are gaps."
+      },
+      {
+        "text": "Observe a bicycle wheel",
+        "detail": "Look at a bicycle wheel. Notice its round shape. Imagine trying to cover a floor with many bicycle wheels. Think about whether they would leave gaps."
+      }
+    ],
+    "imageFocus": "matchboxes arranged without gaps, bangles with gaps"
+  },
+  "sectionWatch": {
+    "refresher": {
+      "text": "Students recall shape properties",
+      "detail": "Ensure students can clearly differentiate between shapes based on their properties, which is crucial for understanding why some shapes tile and others don't."
+    },
+    "concept": {
+      "text": "Students grasp tiling vs. gaps",
+      "detail": "Observe if students understand the core idea that straight edges allow shapes to fit without gaps, while curved edges create them. Look for confusion between shape and arrangement."
+    },
+    "realLife": {
+      "text": "Students connect tiling to real life",
+      "detail": "Listen for students making connections between the classroom demonstration and real-world examples like floor tiles and brick walls. Ensure they understand the purpose of tiling."
+    },
+    "challenge": {
+      "text": "Pairs demonstrate tiling and gaps",
+      "detail": "Check if pairs successfully arrange matchboxes without gaps and identify gaps when arranging bangles. Observe their discussions about the floor patterns in the book."
+    },
+    "levelSet": {
+      "text": "Students apply tiling understanding",
+      "detail": "Listen for students who attribute gaps to 'wrong shapes' rather than the inherent properties of the shape. Guide them to understand the geometric reason for gaps."
+    },
+    "explore": {
+      "text": "Students observe tiling in environment",
+      "detail": "Ensure students understand they are looking for patterns where shapes fit together or leave gaps, specifically in their surroundings."
+    }
+  },
+  "materialsUsed": [
+    "matchbox",
+    "bangle",
+    "slate",
+    "paper"
+  ],
+  "pagesCited": [],
+  "figureRefs": [],
+  "timings": {
+    "refresher": 5,
+    "concept": 4,
+    "realLife": 5,
+    "challenge": 6,
+    "levelSet": 4,
+    "explore": 6
+  },
+  "topic": "This floor is formed using ___ shapes.",
+  "subtopic": "",
+  "pageRange": [
+    null,
+    null
+  ],
+  "bookMoves": [
+    {
+      "ord": 1,
+      "type": "activity",
+      "gist": "Asks to identify the shapes used to form different floors.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "This floor is formed using ___ shapes. This floor is formed using ___ shapes."
+    },
+    {
+      "ord": 2,
+      "type": "activity",
+      "gist": "Asks if match-boxes can be arranged without gaps.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "This floor is formed using ___ shapes. Pooja and her brother are arranging some match-boxes on a paper. Can they arrange them without leaving any gap?"
+    },
+    {
+      "ord": 3,
+      "type": "activity",
+      "gist": "Asks if bangles can be arranged without gaps and instructs to make a paper boat.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "Now they took some bangles and placed them on a white paper. Is it possible to arrange them without any gaps on the paper? Take a paper. Fold it as shown in the picture and make a boat."
+    },
+    {
+      "ord": 4,
+      "type": "activity",
+      "gist": "Instructs to make a paper boat and a rocket without looking at pictures.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "Take another piece of paper and try making a boat without looking at the above pictures. Then, try to make a rocket."
+    },
+    {
+      "ord": 5,
+      "type": "practice",
+      "gist": "Asks to identify and color shapes in a picture with specified colors.",
+      "section": "levelSet",
+      "fidelity": "verbatim",
+      "verbatim": "1. Some shapes are given below with diﬀ erent colours. Identify the shapes in the picture and colour them with the same colour."
+    },
+    {
+      "ord": 6,
+      "type": "practice",
+      "gist": "Asks to count specific shapes in a peacock picture from the previous page.",
+      "section": "levelSet",
+      "fidelity": "verbatim",
+      "verbatim": "2. Look at the picture of the peacock given in the previous page and answer the following. (A) How many s are there ? ———— (B) How many s are there ? ———— (C) How many s are there ? ———— (D) How many s are there ? ————"
+    },
+    {
+      "ord": 7,
+      "type": "practice",
+      "gist": "Asks to count specific shapes in each picture.",
+      "section": "levelSet",
+      "fidelity": "verbatim",
+      "verbatim": "3. How many are there in each picture? Count them and write in the blank. 4. How many are there in each picture? Count them and write in the blank."
+    },
+    {
+      "ord": 8,
+      "type": "practice",
+      "gist": "Asks to count and write the number of specific shapes.",
+      "section": "levelSet",
+      "fidelity": "verbatim",
+      "verbatim": "5. Count and write. (A) —— s are there. (B) —— s are there (C) —— s are there"
+    }
+  ],
+  "_meta": {
+    "masteryTarget": "some shapes fit together without gaps, and some do not",
+    "selectedActivity": "Count The Class Itself",
+    "activitySource": "library",
+    "selectedContext": "School",
+    "formats": {
+      "refresher": "partner re-tell in one breath",
+      "realLife": "cricket or playground scene",
+      "challenge": "build-and-check with local materials",
+      "levelSet": "partner tick-list self-check",
+      "explore": "measure-something-outside dare"
+    },
+    "plannedMinutes": {
+      "refresher": 5,
+      "concept": 4,
+      "realLife": 5,
+      "challenge": 6,
+      "levelSet": 4,
+      "explore": 6
+    },
+    "plannedHook": {
+      "scene": "The class has experimented with placing matchboxes and bangles on a surface.",
+      "object": "Matchboxes and bangles on a slate.",
+      "question": "Why do some shapes fit together without gaps, and others don't?",
+      "answeredNextLesson": "This question will lead into a new chapter about the properties of shapes that allow tessellation."
+    },
+    "plannedBridge": null,
+    "provenance": {
+      "pages": [
+        null,
+        null
+      ],
+      "textbookExcerptChars": 0,
+      "knowledgeExtracted": {
+        "concepts": 3,
+        "competencies": 4,
+        "vocabulary": 8,
+        "contexts": 7
+      },
+      "canonicalLibraryIdsUsed": {},
+      "canonicalEntriesSeededHere": {},
+      "activity": {
+        "name": "Count The Class Itself",
+        "source": "library",
+        "id": "84a4213d-3368-4b4c-8a84-6cfd762d7030"
+      },
+      "context": "School",
+      "sectionFormats": {
+        "refresher": "partner re-tell in one breath",
+        "realLife": "cricket or playground scene",
+        "challenge": "build-and-check with local materials",
+        "levelSet": "partner tick-list self-check",
+        "explore": "measure-something-outside dare"
+      },
+      "plannedMinutes": {
+        "refresher": 5,
+        "concept": 4,
+        "realLife": 5,
+        "challenge": 6,
+        "levelSet": 4,
+        "explore": 6
+      }
+    },
+    "sectionCitations": {
+      "concept": "Textbook, no ingested textbook pages (context assembly) — concepts: Shapes, Tiling/Tessellation, Gaps; vocabulary: shapes, floor, gap, bangles, boat, rocket (+2 more). Resolved against the shared canonical library.",
+      "realLife": "Textbook-named context(s) (context assembly): floor, match-boxes, paper, bangles, boat, peacock (+1 more).",
+      "levelSet": "Free (generation) — the misconception this section is meant to surface: \"the floor has gaps because the shapes are wrong\".",
+      "explore": "Free (generation) — planned to open on: \"The class has experimented with placing matchboxes and bangles on a surface.\".",
+      "refresher": "Built entirely from the previous topic's Explore (planning + generation) — no new textbook or library lookup for this section.",
+      "challenge": "Activity \"Count The Class Itself\" — Pedagogy Library (activity selection), matched on 0 competenc(ies)."
+    },
+    "revision": 2
+  },
+  "figures": [],
+  "extras": {
+    "Challenge": {
+      "text": "Discuss why some shapes tile and others don't.",
+      "detail": "Have students articulate the properties of shapes that allow them to tile without gaps versus those that always leave spaces."
+    }
+  }
+}

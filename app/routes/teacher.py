@@ -836,14 +836,23 @@ def _prep_material_row_to_dto(r: dict) -> dict:
     }
 
 
-# GET /api/teacher/prep-materials
+# GET /api/teacher/prep-materials — capped to the most recent rows, newest
+# first. Some saved lessons carry an embedded diagram image inline in the
+# lesson JSON (several MB each); pulling a teacher's entire history
+# unbounded eventually exceeds the DB statement timeout as it accumulates,
+# and every caller here (getPrepMaterial's newestFor) already wants the
+# newest match for a topic anyway, so trimming the tail is safe.
 @router.get("/prep-materials")
 def get_own_prep_materials(teacher_id: str = Depends(require_teacher)):
     try:
         ac = create_admin_client()
-        rows = ac.table("prep_materials").select("*").eq("teacher_id", teacher_id).execute().data or []
+        rows = (
+            ac.table("prep_materials").select("*").eq("teacher_id", teacher_id)
+            .order("created_at", desc=True).limit(25).execute().data or []
+        )
         return {"prepMaterials": [_prep_material_row_to_dto(r) for r in rows]}
-    except Exception:
+    except Exception as e:
+        print(f"[teacher/prep-materials] fetch failed: {e}")
         return {"prepMaterials": []}
 
 

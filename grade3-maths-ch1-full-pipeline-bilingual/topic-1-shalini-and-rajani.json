@@ -1,0 +1,393 @@
+{
+  "materials": [],
+  "teachingOrder": [
+    "refresher",
+    "concept",
+    "realLife",
+    "challenge",
+    "levelSet",
+    "explore"
+  ],
+  "planningNote": "This period introduces children to the idea that objects appear differently from various viewpoints, building foundational spatial understanding. It sets the stage for later lessons on shape properties and tiling by emphasizing observation from multiple angles.",
+  "objective": "Show different views of an object",
+  "floor": "Given a matchbox, a child can physically move around it and point out what the top, front, and side views look like, without needing to draw or compare to other objects.",
+  "previousTopicRefresher": null,
+  "concept": [
+    {
+      "text": "Observe a matchbox from the front",
+      "detail": "Hold up a matchbox and show it to the class from the front. Ask students to describe what they see, focusing on the main visible face. Give them a few seconds to respond aloud.",
+      "detail_te": "ఒక అగ్గిపెట్టెను పట్టుకుని, దాని ముందు భాగాన్ని తరగతికి చూపించండి. విద్యార్థులు ఏమి చూస్తున్నారో వివరించమని అడగండి, ముఖ్యంగా కనిపించే ప్రధాన ముఖంపై దృష్టి పెట్టమని చెప్పండి. వారికి బిగ్గరగా స్పందించడానికి కొన్ని సెకన్లు ఇవ్వండి.",
+      "treatment_te": "cue"
+    },
+    {
+      "text": "Compare front and top views",
+      "detail": "Rotate the matchbox to show its top view. Ask students if it looks the same as the front view. Draw both the front and top views on the blackboard as clearly as possible, labeling them 'Front View' and 'Top View'.",
+      "detail_te": "అగ్గిపెట్టెను తిప్పి, దాని పై భాగాన్ని చూపించండి. ఇది ముందు భాగం వలెనే కనిపిస్తుందా అని విద్యార్థులను అడగండి. 'Front View' మరియు 'Top View' అని లేబుల్ చేసి, బ్లాక్‌బోర్డుపై ముందు మరియు పై భాగం రెండింటినీ వీలైనంత స్పష్టంగా గీయండి.",
+      "treatment_te": "cue"
+    },
+    {
+      "text": "Different views from different positions",
+      "detail": "Explain that an object looks different depending on where you look at it from, not because the object itself changes. Use the matchbox to demonstrate how moving around it reveals different sides.",
+      "detail_te": "ఒక వస్తువును మీరు ఎక్కడ నుండి చూస్తారనే దానిపై ఆధారపడి అది భిన్నంగా కనిపిస్తుందని వివరించండి, వస్తువు మారడం వల్ల కాదు. అగ్గిపెట్టెను ఉపయోగించి, దాని చుట్టూ కదలడం ద్వారా వివిధ వైపులా ఎలా కనిపిస్తాయో ప్రదర్శించండి.",
+      "treatment_te": "cue"
+    }
+  ],
+  "realLife": {
+    "points": [
+      {
+        "text": "Chair views in the home",
+        "detail": "Mention that a chair at home can look like Shalini's drawing if you are standing directly above it. Ask students to imagine looking down at their own chair from the ceiling. Wait for a few hands to go up.",
+        "detail_te": "మీరు దాని పైన నిలబడి ఉంటే ఇంట్లో ఒక కుర్చీ శాలిని గీసినట్లుగా కనిపిస్తుందని చెప్పండి. పైకప్పు నుండి వారి స్వంత కుర్చీని క్రిందికి చూస్తున్నట్లు ఊహించుకోమని విద్యార్థులను అడగండి. కొన్ని చేతులు పైకి లేచే వరకు వేచి ఉండండి.",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "House views from different directions",
+        "detail": "Describe looking at a house from the front, then walking around to see it from the side. Explain that the house itself stays the same, but what you see changes. This is similar to the house pictures in their book.",
+        "detail_te": "ఒక ఇంటిని ముందు నుండి చూసి, ఆపై దాని పక్క నుండి చూడటానికి చుట్టూ నడవడాన్ని వివరించండి. ఇల్లు మారదని, కానీ మీరు చూసేది మారుతుందని వివరించండి. ఇది వారి పుస్తకంలోని ఇంటి చిత్రాల మాదిరిగానే ఉంటుంది.",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "Table views for drawing",
+        "detail": "Explain that if you were to draw a table, what you draw would depend on whether you were looking at it from the front, side, or directly from above. This is why the book asks them to imagine and draw different views.",
+        "detail_te": "మీరు ఒక టేబుల్‌ను గీయాలంటే, మీరు దానిని ముందు నుండి, పక్క నుండి లేదా నేరుగా పై నుండి చూస్తున్నారా అనే దానిపై ఆధారపడి మీరు గీసేది మారుతుందని వివరించండి. అందుకే పుస్తకం వారిని వివిధ వీక్షణలను ఊహించి గీయమని అడుగుతుంది.",
+        "treatment_te": "cue"
+      }
+    ]
+  },
+  "challenge": {
+    "activity": "If Shalini drew a chair and what the reader",
+    "points": [
+      {
+        "text": "PLAY: Discuss Shalini's chair drawing",
+        "detail": "Divide the class into pairs. Have them look at Shalini's chair drawing and discuss whether they think it is a chair or not. One partner should argue it is, the other it is not. Give them two minutes.",
+        "detail_te": "తరగతిని జంటలుగా విభజించండి. శాలిని గీసిన కుర్చీ చిత్రాన్ని చూసి, అది కుర్చీనా కాదా అని చర్చించమని వారిని అడగండి. ఒక భాగస్వామి అది అని వాదించాలి, మరొకరు కాదని వాదించాలి. వారికి రెండు నిమిషాలు ఇవ్వండి.",
+        "treatment_te": "full"
+      },
+      {
+        "text": "REFLECT: Share different perspectives",
+        "detail": "After two minutes, ask a few pairs to share their thoughts with the class. Encourage them to explain why they thought it was or wasn't a chair, focusing on what part of the chair they were imagining. Acknowledge all responses.",
+        "detail_te": "రెండు నిమిషాల తర్వాత, కొన్ని జంటలను వారి ఆలోచనలను తరగతితో పంచుకోమని అడగండి. అది కుర్చీ అని లేదా కాదని వారు ఎందుకు అనుకున్నారో వివరించమని వారిని ప్రోత్సహించండి, కుర్చీలోని ఏ భాగాన్ని వారు ఊహించుకున్నారో దానిపై దృష్టి పెట్టండి. అన్ని ప్రతిస్పందనలను అంగీకరించండి.",
+        "treatment_te": "full"
+      },
+      {
+        "text": "ACT: Identify views of a house",
+        "detail": "Direct students to the house pictures in their book. Explain that Shalini's drawing is a top view, just like one of the house pictures. Guide them to identify the top, front, and side views for each house picture. The top view shows the roof, the front view shows the main entrance, and the side view shows one side wall.",
+        "detail_te": "విద్యార్థులను వారి పుస్తకంలోని ఇంటి చిత్రాల వైపు మళ్లించండి. శాలిని గీసిన చిత్రం ఒక 'top view' అని వివరించండి, ఇంటి చిత్రాలలో ఒకదాని వలెనే. ప్రతి ఇంటి చిత్రానికి 'top', 'front' మరియు 'side views' ను గుర్తించడానికి వారికి మార్గనిర్దేశం చేయండి. 'top view' పైకప్పును చూపిస్తుంది, 'front view' ప్రధాన ప్రవేశాన్ని చూపిస్తుంది మరియు 'side view' ఒక పక్క గోడను చూపిస్తుంది.",
+        "treatment_te": "full"
+      }
+    ]
+  },
+  "levelSet": {
+    "points": [
+      {
+        "text": "Recap: Objects look different from different places",
+        "detail": "Briefly recap that objects look different depending on where you look from. Then, ask pairs to discuss if the matchbox changes when you look at it from the top, or if it just looks different. Watch for students who still think the object itself transforms.",
+        "detail_te": "వస్తువులు మీరు ఎక్కడ నుండి చూస్తారనే దానిపై ఆధారపడి భిన్నంగా కనిపిస్తాయని క్లుప్తంగా పునరావృతం చేయండి. ఆపై, అగ్గిపెట్టెను పై నుండి చూసినప్పుడు అది మారుతుందా, లేదా అది భిన్నంగా కనిపిస్తుందా అని చర్చించమని జంటలను అడగండి. వస్తువు స్వయంగా మారుతుందని ఇంకా భావించే విద్యార్థుల కోసం చూడండి.",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "Most interesting observation today",
+        "detail": "Ask students to turn to a partner and share one thing they found interesting or surprising today about looking at objects from different angles. Listen for comments about the matchbox or the chair drawings.",
+        "detail_te": "విద్యార్థులు ఒక భాగస్వామి వైపు తిరిగి, వివిధ కోణాల నుండి వస్తువులను చూడటం గురించి ఈ రోజు వారికి ఆసక్తికరంగా లేదా ఆశ్చర్యకరంగా అనిపించిన ఒక విషయాన్ని పంచుకోమని అడగండి. అగ్గిపెట్టె లేదా కుర్చీ చిత్రాల గురించి వ్యాఖ్యల కోసం వినండి.",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "Notice views on the way home",
+        "detail": "Invite students to look at a parked bicycle or a bullock cart on their way home. Ask them to notice how it looks from the front, from the side, and if they can, from directly above (like from a balcony or a small hill).",
+        "detail_te": "ఇంటికి వెళ్ళేటప్పుడు పార్క్ చేసిన సైకిల్ లేదా ఎద్దుల బండిని చూడమని విద్యార్థులను ఆహ్వానించండి. అది ముందు నుండి, పక్క నుండి మరియు వారు చేయగలిగితే, నేరుగా పై నుండి (బాల్కనీ లేదా చిన్న కొండ నుండి వంటివి) ఎలా కనిపిస్తుందో గమనించమని వారిని అడగండి.",
+        "treatment_te": "cue"
+      }
+    ]
+  },
+  "explore": {
+    "points": [
+      {
+        "text": "Observe a chair from above",
+        "detail": "Tell students that at home, they should try to look at a chair from directly above it, like Shalini did. Ask them to notice its shape and what parts they can see from that view.",
+        "image": {
+          "url": "/api/textbook-catalog/image/ts_scert_class3_maths_en/1/img_ts_scert_class3_maths_en_ch01_01",
+          "caption": "An illustration of a young girl in a blue school uniform showing a book to a woman in a blue sari, who is holding a book in her left hand. A wooden chair is visible behind the girl. The illustration depicts a scene from the lesson text."
+        },
+        "detail_te": "ఇంట్లో, శాలిని చేసినట్లుగా, కుర్చీని నేరుగా పై నుండి చూడటానికి ప్రయత్నించమని విద్యార్థులకు చెప్పండి. దాని ఆకారాన్ని మరియు ఆ వీక్షణ నుండి వారు ఏ భాగాలను చూడగలరో గమనించమని వారిని అడగండి.",
+        "treatment_te": "full"
+      },
+      {
+        "text": "Look at a cup from the side and top",
+        "detail": "Tell students to take a cup and look at it first from the side, then from directly above. Ask them to observe how the shape changes from these two different viewpoints.",
+        "detail_te": "విద్యార్థులు ఒక కప్పును తీసుకుని, మొదట పక్క నుండి, ఆపై నేరుగా పై నుండి చూడమని చెప్పండి. ఈ రెండు వేర్వేరు వీక్షణల నుండి ఆకారం ఎలా మారుతుందో గమనించమని వారిని అడగండి.",
+        "treatment_te": "full"
+      },
+      {
+        "text": "Find an object with distinct views",
+        "detail": "Tell students to find one object in their house, like a book or a small box, that looks very different from its top, front, and side views. They should be ready to describe it tomorrow.",
+        "detail_te": "వారి ఇంట్లో ఒక వస్తువును కనుగొనమని విద్యార్థులకు చెప్పండి, అది ఒక పుస్తకం లేదా చిన్న పెట్టె వంటిది, దాని 'top', 'front' మరియు 'side views' నుండి చాలా భిన్నంగా కనిపిస్తుంది. రేపు దానిని వివరించడానికి వారు సిద్ధంగా ఉండాలి.",
+        "treatment_te": "full"
+      }
+    ],
+    "imageFocus": "matchbox"
+  },
+  "sectionWatch": {
+    "refresher": null,
+    "concept": {
+      "text": "Matchbox views comparison",
+      "detail": "Observe if students can articulate the difference between the actual object changing and the view of the object changing. Ensure they understand that the matchbox remains the same, only their perspective shifts."
+    },
+    "realLife": {
+      "text": "Connecting views to daily objects",
+      "detail": "Check if students can relate the concept of different views to the real-life examples provided. Look for nods of understanding when discussing the house or table views."
+    },
+    "challenge": {
+      "text": "Shalini's chair discussion",
+      "detail": "Listen for pairs who correctly identify Shalini's drawing as a top view. Watch for students who insist it cannot be a chair because it does not look like the front view they are used to seeing."
+    },
+    "levelSet": {
+      "text": "Confirming understanding of views",
+      "detail": "During the recap, identify any students who still believe the object itself changes when viewed from a different angle. This indicates a need for further clarification on perspective."
+    },
+    "explore": {
+      "text": "Preparing for next day's recall",
+      "detail": "Ensure students understand the task to observe objects at home. The goal is for them to be able to describe what they saw from different angles tomorrow."
+    }
+  },
+  "materialsUsed": [
+    "matchbox"
+  ],
+  "pagesCited": [],
+  "figureRefs": [
+    "img_ts_scert_class3_maths_en_ch01_01"
+  ],
+  "timings": {
+    "concept": 8,
+    "realLife": 5,
+    "challenge": 10,
+    "levelSet": 5,
+    "explore": 13
+  },
+  "index": 1,
+  "topic": "Shalini and Rajani like drawing pictures.",
+  "subtopic": "",
+  "pageRange": [
+    null,
+    null
+  ],
+  "bookMoves": [
+    {
+      "ord": 1,
+      "type": "concept",
+      "gist": "Introduces Shalini and Rajani who like drawing pictures.",
+      "section": "concept",
+      "fidelity": "faithful"
+    },
+    {
+      "ord": 2,
+      "type": "concept",
+      "gist": "Teacher asks students to draw chairs, leading to a disagreement between Shalini and Rajni.",
+      "section": "concept",
+      "fidelity": "faithful"
+    },
+    {
+      "ord": 3,
+      "type": "activity",
+      "gist": "Asks if Shalini drew a chair and what the reader thinks.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "Has Shalini drawn the picture of a chair? What do you think?"
+    },
+    {
+      "ord": 4,
+      "type": "concept",
+      "gist": "Teacher explains Shalini's drawing is a top view of a chair, showing other examples.",
+      "section": "concept",
+      "fidelity": "faithful"
+    },
+    {
+      "ord": 5,
+      "type": "concept",
+      "gist": "Introduces front view and side view.",
+      "section": "concept",
+      "fidelity": "faithful"
+    },
+    {
+      "ord": 6,
+      "type": "activity",
+      "gist": "Asks if the reader has observed a chair from different views and if it looks different.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "Have you looked at a chair from the top, from the side and from the front? Does the chair look the same or diﬀ erent when seen from diﬀ erent sides? 1. Look at the pictures of a house drawn here. Can you say which is drawn from the top, which is from the front and which is from the side. Write in the boxes given below them."
+    },
+    {
+      "ord": 7,
+      "type": "activity",
+      "gist": "Asks to identify objects from their side view.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "2. Identify these objects. (i) Look at the pictures of objects given below. These pictures show their side view. Write the names of the objects in the boxes given below them."
+    },
+    {
+      "ord": 8,
+      "type": "activity",
+      "gist": "Asks to identify objects from their top view.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "(ii) Look at the pictures of some objects given below. These pictures show their top view. Write the names of the objects in the boxes given below them."
+    },
+    {
+      "ord": 9,
+      "type": "activity",
+      "gist": "Asks to imagine and draw top and side views of a table.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "(iii) Imagine how a table looks like from the top and the side. Draw the correct picture in the boxes. Top view Side view"
+    },
+    {
+      "ord": 10,
+      "type": "activity",
+      "gist": "Instructs to trace a match-box and observe the shapes formed.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "(i) Let us draw. Take a match-box, put it on a piece of paper and draw along the edges as shown here. Observe the shapes formed."
+    },
+    {
+      "ord": 11,
+      "type": "activity",
+      "gist": "Instructs to trace a bangle and other objects, then identify and draw their shapes.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "(ii) Take a bangle and trace it. Observe the shape formed. (iii) Trace the following objects on a paper. Identify the shapes and draw in the table. Object Shape of the object"
+    },
+    {
+      "ord": 12,
+      "type": "activity",
+      "gist": "Instructs to open a match-box and observe its appearance.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "3. Let us see the shapes in objects. Take a match-box. Open it as shown in the ﬁ gure. See how it looks."
+    }
+  ],
+  "_meta": {
+    "masteryTarget": "how something looks depends on where I look at it from",
+    "selectedActivity": "Body Shapes On The Floor",
+    "activitySource": "library",
+    "selectedContext": "School",
+    "formats": {
+      "refresher": "hands-up recall of the previous object",
+      "realLife": "walk-to-school scene",
+      "challenge": "team relay at the board",
+      "levelSet": "draw-what-you-learned card",
+      "explore": "predict-then-test"
+    },
+    "plannedMinutes": {
+      "refresher": 4,
+      "concept": 8,
+      "realLife": 5,
+      "challenge": 10,
+      "levelSet": 5,
+      "explore": 13
+    },
+    "plannedHook": {
+      "scene": "The class has just drawn a matchbox from the front, side, and top.",
+      "object": "A matchbox",
+      "question": "What happens if we trace around the matchbox?",
+      "answeredNextLesson": "an object's outline can be traced"
+    },
+    "plannedBridge": null,
+    "provenance": {
+      "pages": [
+        null,
+        null
+      ],
+      "textbookExcerptChars": 2930,
+      "knowledgeExtracted": {
+        "concepts": 3,
+        "competencies": 4,
+        "vocabulary": 5,
+        "contexts": 11
+      },
+      "canonicalLibraryIdsUsed": {},
+      "canonicalEntriesSeededHere": {},
+      "activity": {
+        "name": "Body Shapes On The Floor",
+        "source": "library",
+        "id": "1d313eeb-47fb-4381-b252-38c94a7d0add"
+      },
+      "context": "School",
+      "sectionFormats": {
+        "refresher": "hands-up recall of the previous object",
+        "realLife": "walk-to-school scene",
+        "challenge": "team relay at the board",
+        "levelSet": "draw-what-you-learned card",
+        "explore": "predict-then-test"
+      },
+      "plannedMinutes": {
+        "refresher": 4,
+        "concept": 8,
+        "realLife": 5,
+        "challenge": 10,
+        "levelSet": 5,
+        "explore": 13
+      }
+    },
+    "sectionCitations": {
+      "concept": "Textbook, no ingested textbook pages (context assembly) — concepts: Different views of an object (top, front, side), Tracing objects to identify shapes, Unfolding 3D objects to see their 2D net/shape; vocabulary: top view, side view, front view, trace, shape. Resolved against the shared canonical library.",
+      "realLife": "Textbook-named context(s) (context assembly): chairs, house, table, match-box, bangle, book (+5 more).",
+      "levelSet": "Free (generation) — the misconception this section is meant to surface: \"the matchbox changes when I look at it from the top\".",
+      "explore": "Free (generation) — planned to open on: \"The class has just drawn a matchbox from the front, side, and top.\".",
+      "refresher": "Built entirely from the previous topic's Explore (planning + generation) — no new textbook or library lookup for this section.",
+      "challenge": "Activity \"Body Shapes On The Floor\" — Pedagogy Library (activity selection), matched on 0 competenc(ies)."
+    },
+    "teluguReview": "unreviewed-draft",
+    "teluguBulletsApplied": 15,
+    "teluguBulletsTotal": 15
+  },
+  "figures": [],
+  "figureImages": {
+    "img_ts_scert_class3_maths_en_ch01_01": {
+      "url": "https://imnidyunrleqewcnoxng.supabase.co/storage/v1/object/public/textbook-images/ts_scert_class3_maths_en/ch01/img_ts_scert_class3_maths_en_ch01_01.jpg",
+      "caption": "An illustration of a young girl in a blue school uniform showing a book to a woman in a blue sari, who is holding a book in her left hand. A wooden chair is visible behind the girl. The illustration depicts a scene from the lesson text."
+    },
+    "img_ts_scert_class3_maths_en_ch01_02": {
+      "url": "https://imnidyunrleqewcnoxng.supabase.co/storage/v1/object/public/textbook-images/ts_scert_class3_maths_en/ch01/img_ts_scert_class3_maths_en_ch01_02.jpg",
+      "caption": "An illustration of a rectangular chair as viewed from the top, with a slightly textured, light brown seat and back, and darker brown armrests or side supports. The bottom edge shows two small, rounded feet."
+    },
+    "img_ts_scert_class3_maths_en_ch01_03": {
+      "url": "https://imnidyunrleqewcnoxng.supabase.co/storage/v1/object/public/textbook-images/ts_scert_class3_maths_en/ch01/img_ts_scert_class3_maths_en_ch01_03.jpg",
+      "caption": "Two cartoon girls, Pooja and Reena, are shown alongside two illustrations of a chair. Pooja is on the left, pointing down. To her right is a front view of a chair, showing its seat, backrest, and armrests. Reena is on the right, pointing to her left. To her left is a side view of a chair, showing its seat, backrest, and armrests from the side."
+    },
+    "img_ts_scert_class3_maths_en_ch01_04": {
+      "url": "https://imnidyunrleqewcnoxng.supabase.co/storage/v1/object/public/textbook-images/ts_scert_class3_maths_en/ch01/img_ts_scert_class3_maths_en_ch01_04.jpg",
+      "caption": "Three different views of a house are shown: the first house has a blue door on the front, the second house is viewed from the top with an orange thatched roof, and the third house has a small window and a pointed roof, shown from the side."
+    },
+    "img_ts_scert_class3_maths_en_ch01_05": {
+      "url": "https://imnidyunrleqewcnoxng.supabase.co/storage/v1/object/public/textbook-images/ts_scert_class3_maths_en/ch01/img_ts_scert_class3_maths_en_ch01_05.jpg",
+      "caption": "Three items are shown from their side view for identification: a light-blue cup with a handle, a light-blue bucket with a handle, and a transparent glass with vertical striations."
+    },
+    "img_ts_scert_class3_maths_en_ch01_06": {
+      "url": "https://imnidyunrleqewcnoxng.supabase.co/storage/v1/object/public/textbook-images/ts_scert_class3_maths_en/ch01/img_ts_scert_class3_maths_en_ch01_06.jpg",
+      "caption": "Three hand-drawn illustrations are shown side-by-side. From left to right: a light-colored staircase with a dark handrail, a light-colored computer monitor (CRT style) seen from the side, and a clear glass bottle."
+    },
+    "img_ts_scert_class3_maths_en_ch01_07": {
+      "url": "https://imnidyunrleqewcnoxng.supabase.co/storage/v1/object/public/textbook-images/ts_scert_class3_maths_en/ch01/img_ts_scert_class3_maths_en_ch01_07.jpg",
+      "caption": "Three images are presented: a top-down view of a cup with a handle, a front-on view of a flight of stairs, and a side-view of a cup."
+    }
+  },
+  "_needsReview": true,
+  "_reviewReasons": [
+    "Dividing the class into pairs for discussion and argument will be chaotic and difficult to manage with 30-60 children on fixed benches. Fix: Rephrase the activity as a whole-class discussion led by the teacher, using call-and-response or asking for a show of hands.",
+    "The sheet refers to 'Shalini's drawing' and 'house pictures in their book' multiple times without specifying page numbers or providing the actual images. Fix: Specify the exact page numbers for all referenced images in the textbook, or describe the images if they are not in the textbook.",
+    "The 'Challenge' section relies heavily on 'Shalini's chair drawing' and 'house pictures in their book' which are not provided or referenced with page numbers. Fix: Specify the exact page numbers for all referenced images in the textbook, or describe the images if they are not in the textbook."
+  ],
+  "sectionImages": {
+    "concept": [
+      "img_ts_scert_class3_maths_en_ch01_02",
+      "img_ts_scert_class3_maths_en_ch01_03"
+    ],
+    "challenge": [
+      "img_ts_scert_class3_maths_en_ch01_04"
+    ],
+    "explore": [
+      "img_ts_scert_class3_maths_en_ch01_05",
+      "img_ts_scert_class3_maths_en_ch01_06",
+      "img_ts_scert_class3_maths_en_ch01_07"
+    ]
+  }
+}

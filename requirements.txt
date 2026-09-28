@@ -12,3 +12,22 @@ holidays==0.100
 requests==2.32.3
 PyMuPDF==1.24.14
 Pillow==11.0.0
+# TS SCERT textbook scraper (app/lib/ts_scert_textbooks.py)
+beautifulsoup4==4.12.2
+gdown==5.2.0
+# Agentic prep-material pipeline (prep_flow/, generation/, validation_flow/,
+# wired in via app/lib/prep_pipeline_bridge.py). Requires Python >=3.11
+# (deepagents' own floor) -- the venv this backend runs on was upgraded to
+# 3.13 for this. Skips langgraph-checkpoint-postgres/psycopg: that's for
+# resumability, which this integration doesn't use (persist=False).
+langgraph>=1.2,<2
+
+# The Deep Agent layer (deep_agents/, config flag "deep_agents", now True in
+# prep_pipeline_bridge.py) and its hard import dependency context_flow/ (see
+# prep_pipeline_bridge.py's docstring for why context_flow is present but
+# never invoked). Nothing else needs these -- with the flag False the three
+# reasoning seams fall back to a plain structured call and none of this
+# imports at all.
+deepagents>=0.7,<1
+langchain-openai>=1.6,<2
+wcmatch>=11

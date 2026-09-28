@@ -285,6 +285,83 @@ def get_prep_material_lesson(schoolId: str, materialId: str, admin: dict = Depen
     return {"lesson": row.get("lesson")}
 
 
+# ─── Prep materials (on-demand generation from a published textbook) ─────────
+#
+# The shared-batch generator (prep_batch_jobs.py) tops up material for a
+# school's own syllabus automatically in the background. These routes are the
+# manual counterpart: an admin picks a real published textbook chapter and
+# generates + saves its lessons right away, via
+# prep_batch_jobs.save_published_chapter_lessons -- the same pipeline, just
+# triggered on demand instead of waiting for ensure_stock() to reach it.
+
+@router.get("/{schoolId}/prep-materials/published-books")
+def list_published_books(schoolId: str, admin: dict = Depends(require_admin)):
+    """Proxies the published-textbook catalog so the admin panel can offer a
+    picker -- this service is shared across every school (not scoped to
+    schoolId), same as prep_pipeline_bridge.py's own catalog lookup."""
+    import requests
+    from ..lib.prep_pipeline_bridge import PUBLISHED_TEXTBOOK_API
+
+    try:
+        # Render free tier sleeps; a cold start is 30-60s (textbook_catalog.py's
+        # own sync path hits the same thing and uses the same 90s allowance).
+        resp = requests.get(f"{PUBLISHED_TEXTBOOK_API}/published/books", timeout=90)
+        resp.raise_for_status()
+        books = resp.json()
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Published textbook catalog unavailable: {e}")
+    return {"books": [
+        {"bookId": b.get("book_id"), "grade": b.get("grade"), "subject": b.get("subject"),
+         "board": b.get("board"), "language": b.get("language"),
+         "chaptersPublished": b.get("chapters_published"), "totalChapters": b.get("total_chapters")}
+        for b in (books if isinstance(books, list) else [])
+    ]}
+
+
+@router.get("/{schoolId}/prep-materials/published-books/{bookId}/chapters")
+def list_published_chapters(schoolId: str, bookId: str, admin: dict = Depends(require_admin)):
+    """One book's chapter list (metadata only, no prose) -- for the chapter
+    picker once a book is chosen."""
+    import requests
+    from ..lib.prep_pipeline_bridge import PUBLISHED_TEXTBOOK_API
+
+    try:
+        resp = requests.get(f"{PUBLISHED_TEXTBOOK_API}/published/books/{bookId}/chapters", timeout=90)
+        resp.raise_for_status()
+        chapters = resp.json()
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Published textbook catalog unavailable: {e}")
+    return {"chapters": [
+        {"chapterNumber": c.get("chapter_number"), "chapterTitle": c.get("chapter_title"),
+         "pageStart": c.get("page_start"), "pageEnd": c.get("page_end")}
+        for c in (chapters if isinstance(chapters, list) else [])
+    ]}
+
+
+class GenerateFromBookBody(BaseModel):
+    bookId: str
+    chapterNumber: int
+
+
+@router.post("/{schoolId}/prep-materials/generate-from-book")
+def post_generate_from_book(schoolId: str, body: GenerateFromBookBody, admin: dict = Depends(require_admin)):
+    """Starts the on-demand pipeline run in a background thread and returns a
+    job id right away -- the run itself takes 1-3 minutes, far past what a
+    browser/gateway will hold a request open for. Poll the GET below."""
+    from ..lib.prep_batch_jobs import start_chapter_generation
+    job_id = start_chapter_generation(schoolId, body.bookId, body.chapterNumber)
+    return {"jobId": job_id}
+
+
+@router.get("/{schoolId}/prep-materials/generate-from-book/{jobId}")
+def get_generate_from_book_job(schoolId: str, jobId: str, admin: dict = Depends(require_admin)):
+    from ..lib.prep_batch_jobs import get_chapter_job
+    job = get_chapter_job(jobId)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return job
+
+
 # ─── Announcements ──────────────────────────────────────────────────────────────
 
 @router.get("/{schoolId}/announcements")

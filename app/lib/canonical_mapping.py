@@ -81,12 +81,42 @@ def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def _retrying(fn, *, attempts: int = 2):
+    """Run `fn()`, retrying once on a transient connection error before
+    giving up.
+
+    `create_admin_client()` (supabase_clients.py) is a process-wide singleton
+    — one httpx/HTTP2 connection pool, reused by every concurrent
+    `asyncio.to_thread()` caller. `resolve_knowledge()` fans this out across
+    several topics at once (gather_bounded), so a connection Supabase's edge
+    quietly closed shows up here as `ConnectionTerminated` on whichever
+    request happened to be mid-flight — a transient pool hiccup, not a real
+    data problem. Retried once because that is exactly what re-clicking
+    "Generate sheet" would get anyway, and because the alternative — this
+    exception propagating out of resolve_canonical() uncaught — previously
+    took down canonical resolution for ALL FOUR kinds on that topic, not just
+    the one call that happened to hit it (see resolve_knowledge()'s per-kind
+    try/except in tools.py, the other half of this fix).
+    """
+    last_exc = None
+    for attempt in range(1, attempts + 1):
+        try:
+            return fn()
+        except Exception as exc:
+            last_exc = exc
+            if attempt >= attempts:
+                raise
+            print(f"[CANONICAL] transient error ({exc}), retrying "
+                  f"({attempt}/{attempts - 1} retries left)")
+    raise last_exc  # pragma: no cover — loop always returns or raises above
+
+
 def _fetch_all(ac, table: str, name_col: str) -> list:
-    res = ac.table(table).select(f"id, {name_col}, aliases").execute()
+    res = _retrying(lambda: ac.table(table).select(f"id, {name_col}, aliases").execute())
     return res.data or []
 
 
-def resolve_canonical(ac, kind: str, raw_names: list) -> dict:
+def resolve_canonical(ac, kind: str, raw_names: list, trace: dict = None) -> dict:
     """Resolve a batch of raw, as-extracted names onto canonical row ids in
     `kind` (one of "concepts", "competencies", "vocabulary", "contexts").
 
@@ -95,10 +125,21 @@ def resolve_canonical(ac, kind: str, raw_names: list) -> dict:
     started with. Creates new rows for names that don't match anything
     existing; a unique-constraint race with a concurrent extraction falls back
     to a lookup rather than failing the whole batch.
+
+    `trace`, if given a dict, is filled in place with the breakdown of HOW each
+    name resolved — {"matchedExisting": [...], "matchedViaLLM": [...],
+    "created": [...]} — without changing what this function returns, so every
+    existing caller is unaffected. "created" is the one list that matters for
+    provenance: those are new rows this call actually wrote into the shared
+    library (resolve_canonical's designed "grows organically" behaviour), as
+    opposed to the other two, which only ever read what was already there.
     """
     if kind not in _TABLES:
         raise ValueError(f"unknown canonical kind: {kind}")
     name_col = _TABLES[kind]
+
+    if trace is not None:
+        trace.update({"kind": kind, "matchedExisting": [], "matchedViaLLM": [], "created": []})
 
     cleaned = [n.strip() for n in (raw_names or []) if n and n.strip()]
     if not cleaned:
@@ -116,35 +157,54 @@ def resolve_canonical(ac, kind: str, raw_names: list) -> dict:
 
     resolved: dict = {}
     unmatched: list = []
+    matched_direct: list = []
     for name in cleaned:
         hit = by_lower.get(name.lower())
         if hit:
             resolved[name] = hit["id"]
+            matched_direct.append(name)
         else:
             unmatched.append(name)
 
+    matched_llm: dict = {}
     if unmatched and existing:
-        matched = _llm_match(ac, kind, name_col, unmatched, existing)
-        for name, canonical_id in matched.items():
+        matched_llm = _llm_match(ac, kind, name_col, unmatched, existing)
+        for name, canonical_id in matched_llm.items():
             resolved[name] = canonical_id
         unmatched = [n for n in unmatched if n not in resolved]
 
+    created: list = []
     for name in unmatched:
         new_id = str(uuid.uuid4())
         try:
-            ac.table(kind).insert(
+            _retrying(lambda: ac.table(kind).insert(
                 {"id": new_id, name_col: name, "aliases": [], "created_at": _now()}
-            ).execute()
+            ).execute())
             resolved[name] = new_id
+            created.append(name)
         except Exception:
-            row = (
-                ac.table(kind).select("id").ilike(name_col, name)
-                .limit(1).execute().data or []
-            )
+            # Reached either because the row genuinely already exists (a real
+            # unique-constraint race with a concurrent extraction) or because
+            # even the retry above hit the same transient connection problem.
+            # Either way, one more read is worth it before giving up on this
+            # single name — it is a lot cheaper than losing it outright.
+            try:
+                row = _retrying(lambda: ac.table(kind).select("id").ilike(name_col, name)
+                                .limit(1).execute()).data or []
+            except Exception as exc:
+                print(f"[CANONICAL] Could not insert or find '{name}' in {kind} "
+                      f"(connection issue: {exc}); dropping.")
+                continue
             if row:
                 resolved[name] = row[0]["id"]
+                matched_direct.append(name)  # lost a create race — this is a read, not a write
             else:
                 print(f"[CANONICAL] Could not insert or find '{name}' in {kind}; dropping.")
+
+    if trace is not None:
+        trace["matchedExisting"] = sorted(matched_direct)
+        trace["matchedViaLLM"] = sorted(matched_llm)
+        trace["created"] = sorted(created)
     return resolved
 
 
@@ -153,8 +213,6 @@ def _llm_match(ac, kind: str, name_col: str, unmatched: list, existing: list) ->
     different phrasing. Returns {raw_name: canonical_id} for confident matches
     only — anything else is left for the caller to create as new.
     """
-    from .vision_extraction import call_gemini, robust_json_parse  # lazy: heavy deps
-
     existing_list = "\n".join(f"- {e[name_col]}" for e in existing)
     new_list = "\n".join(f"- {n}" for n in unmatched)
     prompt = _MATCH_PROMPT.format(
@@ -165,12 +223,26 @@ def _llm_match(ac, kind: str, name_col: str, unmatched: list, existing: list) ->
     )
 
     try:
+        # Lazy AND inside the try: a flat checkout (no app/lib/vision_extraction,
+        # no PyMuPDF/Pillow) must degrade to "treat everything as new" exactly
+        # like a real LLM failure would — not crash resolve_canonical outright,
+        # which previously discarded concepts/vocabulary/contexts resolution for
+        # the whole topic rather than just skipping the fuzzy-match step.
+        from .vision_extraction import call_gemini, robust_json_parse
         # "standard", not "simple": a wrong merge here permanently pollutes a
         # library every future book's extraction reads from — this is the one
         # canonical-mapping call where the stakes justify the better model.
         raw = call_gemini([prompt], tier="standard")
         data = robust_json_parse(raw)
         resolutions = data.get("resolutions", []) or []
+    except (ImportError, ModuleNotFoundError):
+        # Expected and permanent in a flat checkout — vision_extraction lives in
+        # the real backend monorepo, not here (see this module's own docstring).
+        # Every unmatched name becomes new, silently, same as the log line below
+        # would say every single call in this environment — printing it once per
+        # call just trains the console to be ignored. Genuine failures (the API
+        # call itself, a malformed response) still print, below.
+        return {}
     except Exception as exc:
         print(f"[CANONICAL] LLM match failed for {kind}, treating all {len(unmatched)} as new: {exc}")
         return {}

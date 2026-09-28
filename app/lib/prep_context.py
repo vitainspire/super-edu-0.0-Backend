@@ -13,7 +13,7 @@ async def fetch_grounding(admin, topic_definition_id: str) -> Optional[dict]:
     try:
         topic_rows = (
             admin.table("syllabus_topics")
-            .select("id, chapter_id")
+            .select("id, chapter_id, grade, subject, page_start, page_end")
             .eq("definition_id", topic_definition_id)
             .execute()
         ).data or []
@@ -22,12 +22,18 @@ async def fetch_grounding(admin, topic_definition_id: str) -> Optional[dict]:
 
         topic_ids = [t["id"] for t in topic_rows]
         chapter_id = topic_rows[0].get("chapter_id")
+        grade = topic_rows[0].get("grade")
+        subject = topic_rows[0].get("subject")
+        # This topic's own page range within the chapter — used to send the
+        # model the two or three relevant pages instead of all ~11k words.
+        topic_page_start = topic_rows[0].get("page_start")
+        topic_page_end = topic_rows[0].get("page_end")
 
-        chapter_title = page_start = page_end = None
+        chapter_title = page_start = page_end = chapter_number = None
         if chapter_id:
             chapter = (
                 admin.table("syllabus_chapters")
-                .select("title, page_start, page_end")
+                .select("title, page_start, page_end, chapter_number, grade, subject")
                 .eq("id", chapter_id)
                 .maybe_single()
                 .execute()
@@ -36,6 +42,9 @@ async def fetch_grounding(admin, topic_definition_id: str) -> Optional[dict]:
                 chapter_title = chapter.get("title")
                 page_start = chapter.get("page_start")
                 page_end = chapter.get("page_end")
+                chapter_number = chapter.get("chapter_number")
+                grade = grade or chapter.get("grade")
+                subject = subject or chapter.get("subject")
 
         ex_rows = (
             admin.table("syllabus_exercises")
@@ -63,11 +72,34 @@ async def fetch_grounding(admin, topic_definition_id: str) -> Optional[dict]:
             seen_sb.add(s["definition_id"])
             sidebars.append(s["text"])
 
-        if not chapter_title and not exercises and not sidebars:
+        # The textbook's actual prose, if this book has been mirrored (see
+        # lib/textbook_catalog.py). Everything above is the *skeleton* of the
+        # chapter — its title, page range, exercise questions and sidebars —
+        # which lets a lesson line up with the book structurally while the
+        # model still invents the explanation itself. This is the part that
+        # makes it grounded in what the child will actually read.
+        textbook = None
+        try:
+            from .textbook_catalog import grounding_for_syllabus_chapter
+            if grade and subject:
+                textbook = grounding_for_syllabus_chapter(
+                    grade, subject, chapter_number, chapter_title,
+                    syllabus_page_start=page_start,
+                    topic_page_start=topic_page_start, topic_page_end=topic_page_end,
+                    ac=admin,
+                )
+        except Exception as e:
+            # Never let a missing/slow textbook mirror break prep generation —
+            # an ungrounded lesson is worse than a grounded one, but far
+            # better than no lesson.
+            print(f"[prep_context] textbook grounding unavailable: {e}")
+
+        if not chapter_title and not exercises and not sidebars and not textbook:
             return None
         return {
             "chapterTitle": chapter_title, "pageStart": page_start, "pageEnd": page_end,
             "exercises": exercises, "sidebars": sidebars,
+            "textbook": textbook,
         }
     except Exception:
         return None

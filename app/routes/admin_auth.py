@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Request, HTTPException, Depends
 from pydantic import BaseModel
 from supabase import create_client
+from supabase_auth.errors import AuthApiError
 
 from ..lib.supabase_clients import create_admin_client
 from ..lib.admin_queries import fetch_admin, fetch_school, upsert_admin, create_school
@@ -51,9 +52,19 @@ def login(body: LoginBody, request: Request):
     try:
         supabase = _auth_client()
         auth_res = supabase.auth.sign_in_with_password({"email": body.email, "password": body.password})
-    except Exception as e:
+    except AuthApiError as e:
+        # A real rejection from Supabase Auth (wrong password, unknown email,
+        # unconfirmed email, etc.) — genuinely a 401.
         api_log("admin/login", ip, (time.time() - t0) * 1000, False, "unauthorized")
         raise HTTPException(status_code=401, detail=str(e) or "Invalid credentials")
+    except Exception as e:
+        # NOT a credentials verdict — a dropped connection, timeout, or other
+        # transport failure talking to Supabase itself. Bucketing this as 401
+        # is what made a transient network blip indistinguishable from a
+        # wrong password on screen; 503 says "try again", not "check your
+        # password", which is the actually-true thing here.
+        api_log("admin/login", ip, (time.time() - t0) * 1000, False, "error", error=str(e))
+        raise HTTPException(status_code=503, detail="Couldn't reach the login service — try again in a moment.")
 
     if not auth_res.user or not auth_res.session:
         api_log("admin/login", ip, (time.time() - t0) * 1000, False, "unauthorized")

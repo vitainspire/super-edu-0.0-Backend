@@ -1,0 +1,3 @@
+T1: no supplement needed -- page stands as-is
+T2: injected [sequencingSoundness] -> None
+T3: injected [misconceptionNamed] -> Before asking students to count shapes in complex images, present examples of shapes that are partially obscured or overlapping and ask students to discuss how they would count them, highlighting that sometimes parts of shapes are hidden.
