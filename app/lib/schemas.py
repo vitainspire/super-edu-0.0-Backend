@@ -775,6 +775,11 @@ class TeacherPrepMaterialUpsertSchema(BaseModel):
     subtopic: Optional[str] = Field(default=None, max_length=LEN_TOPIC)
     lesson: dict
     createdAt: Optional[str] = None
+    # 'shared' (a cached copy of the shared lesson), 'personal' (an explicit
+    # "make this mine" generation), or 'live_fallback' (nothing shared existed
+    # yet). Only 'personal' rows are ever preferred over the shared pool on a
+    # later fetch — see PrepMaterialModal.tsx.
+    source: Optional[str] = Field(default="shared", max_length=LEN_SHORT)
 
 
 class TeacherInterventionUpsertSchema(BaseModel):

@@ -1,0 +1,369 @@
+{
+  "materials": [
+    "matchbox",
+    "loose match-sticks"
+  ],
+  "teachingOrder": [
+    "refresher",
+    "concept",
+    "realLife",
+    "challenge",
+    "levelSet",
+    "explore"
+  ],
+  "planningNote": "This period builds on the previous lesson's observation of objects from different angles by focusing on the outlines and properties of shapes within those objects. It introduces the idea that shapes have distinct sides and corners, preparing for the next topic on how shapes fit together.",
+  "objective": "Sort shapes by number of sides",
+  "floor": "Given a matchbox, a child can trace one of its faces and correctly count the number of sides and corners of the resulting shape, without needing to compare it to other shapes.",
+  "previousTopicRefresher": {
+    "previousTopic": "Shalini and Rajani like drawing pictures.",
+    "recap": [
+      {
+        "text": "Recall chair views",
+        "detail": "Ask students to recall what they noticed about the chair they looked at from above yesterday. Wait for a few hands to go up and call on one or two to share. Listen for descriptions of the top view.",
+        "detail_te": "నిన్న చూసిన కుర్చీ గురించి ఏమి గమనించారో చెప్పమని విద్యార్థులను అడగండి. కొందరు చేతులు పైకి ఎత్తిన తర్వాత, ఒకరిద్దరిని చెప్పమని అడగండి. పై నుండి చూసినప్పుడు కుర్చీ ఎలా కనిపించిందో వినండి.",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "Different views of a cup",
+        "detail": "Ask students to share what they observed when looking at a cup from the side and from the top. Have them discuss in pairs for 30 seconds, then call on one or two pairs to share. Watch for clear articulation of how the view changed.",
+        "detail_te": "ఒక కప్పును పక్క నుండి మరియు పై నుండి చూసినప్పుడు ఏమి గమనించారో చెప్పమని విద్యార్థులను అడగండి. 30 సెకన్ల పాటు జంటలుగా చర్చించమని చెప్పండి, ఆపై ఒకరిద్దరు జంటలను చెప్పమని అడగండి. వీక్షణ ఎలా మారిందో స్పష్టంగా చెప్పడం గమనించండి.",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "Object views and outlines",
+        "detail": "Explain that looking at objects from different views helps us see their outlines and shapes. Transition by stating that today they will focus on these shapes and what they are made of.",
+        "detail_te": "వస్తువులను వివిధ కోణాల నుండి చూడటం వాటి ఆకృతులను మరియు ఆకారాన్ని చూడటానికి సహాయపడుతుందని వివరించండి. ఈ రోజు ఈ ఆకారాలపై మరియు అవి దేనితో తయారు చేయబడ్డాయో దృష్టి సారిస్తారని చెప్పి, తదుపరి అంశానికి వెళ్ళండి.",
+        "treatment_te": "cue"
+      }
+    ]
+  },
+  "concept": [
+    {
+      "text": "Tracing a matchbox face",
+      "detail": "Take a matchbox and place it on the blackboard. Trace around one of its rectangular faces with chalk, creating a shape. Ask students what shape they see.",
+      "detail_te": "ఒక అగ్గిపెట్టెను తీసుకుని, దానిని నల్లబల్లపై ఉంచండి. దాని దీర్ఘచతురస్రాకార ముఖం చుట్టూ సుద్దతో గీసి, ఒక ఆకారాన్ని సృష్టించండి. విద్యార్థులు ఏ ఆకారాన్ని చూస్తున్నారని అడగండి.",
+      "treatment_te": "cue"
+    },
+    {
+      "text": "Sides and corners of a rectangle",
+      "detail": "Point to the traced rectangle on the board. Count its sides and corners aloud with the class. Explain that shapes have these properties. Draw a triangle next to it and count its sides and corners.",
+      "detail_te": "బోర్డుపై గీసిన దీర్ఘచతురస్రం వైపు చూపండి. దాని భుజాలను మరియు మూలలను తరగతితో కలిసి గట్టిగా లెక్కించండి. ఆకారాలకు ఈ లక్షణాలు ఉంటాయని వివరించండి. దాని పక్కన ఒక త్రిభుజాన్ని గీసి, దాని భుజాలను మరియు మూలలను లెక్కించండి.",
+      "treatment_te": "cue"
+    },
+    {
+      "text": "Comparing shapes with same side count",
+      "detail": "Draw a long, thin rectangle and a short, wide rectangle on the board, both having four sides. Ask students if they are the same shape. Explain that even with the same number of sides, shapes can look different. This closes the gap about all 4-sided shapes being squares.",
+      "detail_te": "బోర్డుపై పొడవైన, సన్నని దీర్ఘచతురస్రం మరియు పొట్టి, వెడల్పాటి దీర్ఘచతురస్రం గీయండి, రెండింటికీ నాలుగు భుజాలు ఉంటాయి. అవి ఒకే ఆకారమా అని విద్యార్థులను అడగండి. ఒకే సంఖ్యలో భుజాలు ఉన్నప్పటికీ, ఆకారాలు భిన్నంగా కనిపించవచ్చని వివరించండి. ఇది నాలుగు భుజాలున్న అన్ని ఆకారాలు చతురస్రాలే అనే అపోహను తొలగిస్తుంది.",
+      "treatment_te": "cue"
+    }
+  ],
+  "realLife": {
+    "points": [
+      {
+        "text": "Rangoli shapes in festivals",
+        "detail": "Explain that during festivals like Diwali or Pongal, people draw beautiful rangolis (or muggus) on the ground using different shapes. Ask students if they have seen rangolis with circles, squares, or triangles.",
+        "detail_te": "దీపావళి లేదా సంక్రాంతి వంటి పండుగల సమయంలో, ప్రజలు వివిధ ఆకారాలను ఉపయోగించి నేలపై అందమైన రంగోలీలు (లేదా ముగ్గులు) వేస్తారని వివరించండి. వృత్తాలు, చతురస్రాలు లేదా త్రిభుజాలతో రంగోలీలు చూశారా అని విద్యార్థులను అడగండి.",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "Match-sticks for shape making",
+        "detail": "Describe how match-sticks can be used to make various shapes, just like Suresh does in the book. Explain that each stick forms a side of the shape, and where sticks meet, they form corners.",
+        "detail_te": "పుస్తకంలో సురేష్ చేసినట్లుగా, అగ్గిపుల్లలను ఉపయోగించి వివిధ ఆకారాలను ఎలా తయారు చేయవచ్చో వివరించండి. ప్రతి పుల్ల ఆకారానికి ఒక భుజంగా ఏర్పడుతుందని, పుల్లలు కలిసే చోట మూలలు ఏర్పడతాయని వివరించండి.",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "Flooring patterns and shapes",
+        "detail": "Mention that many houses have floors made of tiles, and these tiles often form patterns with different shapes. Explain that these shapes have specific numbers of sides and corners that allow them to fit together.",
+        "detail_te": "చాలా ఇళ్లలో నేలలు పలకలతో తయారు చేయబడతాయని, ఈ పలకలు తరచుగా వివిధ ఆకారాలతో నమూనాలను ఏర్పరుస్తాయని చెప్పండి. ఈ ఆకారాలకు నిర్దిష్ట సంఖ్యలో భుజాలు మరియు మూలలు ఉంటాయని, అవి ఒకదానికొకటి సరిగ్గా సరిపోయేలా చేస్తాయని వివరించండి.",
+        "treatment_te": "cue"
+      }
+    ]
+  },
+  "challenge": {
+    "activity": "Introduces observing shapes in a rangoli made",
+    "points": [
+      {
+        "text": "PLAY: Identify and color rangoli shapes",
+        "detail": "Direct students to the rangoli picture in their books. In pairs, they should identify the given shapes (circles, squares, triangles, etc.) within the rangoli and color them according to the instructions. Give them three minutes.",
+        "detail_te": "విద్యార్థులను వారి పుస్తకాలలోని రంగోలీ చిత్రానికి నిర్దేశించండి. జంటలుగా, వారు రంగోలీలోని ఇచ్చిన ఆకారాలను (వృత్తాలు, చతురస్రాలు, త్రిభుజాలు మొదలైనవి) గుర్తించి, సూచనల ప్రకారం రంగులు వేయాలి. వారికి మూడు నిమిషాలు ఇవ్వండి.",
+        "treatment_te": "full"
+      },
+      {
+        "text": "REFLECT: Discuss match-stick shapes",
+        "detail": "Ask pairs to share which shapes they found most often in the rangoli. Then, introduce the match-stick activity. Ask them to imagine making a square with 4 sticks, then a triangle with 3 sticks. Have them discuss how many sticks they would need for other shapes.",
+        "detail_te": "రంగోలీలో వారు తరచుగా కనుగొన్న ఆకారాలను పంచుకోవాలని జంటలను అడగండి. ఆపై, అగ్గిపుల్లల కార్యాచరణను పరిచయం చేయండి. 4 పుల్లలతో ఒక చతురస్రం, ఆపై 3 పుల్లలతో ఒక త్రిభుజం తయారుచేయడం ఊహించుకోమని వారిని అడగండి. ఇతర ఆకారాలకు ఎన్ని పుల్లలు అవసరమో చర్చించమని చెప్పండి.",
+        "treatment_te": "full"
+      },
+      {
+        "text": "ACT: Make shapes with match-sticks",
+        "detail": "Distribute small bundles of loose match-sticks to each pair. Instruct them to try making a square using 8 sticks as shown in the book, then a triangle using 5 sticks. Observe their attempts and guide them to count sides and corners.",
+        "detail_te": "ప్రతి జంటకు చిన్న అగ్గిపుల్లల కట్టలను పంపిణీ చేయండి. పుస్తకంలో చూపిన విధంగా 8 పుల్లలను ఉపయోగించి ఒక చతురస్రం, ఆపై 5 పుల్లలను ఉపయోగించి ఒక త్రిభుజం తయారుచేయడానికి ప్రయత్నించమని వారికి సూచించండి. వారి ప్రయత్నాలను గమనించి, భుజాలను మరియు మూలలను లెక్కించడానికి వారికి మార్గనిర్దేశం చేయండి.",
+        "treatment_te": "full"
+      }
+    ]
+  },
+  "levelSet": {
+    "points": [
+      {
+        "text": "Recap: Sides and corners define shapes",
+        "detail": "Recap that shapes are defined by their sides and corners. Ask pairs to decide if all shapes with four sides are squares, or if some four-sided shapes can be different. Listen for students who understand that squares are specific types of four-sided shapes.",
+        "detail_te": "ఆకారాలు వాటి భుజాలు మరియు మూలల ద్వారా నిర్వచించబడతాయని పునశ్చరణ చేయండి. నాలుగు భుజాలున్న అన్ని ఆకారాలు చతురస్రాలేనా, లేదా కొన్ని నాలుగు భుజాలున్న ఆకారాలు భిన్నంగా ఉండవచ్చా అని నిర్ణయించమని జంటలను అడగండి. చతురస్రాలు నిర్దిష్ట రకాల నాలుగు భుజాలున్న ఆకారాలని అర్థం చేసుకున్న విద్యార్థుల కోసం వినండి.",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "One new thing learned today",
+        "detail": "Ask students to share with a partner one new thing they learned or found interesting about shapes today. Encourage them to use words like 'sides' and 'corners'.",
+        "detail_te": "ఈ రోజు ఆకారాల గురించి వారు నేర్చుకున్న ఒక కొత్త విషయాన్ని లేదా ఆసక్తికరంగా అనిపించిన ఒక విషయాన్ని భాగస్వామితో పంచుకోమని విద్యార్థులను అడగండి. 'sides' మరియు 'corners' వంటి పదాలను ఉపయోగించమని వారిని ప్రోత్సహించండి.",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "Find shapes in your surroundings",
+        "detail": "Invite students to look for different shapes with clear sides and corners on their way home or in their house. Tell them to notice how many sides and corners each shape has, like a window, a door, or a book.",
+        "detail_te": "ఇంటికి వెళ్ళేటప్పుడు లేదా వారి ఇంట్లో స్పష్టమైన భుజాలు మరియు మూలలు ఉన్న వివిధ ఆకారాలను వెతకమని విద్యార్థులను ఆహ్వానించండి. కిటికీ, తలుపు లేదా పుస్తకం వంటి ప్రతి ఆకారానికి ఎన్ని భుజాలు మరియు మూలలు ఉన్నాయో గమనించమని వారికి చెప్పండి.",
+        "treatment_te": "cue"
+      }
+    ]
+  },
+  "explore": {
+    "points": [
+      {
+        "text": "Observe a tiled floor",
+        "detail": "Tell students that on their way home, they should look at a tiled floor or a brick wall and notice whether the tiles or bricks fit together with no empty space between them.",
+        "image": {
+          "url": "/api/textbook-catalog/image/ts_scert_class3_maths_en/1/img_ts_scert_class3_maths_en_ch01_08",
+          "caption": "Three items are shown, potentially representing a side view, top view, and another angled view of an object, possibly a humidifier or similar device, and a cup. The first image on the left is a light blue and grey object with a wide base and narrower top. The middle image is a circular, light blue object with concentric rings in the center. The rightmost image is a light blue cup or bowl viewed from the top, showing the interior with faint lines radiating from the center."
+        },
+        "detail_te": "ఇంటికి వెళ్ళేటప్పుడు, పలకలు వేసిన నేల లేదా ఇటుక గోడను చూసి, పలకలు లేదా ఇటుకలు వాటి మధ్య ఖాళీ స్థలం లేకుండా ఒకదానికొకటి సరిపోతాయో లేదో గమనించమని విద్యార్థులకు చెప్పండి.",
+        "treatment_te": "full"
+      },
+      {
+        "text": "Look at bangles stacked together",
+        "detail": "Tell students to observe bangles (chudiyan) in a shop or at home. Ask them to notice if bangles can be placed next to each other without leaving any gaps.",
+        "detail_te": "ఒక దుకాణంలో లేదా ఇంట్లో గాజుల (chudiyan) కుప్పలను గమనించమని విద్యార్థులకు చెప్పండి. గాజులను ఎటువంటి ఖాళీలు లేకుండా ఒకదాని పక్కన ఒకటి ఉంచవచ్చో లేదో గమనించమని వారిని అడగండి.",
+        "treatment_te": "full"
+      },
+      {
+        "text": "Find objects that fit perfectly",
+        "detail": "Tell students to find one object at home that can be placed next to another identical object without leaving any gaps, like two books side-by-side or two matchboxes. They should be ready to describe it tomorrow.",
+        "detail_te": "ఇంట్లో ఒక వస్తువును కనుగొనమని విద్యార్థులకు చెప్పండి, దానిని మరొక సారూప్య వస్తువు పక్కన ఎటువంటి ఖాళీలు లేకుండా ఉంచవచ్చు, ఉదాహరణకు రెండు పుస్తకాలు పక్కపక్కన లేదా రెండు అగ్గిపెట్టెలు. రేపు దాని గురించి వివరించడానికి వారు సిద్ధంగా ఉండాలి.",
+        "treatment_te": "full"
+      }
+    ],
+    "imageFocus": "match-stick shapes"
+  },
+  "sectionWatch": {
+    "refresher": {
+      "text": "Connecting views to shapes",
+      "detail": "Ensure students make the connection between observing different views of objects and identifying the 2D shapes that make up those views. Watch for any confusion about 3D objects versus 2D outlines."
+    },
+    "concept": {
+      "text": "Counting sides and corners",
+      "detail": "Observe if students can accurately count the sides and corners of the shapes drawn. Pay attention to their understanding that shapes with the same number of sides can be different, addressing the misconception that all 4-sided shapes are squares."
+    },
+    "realLife": {
+      "text": "Recognizing shapes in context",
+      "detail": "Check if students can identify the shapes mentioned in the real-life examples. Listen for their understanding of how match-sticks form sides and corners."
+    },
+    "challenge": {
+      "text": "Match-stick shape formation",
+      "detail": "Watch for students who struggle to create shapes with the given number of match-sticks. Ensure they understand that the sticks form the sides and the meeting points are the corners."
+    },
+    "levelSet": {
+      "text": "Understanding shape properties",
+      "detail": "Listen for students who still confuse 'four sides' with 'square'. Reinforce that squares are specific, but there are other shapes with four sides."
+    },
+    "explore": {
+      "text": "Observing gaps in arrangements",
+      "detail": "Ensure students understand that they are looking for whether objects fit together perfectly or leave spaces. This is the core idea for the next lesson."
+    }
+  },
+  "materialsUsed": [
+    "matchbox",
+    "loose match-sticks"
+  ],
+  "pagesCited": [],
+  "figureRefs": [
+    "img_ts_scert_class3_maths_en_ch01_08"
+  ],
+  "timings": {
+    "refresher": 5,
+    "concept": 9,
+    "realLife": 5,
+    "challenge": 9,
+    "levelSet": 5,
+    "explore": 12
+  },
+  "index": 2,
+  "topic": "4. Let us observe the shapes in a rangoli.",
+  "subtopic": "",
+  "pageRange": [
+    null,
+    null
+  ],
+  "bookMoves": [
+    {
+      "ord": 1,
+      "type": "activity",
+      "gist": "Introduces observing shapes in a rangoli made by Sita and Gita.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "4. Let us observe the shapes in a rangoli. Sita and Gita are very interested in making rangoli. They are making rangolis on a festival. Let us observe this lovely rangoli."
+    },
+    {
+      "ord": 2,
+      "type": "activity",
+      "gist": "Asks to identify and color specific shapes within the rangoli.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "Identify these shapes , , , , , in the rangoli. (i) Identify the shape and colour it. Black, Green, Red, Yellow, Blue Identify the above shapes in the picture given below. Fill in those shapes with the same colours."
+    },
+    {
+      "ord": 3,
+      "type": "activity",
+      "gist": "Introduces making shapes with match-sticks, showing examples.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "5. Let's play with match-sticks. Suresh made these shapes using match-sticks."
+    },
+    {
+      "ord": 4,
+      "type": "activity",
+      "gist": "Asks to make various shapes using a specified number of match-sticks.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "(i) Make shapes using match-sticks (A) Make a using 8 sticks (B) Make a using 8 sticks (C) Make a using 5 sticks (D) Make a using 12 sticks (E) Make a using 12 sticks (F) Make a using 12 sticks"
+    },
+    {
+      "ord": 5,
+      "type": "activity",
+      "gist": "Asks to determine how many different shapes can be formed with various stick counts.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "(ii) (A) How many diﬀ erent shapes can be formed using 8 sticks? Write the answer in the box. (B) How many diﬀ erent shapes can be formed using 5 sticks? Write the answer in the box. (C) How many diﬀ erent shapes can be formed using 12 sticks? Write the answer in the box. (D) How many diﬀ erent shapes can be formed using 6 sticks? Write the answer in the box."
+    },
+    {
+      "ord": 6,
+      "type": "activity",
+      "gist": "Asks to observe different floorings, identify shapes, and draw them.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "6. See the three types of ﬂ ooring in diﬀ erent houses. Identify the shapes in it. Draw the shapes in the given blanks."
+    }
+  ],
+  "_meta": {
+    "masteryTarget": "shapes are made of sides and corners, and can be different even with the same number of sides",
+    "selectedActivity": "Count The Class Itself",
+    "activitySource": "library",
+    "selectedContext": "School",
+    "formats": {
+      "refresher": "one-question quick round on the previous scene",
+      "realLife": "festival preparation scene",
+      "challenge": "pair race against a shared target",
+      "levelSet": "one-thing-I-can-now-do share",
+      "explore": "what-would-happen-if question"
+    },
+    "plannedMinutes": {
+      "refresher": 5,
+      "concept": 9,
+      "realLife": 5,
+      "challenge": 9,
+      "levelSet": 5,
+      "explore": 12
+    },
+    "plannedHook": {},
+    "plannedBridge": null,
+    "provenance": {
+      "pages": [
+        null,
+        null
+      ],
+      "textbookExcerptChars": 1490,
+      "knowledgeExtracted": {
+        "concepts": 2,
+        "competencies": 6,
+        "vocabulary": 4,
+        "contexts": 4
+      },
+      "canonicalLibraryIdsUsed": {},
+      "canonicalEntriesSeededHere": {},
+      "activity": {
+        "name": "Count The Class Itself",
+        "source": "library",
+        "id": "84a4213d-3368-4b4c-8a84-6cfd762d7030"
+      },
+      "context": "School",
+      "sectionFormats": {
+        "refresher": "one-question quick round on the previous scene",
+        "realLife": "festival preparation scene",
+        "challenge": "pair race against a shared target",
+        "levelSet": "one-thing-I-can-now-do share",
+        "explore": "what-would-happen-if question"
+      },
+      "plannedMinutes": {
+        "refresher": 5,
+        "concept": 9,
+        "realLife": 5,
+        "challenge": 9,
+        "levelSet": 5,
+        "explore": 12
+      }
+    },
+    "sectionCitations": {
+      "concept": "Textbook, no ingested textbook pages (context assembly) — concepts: Geometric shapes, Properties of shapes; vocabulary: rangoli, shapes, match-sticks, flooring. Resolved against the shared canonical library.",
+      "realLife": "Textbook-named context(s) (context assembly): rangoli, match-sticks, houses, flooring.",
+      "levelSet": "Free (generation) — the misconception this section is meant to surface: \"all shapes with four sides are squares\".",
+      "explore": "Free — built to hand off to the next topic's Refresher (generation); opens on one of the textbook's own named things where possible",
+      "refresher": "Built entirely from the previous topic's Explore (planning + generation) — no new textbook or library lookup for this section.",
+      "challenge": "Activity \"Count The Class Itself\" — Pedagogy Library (activity selection), matched on 0 competenc(ies)."
+    },
+    "teluguReview": "unreviewed-draft",
+    "teluguBulletsApplied": 18,
+    "teluguBulletsTotal": 18
+  },
+  "figures": [],
+  "figureImages": {
+    "img_ts_scert_class3_maths_en_ch01_08": {
+      "url": "https://imnidyunrleqewcnoxng.supabase.co/storage/v1/object/public/textbook-images/ts_scert_class3_maths_en/ch01/img_ts_scert_class3_maths_en_ch01_08.jpg",
+      "caption": "Three items are shown, potentially representing a side view, top view, and another angled view of an object, possibly a humidifier or similar device, and a cup. The first image on the left is a light blue and grey object with a wide base and narrower top. The middle image is a circular, light blue object with concentric rings in the center. The rightmost image is a light blue cup or bowl viewed from the top, showing the interior with faint lines radiating from the center."
+    },
+    "img_ts_scert_class3_maths_en_ch01_09": {
+      "url": "https://imnidyunrleqewcnoxng.supabase.co/storage/v1/object/public/textbook-images/ts_scert_class3_maths_en/ch01/img_ts_scert_class3_maths_en_ch01_09.jpg",
+      "caption": "An illustration of a young boy sitting on the floor, holding a pencil and tracing the outline of a matchbox placed on a piece of paper. His left hand holds the matchbox in place while his right hand guides the pencil."
+    },
+    "img_ts_scert_class3_maths_en_ch01_10": {
+      "url": "https://imnidyunrleqewcnoxng.supabase.co/storage/v1/object/public/textbook-images/ts_scert_class3_maths_en/ch01/img_ts_scert_class3_maths_en_ch01_10.jpg",
+      "caption": "Three identical illustrations of a hand holding a pencil and tracing the outline of a matchbox. The matchbox has a yellow circle with a red dot in the middle on its top surface."
+    },
+    "img_ts_scert_class3_maths_en_ch01_12": {
+      "url": "https://imnidyunrleqewcnoxng.supabase.co/storage/v1/object/public/textbook-images/ts_scert_class3_maths_en/ch01/img_ts_scert_class3_maths_en_ch01_12.jpg",
+      "caption": "The image shows three different views of a matchbox: first, a closed matchbox with a red circle design on its face; second, the same matchbox opened to reveal the inner tray and the outer sleeve spread out, with some text-like squiggles on the inside of the sleeve; and third, the matchbox completely unfolded into a flat, cross-shaped net."
+    },
+    "img_ts_scert_class3_maths_en_ch01_13": {
+      "url": "https://imnidyunrleqewcnoxng.supabase.co/storage/v1/object/public/textbook-images/ts_scert_class3_maths_en/ch01/img_ts_scert_class3_maths_en_ch01_13.jpg",
+      "caption": "The image shows two examples of objects (a book and a box) in different states: one closed and two open. For the book, one open state shows both pages with content and the other shows only one page with content. For the box, one open state shows it fully unfolded into a flat net. There are also empty checkboxes below each open state."
+    },
+    "img_ts_scert_class3_maths_en_ch01_15": {
+      "url": "https://imnidyunrleqewcnoxng.supabase.co/storage/v1/object/public/textbook-images/ts_scert_class3_maths_en/ch01/img_ts_scert_class3_maths_en_ch01_15.jpg",
+      "caption": "Two girls are making a rangoli design on the floor. One girl, in a red dress, is kneeling and working on the design, while the other, in a blue polka-dotted dress, holds a bowl of red powder, with several other bowls of colored powder on the floor around them. The rangoli is a colorful, geometric pattern with a central circle surrounded by other shapes."
+    }
+  },
+  "_needsReview": true,
+  "_reviewReasons": [
+    "The sheet asks for a matchbox to trace on the blackboard, but matchboxes are not listed as free and to hand materials. Fix: Change the material to something readily available like a slate or a book, or specify that children should bring a matchbox from home.",
+    "The sheet asks for 'loose match-sticks' to be distributed to each pair, which implies a large quantity not listed as free and to hand. Fix: Specify that children should bring matchsticks from home, or use readily available sticks/twigs instead.",
+    "Distributing small bundles of match-sticks to each pair and observing their attempts with 30-60 children will be impossible for one teacher. Fix: Change to a whole-class demonstration and guided practice, or have children work individually with materials they brought.",
+    "The 'chair views' and 'cup views' refresher assumes children have access to and experience with these specific objects in a way that allows for abstract viewing exercises. Fix: Replace with a more contextually relevant refresher using common village objects like a pot or a stone, focusing on their basic shape.",
+    "The entire 'Refresher' section on 'chair views' and 'cup views' is a tangent from the objective of sorting shapes by number of sides. Fix: Remove the refresher and start directly with the concept of identifying shapes and their sides."
+  ],
+  "sectionImages": {
+    "concept": [
+      "img_ts_scert_class3_maths_en_ch01_09",
+      "img_ts_scert_class3_maths_en_ch01_10",
+      "img_ts_scert_class3_maths_en_ch01_12",
+      "img_ts_scert_class3_maths_en_ch01_13"
+    ],
+    "realLife": [
+      "img_ts_scert_class3_maths_en_ch01_15"
+    ]
+  }
+}

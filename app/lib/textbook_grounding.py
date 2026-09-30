@@ -69,8 +69,16 @@ def title_score(topic: str, candidate: str) -> float:
 
 
 def anchors_in(markdown: str) -> list[str]:
-    """Anchors (<img id="..." />) appearing in a stretch of markdown."""
-    return re.findall(r'<img id="([^"]+)"\s*/>', markdown)
+    """Anchors (<img id="..." />) appearing in a stretch of markdown.
+
+    Tolerates other attributes and any attribute order, because the vision path
+    now writes the model's caption onto the tag itself
+    (`<img id="p4_img1" caption="..." />`). The previous pattern required `/>`
+    immediately after the id, so a captioned anchor matched nothing and the
+    lesson grounded with no pictures — a silent failure, since a lesson without
+    illustrations looks exactly like a chapter that had none.
+    """
+    return re.findall(r'<img\b[^>]*?\bid="([^"]+)"[^>]*?/?>', markdown)
 
 
 def best_match(chapters: list[dict], topic: str, subtopic: Optional[str] = None) -> Optional[dict]:
@@ -111,6 +119,90 @@ def best_match(chapters: list[dict], topic: str, subtopic: Optional[str] = None)
     return None
 
 
+def _image_page(content: str, image_id: str) -> Optional[int]:
+    """The page an <img id> falls on, found the same way generation/tools.py's
+    api_figures() does it for the published-textbook mirror: whichever
+    <!-- page N --> marker comes last before the tag. None when the chapter
+    has no markers at all (a real, observed gap — some published chapters
+    use [CONCEPT]/[ACTIVITY] tags instead)."""
+    marks = [(m.start(), int(m.group(1))) for m in re.finditer(r"<!--\s*page\s+(\d+)\s*-->", content or "")]
+    if not marks:
+        return None
+    tag = re.search(rf'<img id="{re.escape(image_id)}"', content or "")
+    if not tag:
+        return None
+    page = None
+    for pos, num in marks:
+        if pos <= tag.start():
+            page = num
+        else:
+            break
+    return page
+
+
+async def _fetch_from_catalog_mirror(
+    admin, grade: str, subject: str, topic: str, subtopic: Optional[str],
+) -> Optional[dict]:
+    """Fallback source: the published-textbook REST API, mirrored locally by
+    textbook_catalog.py — for schools with no PDF ever ingested through this
+    app's own pipeline (textbook_books/_chapters/_images), which is every
+    school so far. Matches on syllabus_chapters (real, populated data) since
+    this path has no per-topic index to search the way the ingestion path's
+    chapter["topics"] does — a whole-chapter grounding, not a sub-topic slice,
+    but a real excerpt with real images beats none."""
+    from .textbook_catalog import grounding_for_syllabus_chapter
+
+    try:
+        chapters = (
+            admin.table("syllabus_chapters").select("chapter_number, title, page_start, page_end")
+            .eq("grade", str(grade)).ilike("subject", subject).execute()
+        ).data or []
+    except Exception:
+        return None
+    if not chapters:
+        return None
+
+    best = None
+    for query in (q for q in (subtopic, topic) if q and q.strip()):
+        for c in chapters:
+            score = title_score(query, c.get("title") or "")
+            if score >= MIN_TITLE_OVERLAP and (best is None or score > best[0]):
+                best = (score, c)
+        if best:
+            break
+    if not best:
+        return None
+    chapter = best[1]
+
+    grounded = grounding_for_syllabus_chapter(
+        grade, subject, chapter.get("chapter_number"), chapter.get("title"),
+        syllabus_page_start=chapter.get("page_start"), ac=admin,
+    )
+    if not grounded or not grounded.get("text"):
+        return None
+
+    excerpt = grounded["text"][:MAX_EXCERPT_CHARS]
+    images = [
+        {
+            "id": img["imageId"], "imageId": img["imageId"], "caption": img.get("caption"),
+            "sourcePage": _image_page(grounded["text"], img["imageId"]),
+        }
+        for img in (grounded.get("images") or [])
+        if img.get("imageId") and f'<img id="{img["imageId"]}"' in excerpt
+    ]
+
+    return {
+        "chapterTitle": grounded.get("chapterTitle") or chapter.get("title"),
+        "chapterNumber": grounded.get("chapterNumber"),
+        "pageStart": grounded.get("pageStart"),
+        "pageEnd": grounded.get("pageEnd"),
+        "matchedTopic": None,
+        "excerpt": excerpt,
+        "truncated": len(grounded["text"]) > len(excerpt),
+        "images": images,
+    }
+
+
 async def fetch_textbook_grounding(
     admin, school_id: Optional[str], grade: str, subject: str, topic: str, subtopic: Optional[str] = None,
 ) -> Optional[dict]:
@@ -123,9 +215,20 @@ async def fetch_textbook_grounding(
             .eq("school_id", school_id).eq("grade", str(grade)).ilike("subject", subject)
             .execute()
         ).data or []
-        if not books:
-            return None
+    except Exception:
+        # Not just "no rows" — textbook_books/_chapters/_images don't exist at
+        # all yet (true for every school right now: this app's own
+        # PDF-ingestion pipeline has never been run), which raises rather than
+        # returning empty. Either way means the same thing: no local
+        # ingestion to read from.
+        books = None
 
+    if not books:
+        # Fall back to the published-textbook mirror rather than returning
+        # nothing — real content and real images beat none.
+        return await _fetch_from_catalog_mirror(admin, grade, subject, topic, subtopic)
+
+    try:
         # Published only. An unreviewed chapter may be mis-split, and a lesson
         # built on the wrong pages is exactly what the review step exists to stop.
         chapters = (
@@ -183,6 +286,47 @@ async def fetch_textbook_grounding(
         return None
 
 
+def _marker_legend(excerpt: str) -> str:
+    """What the markers in THIS excerpt mean, named one by one.
+
+    This was a single fixed sentence pointing at `<img id="..." />`. A classified
+    ingest emits no such tag — it emits `[CONCEPT]`, `[ACTIVITY]`, `[FIGURE ...]`
+    and `##` section headings — so on every classified book the model was handed
+    the key to a format it was not reading, and no key at all for the one in
+    front of it.
+
+    Both halves of that cost something measurable. `[ACTIVITY]` marks the book's
+    own exercises, which the rules below ask to be reused word for word; on a
+    Class 3 EVS chapter printing 58 of them, 3 came back in the sheet. A label a
+    model has to infer is a label it obeys by accident.
+
+    Built from what the excerpt actually contains rather than listed in full, so
+    a book carrying none of these labels is not told to look for them.
+    """
+    lines = ["Page markers appear as <!-- page N -->."]
+    if re.search(r"^#{1,6}[ ]+\S", excerpt or "", re.M):
+        lines.append(
+            "A ## or ### heading is a section the book itself names; a ### sits inside "
+            "the ## above it.")
+    if re.search(r"^\[CONCEPT\]", excerpt or "", re.M):
+        lines.append(
+            "[CONCEPT] is the book's own teaching content — the definitions, facts and "
+            "worked examples the Concept section has to be built out of.")
+    if re.search(r"^\[ACTIVITY\]", excerpt or "", re.M):
+        lines.append(
+            "[ACTIVITY] is a task the book itself prints. These are the exercises the "
+            "rules below tell you to reuse word for word: when one fits the period, run "
+            "it as written instead of writing a fresh one that does the same job.")
+    if re.search(r"^\[FIGURE(?![A-Za-z])", excerpt or "", re.M | re.I):
+        lines.append(
+            "[FIGURE id -> file: description] is a picture really printed on that page, "
+            "already described for you. Point the class at it by what it shows and the "
+            "page it is on, and name its id in \"textbookImages\".")
+    if '<img id="' in (excerpt or ""):
+        lines.append('<img id="..." /> marks where a picture sits.')
+    return "\n".join(lines)
+
+
 def textbook_prompt_block(g: dict) -> str:
     """The textbook block of the prompt. Says plainly which parts are fixed
     (the book's content) and which are the model's to invent (the teaching)."""
@@ -206,8 +350,8 @@ def textbook_prompt_block(g: dict) -> str:
 
     return f"""THE TEXTBOOK PAGES THIS LESSON MUST TEACH — {where}, pages {g["pageStart"]}-{g["pageEnd"]}.
 
-This is the book in the children's hands, transcribed verbatim. Page markers
-appear as <!-- page N -->; <img id="..." /> marks where a picture sits.
+This is the book in the children's hands, transcribed verbatim.
+{_marker_legend(g["excerpt"])}
 
 --- BEGIN TEXTBOOK ---
 {g["excerpt"]}{truncated_note}
@@ -223,6 +367,9 @@ HOW TO USE IT — this is the difference between a good prep sheet and a wrong o
 - Never introduce a fact, term or example these pages do not contain. If
   something feels missing, that is the book's decision, not an error to correct.
 - Reuse the book's own exercises and activities where they fit, word for word.
+  Where the text labels them [ACTIVITY], those are exactly the lines meant: a
+  task the book prints is one the class already has in front of them, and
+  rewriting it into your own words throws that away for nothing.
 - Cite pages as (Page N) using the markers, so the teacher can point at the book.
 - YOUR CREATIVITY GOES INTO THE TEACHING, not the content. Explore's real-life
   scenario, the Challenge activity, the analogies, the local framing, how it is

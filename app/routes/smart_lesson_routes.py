@@ -206,7 +206,7 @@ async def _repair_raw_json(raw: str, api_key: str) -> str:
         async with httpx.AsyncClient(timeout=30) as client:
             resp = await client.post(
                 "https://openrouter.ai/api/v1/chat/completions",
-                headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json", "X-Title": "EduTeach Prep Material (json-fix)"},
+                headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
                 json={
                     "model": os.environ.get("OPENROUTER_MODEL", "google/gemini-2.5-flash"),
                     "messages": [
@@ -297,7 +297,7 @@ async def _repair_lesson(lesson: dict, issues: list[str], api_key: str) -> dict:
         async with httpx.AsyncClient(timeout=30) as client:
             resp = await client.post(
                 "https://openrouter.ai/api/v1/chat/completions",
-                headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json", "X-Title": "EduTeach Prep Material (repair)"},
+                headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
                 json={
                     "model": os.environ.get("OPENROUTER_MODEL", "google/gemini-2.5-flash"),
                     "messages": [
@@ -530,7 +530,7 @@ This is a TEACHER'S prep sheet, not a student handout. The visible headline says
             async with httpx.AsyncClient(timeout=90) as client:
                 ai_res = await client.post(
                     "https://openrouter.ai/api/v1/chat/completions",
-                    headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json", "X-Title": "EduTeach Prep Material"},
+                    headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
                     json={
                         "model": model,
                         "messages": [

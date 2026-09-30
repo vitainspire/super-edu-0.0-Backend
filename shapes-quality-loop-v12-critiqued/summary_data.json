@@ -1,0 +1,101 @@
+[
+  {
+    "topic": "Shalini and Rajani like drawing pictures.",
+    "history": [
+      {
+        "loop": 1,
+        "targetable": 2.67,
+        "overall": 2.5,
+        "atOrAbove4": 3,
+        "targetableCount": 9,
+        "fixableFindings": 5,
+        "keptAsBest": true
+      },
+      {
+        "loop": 2,
+        "targetable": 2.67,
+        "overall": 2.5,
+        "atOrAbove4": 3,
+        "targetableCount": 9,
+        "fixableFindings": 5,
+        "rejectedSections": [
+          "concept"
+        ],
+        "keptAsBest": false
+      },
+      {
+        "loop": 3,
+        "targetable": 2.56,
+        "overall": 2.4,
+        "atOrAbove4": 3,
+        "targetableCount": 9,
+        "fixableFindings": 5,
+        "keptAsBest": false
+      }
+    ]
+  },
+  {
+    "topic": "4. Let us observe the shapes in a rangoli.",
+    "history": [
+      {
+        "loop": 1,
+        "targetable": 3.11,
+        "overall": 2.9,
+        "atOrAbove4": 4,
+        "targetableCount": 9,
+        "fixableFindings": 5,
+        "keptAsBest": true
+      },
+      {
+        "loop": 2,
+        "targetable": 2.89,
+        "overall": 2.7,
+        "atOrAbove4": 3,
+        "targetableCount": 9,
+        "fixableFindings": 5,
+        "keptAsBest": false
+      },
+      {
+        "loop": 3,
+        "targetable": 3.11,
+        "overall": 2.9,
+        "atOrAbove4": 4,
+        "targetableCount": 9,
+        "fixableFindings": 5,
+        "keptAsBest": false
+      }
+    ]
+  },
+  {
+    "topic": "This floor is formed using ___ shapes.",
+    "history": [
+      {
+        "loop": 1,
+        "targetable": 2.56,
+        "overall": 2.4,
+        "atOrAbove4": 2,
+        "targetableCount": 9,
+        "fixableFindings": 6,
+        "keptAsBest": false
+      },
+      {
+        "loop": 2,
+        "targetable": 2.89,
+        "overall": 2.7,
+        "atOrAbove4": 3,
+        "targetableCount": 9,
+        "fixableFindings": 6,
+        "keptAsBest": true
+      },
+      {
+        "loop": 3,
+        "targetable": 2.78,
+        "overall": 2.6,
+        "atOrAbove4": 3,
+        "targetableCount": 9,
+        "fixableFindings": 5,
+        "keptAsBest": false
+      }
+    ]
+  }
+]

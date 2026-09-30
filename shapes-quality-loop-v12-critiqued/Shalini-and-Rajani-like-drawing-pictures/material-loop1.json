@@ -1,0 +1,313 @@
+{
+  "index": 1,
+  "teachingOrder": [
+    "refresher",
+    "concept",
+    "realLife",
+    "challenge",
+    "levelSet",
+    "explore"
+  ],
+  "planningNote": "This period introduces students to the idea that objects look different from various angles, using a matchbox to demonstrate. It sets the foundation for understanding geometric shapes as representations of these views.",
+  "objective": "Identify objects from different perspectives",
+  "previousTopicRefresher": null,
+  "concept": [
+    {
+      "text": "Observe a matchbox from the top.",
+      "detail": "Hold a matchbox high so all can see its top. Ask students to describe its shape. Draw this top view on the blackboard. (Page None)"
+    },
+    {
+      "text": "Observe the matchbox from the side.",
+      "detail": "Turn the matchbox to show its long side to the class. Ask what shape they see now. Draw this side view next to the top view. (Page None)"
+    },
+    {
+      "text": "Understand views change with position.",
+      "detail": "If a child says the matchbox changed, explain that only the view changed because our position changed. The matchbox itself is still the same. (Page None)"
+    }
+  ],
+  "realLife": {
+    "points": [
+      {
+        "text": "See a house from different angles.",
+        "detail": "Ask students how a house looks from the road in front. Explain that it looks different if seen from a nearby hill or a tree. (Page None)"
+      },
+      {
+        "text": "Connect views to everyday objects.",
+        "detail": "Show a cup and ask how it looks from the top. Then show its side. Explain that just like the matchbox, common objects have different views. (Page None)"
+      },
+      {
+        "text": "Imagine a table's top and side.",
+        "detail": "Ask students to imagine looking straight down on a table, then from the side. Describe how the top view is a rectangle and the side view shows its legs. (Page None)"
+      }
+    ]
+  },
+  "challenge": {
+    "activity": "Draw different views of a chair",
+    "points": [
+      {
+        "text": "PLAY: Discuss chair views with a partner",
+        "detail": "Have students turn to a partner and discuss how a chair looks from the top, front, and side. Give them one minute to talk."
+      },
+      {
+        "text": "REFLECT: Share one view with the class",
+        "detail": "Ask pairs to share one observation about a chair's view. Listen for descriptions of different shapes or parts seen. (Page None)"
+      },
+      {
+        "text": "ACT: Draw a chair from top, front, or side",
+        "detail": "Instruct students to draw a chair on their slate from either the top, front, or side view. Circulate and observe their drawings. (Page None)"
+      }
+    ]
+  },
+  "levelSet": {
+    "points": [
+      {
+        "text": "Object changed or view changed?",
+        "detail": "Ask students whether a matchbox changes when you look at its side, or if only what you see changes. Have them show thumbs up for 'object changed' or thumbs down for 'view changed'."
+      },
+      {
+        "text": "Most interesting view to draw",
+        "detail": "Ask students what view of an object they found most interesting to draw today. Call on a few students to share their thoughts."
+      },
+      {
+        "text": "Notice how objects look from different places",
+        "detail": "On the way home, look at a cart. Notice how it looks from the front and from the side. Does it look the same or different?"
+      }
+    ]
+  },
+  "explore": {
+    "points": [
+      {
+        "text": "Look at a chair from above.",
+        "detail": "At home, look at a chair from directly above. Notice its shape and what parts you can see."
+      },
+      {
+        "text": "Observe a cup from different positions.",
+        "detail": "Take a cup and look at it from the top, then from the side. See how the shape changes."
+      },
+      {
+        "text": "Find an object with a distinct top view.",
+        "detail": "Find one object in your house that looks very different from the top compared to its side. Remember what it is."
+      }
+    ],
+    "imageFocus": "a matchbox from top and side"
+  },
+  "sectionWatch": {
+    "refresher": null,
+    "concept": {
+      "text": "Students understand view changes with position.",
+      "detail": "Watch for students to grasp that the object itself doesn't change, only how it appears from different angles. Clarify if they think the object transforms."
+    },
+    "realLife": {
+      "text": "Connect textbook examples to real life.",
+      "detail": "Observe if students can relate the concept of different views to the real-world objects discussed, making the connection explicit."
+    },
+    "challenge": {
+      "text": "Students attempt drawing different views",
+      "detail": "Check if students are attempting to draw the chair from a specific view, even if the drawing is simple or not perfectly accurate."
+    },
+    "levelSet": {
+      "text": "Students grasp view vs. object change",
+      "detail": "Listen for students who correctly identify that the view changes, not the object, when looking from different positions."
+    },
+    "explore": {
+      "text": "Students identify object with distinct top view.",
+      "detail": "Listen for students to name a specific object and describe how its top view differs from its side view in tomorrow's refresher."
+    }
+  },
+  "materialsUsed": [
+    "matchbox",
+    "blackboard",
+    "chalk",
+    "students' textbooks",
+    "cup"
+  ],
+  "pagesCited": [],
+  "figureRefs": [],
+  "timings": {
+    "concept": 5,
+    "realLife": 4,
+    "challenge": 6,
+    "levelSet": 5,
+    "explore": 7
+  },
+  "topic": "Shalini and Rajani like drawing pictures.",
+  "subtopic": "",
+  "pageRange": [
+    null,
+    null
+  ],
+  "bookMoves": [
+    {
+      "ord": 1,
+      "type": "concept",
+      "gist": "Introduces Shalini and Rajani who like drawing pictures.",
+      "section": "concept",
+      "fidelity": "faithful"
+    },
+    {
+      "ord": 2,
+      "type": "concept",
+      "gist": "Teacher asks students to draw chairs, leading to a disagreement between Shalini and Rajni.",
+      "section": "concept",
+      "fidelity": "faithful"
+    },
+    {
+      "ord": 3,
+      "type": "activity",
+      "gist": "Asks if Shalini drew a chair and what the reader thinks.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "Has Shalini drawn the picture of a chair? What do you think?"
+    },
+    {
+      "ord": 4,
+      "type": "concept",
+      "gist": "Teacher explains Shalini's drawing is a top view of a chair, showing other examples.",
+      "section": "concept",
+      "fidelity": "faithful"
+    },
+    {
+      "ord": 5,
+      "type": "concept",
+      "gist": "Introduces front view and side view.",
+      "section": "concept",
+      "fidelity": "faithful"
+    },
+    {
+      "ord": 6,
+      "type": "activity",
+      "gist": "Asks if the reader has observed a chair from different views and if it looks different.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "Have you looked at a chair from the top, from the side and from the front? Does the chair look the same or diﬀ erent when seen from diﬀ erent sides? 1. Look at the pictures of a house drawn here. Can you say which is drawn from the top, which is from the front and which is from the side. Write in the boxes given below them."
+    },
+    {
+      "ord": 7,
+      "type": "activity",
+      "gist": "Asks to identify objects from their side views.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "2. Identify these objects. (i) Look at the pictures of objects given below. These pictures show their side view. Write the names of the objects in the boxes given below them."
+    },
+    {
+      "ord": 8,
+      "type": "activity",
+      "gist": "Asks to identify objects from their top views.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "(ii) Look at the pictures of some objects given below. These pictures show their top view. Write the names of the objects in the boxes given below them."
+    },
+    {
+      "ord": 9,
+      "type": "activity",
+      "gist": "Asks to imagine and draw top and side views of a table.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "(iii) Imagine how a table looks like from the top and the side. Draw the correct picture in the boxes. Top view Side view"
+    },
+    {
+      "ord": 10,
+      "type": "activity",
+      "gist": "Instructs to trace a match-box and observe the shapes formed.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "(i) Let us draw. Take a match-box, put it on a piece of paper and draw along the edges as shown here. Observe the shapes formed."
+    },
+    {
+      "ord": 11,
+      "type": "activity",
+      "gist": "Instructs to trace a bangle and other objects, then identify and draw their shapes.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "(ii) Take a bangle and trace it. Observe the shape formed. (iii) Trace the following objects on a paper. Identify the shapes and draw in the table. Object Shape of the object"
+    },
+    {
+      "ord": 12,
+      "type": "activity",
+      "gist": "Instructs to open a match-box and observe its appearance.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "3. Let us see the shapes in objects. Take a match-box. Open it as shown in the ﬁ gure. See how it looks."
+    }
+  ],
+  "_meta": {
+    "masteryTarget": "how an object looks depends on where I am looking from",
+    "selectedActivity": "Role Play",
+    "activitySource": "library",
+    "selectedContext": "Classroom",
+    "formats": {
+      "refresher": "hands-up recall of the previous object",
+      "realLife": "walk-to-school scene",
+      "challenge": "team relay at the board",
+      "levelSet": "draw-what-you-learned card",
+      "explore": "predict-then-test"
+    },
+    "plannedMinutes": {
+      "refresher": 3,
+      "concept": 5,
+      "realLife": 4,
+      "challenge": 6,
+      "levelSet": 5,
+      "explore": 7
+    },
+    "plannedHook": {
+      "scene": "The class has traced outlines of a matchbox from different views.",
+      "object": "A matchbox and its traced outlines on paper.",
+      "question": "What can we call these different outlines?",
+      "answeredNextLesson": "The outlines can be named as shapes like rectangles and squares."
+    },
+    "plannedBridge": null,
+    "provenance": {
+      "pages": [
+        null,
+        null
+      ],
+      "textbookExcerptChars": 0,
+      "knowledgeExtracted": {
+        "concepts": 3,
+        "competencies": 5,
+        "vocabulary": 5,
+        "contexts": 11
+      },
+      "canonicalLibraryIdsUsed": {},
+      "canonicalEntriesSeededHere": {},
+      "activity": {
+        "name": "Role Play",
+        "source": "library",
+        "id": "a6244aa0-6e5e-4f55-a1a4-dc7287b11423"
+      },
+      "context": "Classroom",
+      "sectionFormats": {
+        "refresher": "hands-up recall of the previous object",
+        "realLife": "walk-to-school scene",
+        "challenge": "team relay at the board",
+        "levelSet": "draw-what-you-learned card",
+        "explore": "predict-then-test"
+      },
+      "plannedMinutes": {
+        "refresher": 3,
+        "concept": 5,
+        "realLife": 4,
+        "challenge": 6,
+        "levelSet": 5,
+        "explore": 7
+      }
+    },
+    "sectionCitations": {
+      "concept": "Textbook, no ingested textbook pages (context assembly) — concepts: Different views of objects (top, front, side), Tracing objects to understand shapes, Unfolding 3D objects to see their 2D net/shape; vocabulary: top view, side view, front view, trace, shape. Resolved against the shared canonical library.",
+      "realLife": "Textbook-named context(s) (context assembly): chairs, house, table, match-box, bangle, book (+5 more).",
+      "levelSet": "Free (generation) — the misconception this section is meant to surface: \"the matchbox changed when I looked at its side\".",
+      "explore": "Free (generation) — planned to open on: \"The class has traced outlines of a matchbox from different views.\".",
+      "refresher": "Built entirely from the previous topic's Explore (planning + generation) — no new textbook or library lookup for this section.",
+      "challenge": "Activity \"Role Play\" — Pedagogy Library (activity selection), matched on 0 competenc(ies)."
+    },
+    "revision": 2
+  },
+  "figures": [],
+  "extras": {
+    "challenge": {
+      "text": "Draw views of a matchbox.",
+      "detail": "Using the matchbox, draw its front, side, and top views on your slate. Compare with a partner."
+    }
+  }
+}

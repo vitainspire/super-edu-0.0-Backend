@@ -1,0 +1,288 @@
+{
+  "index": 2,
+  "teachingOrder": [
+    "refresher",
+    "concept",
+    "realLife",
+    "challenge",
+    "levelSet",
+    "explore"
+  ],
+  "planningNote": "This period builds on students' understanding of different views of objects by introducing them to identifying shapes within patterns and constructing them. It sets the stage for understanding how shapes fit together.",
+  "objective": "Identify and construct basic geometric shapes.",
+  "previousTopicRefresher": {
+    "previousTopic": "Shalini and Rajani like drawing pictures.",
+    "recap": [
+      {
+        "text": "Recall looking at a book from above.",
+        "detail": "Ask students to recall the book they looked at from directly above. Have pairs share the shape they saw. Watch for students who recall a rectangle or square."
+      },
+      {
+        "text": "Recall looking at the book from the side.",
+        "detail": "Ask students to remember the shape they saw when looking at the same book from its side. Have them discuss if it was different. Listen for 'rectangle' or 'line'."
+      },
+      {
+        "text": "Recall the glass from directly above.",
+        "detail": "Ask what shape they saw when looking at a drinking glass from directly above. Have students respond aloud. Expect 'circle' as the common answer."
+      }
+    ]
+  },
+  "concept": [
+    {
+      "text": "Shapes are found in rangoli patterns.",
+      "detail": "Draw a simple rangoli pattern on the blackboard using basic shapes like circles, squares, and triangles. Point out the different shapes within it. (Page None)"
+    },
+    {
+      "text": "Shapes can be described by their features.",
+      "detail": "Hold up a bangle. Trace its outline on the blackboard, forming a circle. Explain that circles have a curved edge and no straight sides or corners. (Page None)"
+    },
+    {
+      "text": "Different shapes have different features.",
+      "detail": "Hold up a matchbox. Trace its outline on the blackboard, forming a rectangle. Explain that rectangles have straight sides and corners. (Page None)"
+    }
+  ],
+  "realLife": {
+    "points": [
+      {
+        "text": "Rangoli patterns use many shapes.",
+        "detail": "Explain that during festivals like Diwali, people make rangoli patterns outside their homes using powders. Ask students what shapes they have seen in rangoli. Allow a few guesses."
+      },
+      {
+        "text": "Rangoli shapes match geometric shapes.",
+        "detail": "Point to the rangoli on the blackboard. Explain that the shapes in rangoli, like circles and triangles, are the same shapes we learn about in maths. These shapes are how we describe what they look like."
+      },
+      {
+        "text": "Match-sticks form different shapes.",
+        "detail": "Show how to make a square with four matchsticks on the blackboard. Then show how to make a triangle with three matchsticks. Explain that the number of sticks changes the shape."
+      }
+    ]
+  },
+  "challenge": {
+    "activity": "Identify and color rangoli shapes",
+    "points": [
+      {
+        "text": "PLAY: Identify shapes in the rangoli.",
+        "detail": "Direct students to the rangoli picture in their textbook (Page None). In pairs, ask them to find and point to the circles, squares, and triangles in the rangoli. Give them two minutes."
+      },
+      {
+        "text": "REFLECT: Which shapes were easy to find?",
+        "detail": "After two minutes, have pairs quickly share with another pair which shapes they found easily. Listen for mentions of clear circles or squares."
+      },
+      {
+        "text": "ACT: Make shapes with match-sticks.",
+        "detail": "Ask two students to come to the front. Give them matchsticks and ask one to make a square and the other a triangle on the table where all can see. Ask the class to count the sticks used for each shape."
+      }
+    ]
+  },
+  "levelSet": {
+    "points": [
+      {
+        "text": "Recap: shapes have different features.",
+        "detail": "Briefly restate that shapes have different features, like straight sides or curved edges. Then, have partners look at the classroom door and a nearby window, and discuss which has only straight edges and which has curved edges (the door has only straight edges, the window might have a curved handle or frame)."
+      },
+      {
+        "text": "Share one new thing about shapes.",
+        "detail": "Ask students to turn to their partner and share one new thing they learned about shapes today that they found interesting or easy to understand. Give them 30 seconds."
+      },
+      {
+        "text": "Notice shapes on the way home.",
+        "detail": "Invite students to notice shapes on their way home. Ask them to look for something with straight edges, like a brick, and something with curved edges, like a wheel on a cart."
+      }
+    ]
+  },
+  "explore": {
+    "points": [
+      {
+        "text": "Look for shapes in cooking utensils.",
+        "detail": "Encourage students to look at cooking pots or plates at home. Notice what shapes they are. Ask them to think about why some are round and some are not."
+      },
+      {
+        "text": "Observe shapes in clothes.",
+        "detail": "Tell students to look at patterns or designs on their own clothes or clothes at home. See if they can find any of the shapes they learned today."
+      },
+      {
+        "text": "Count sticks in fences or gates.",
+        "detail": "Suggest students look at fences or gates in their village. Ask them to notice how many sticks or bars are used to make different sections or shapes."
+      }
+    ],
+    "imageFocus": "simple rangoli pattern with basic shapes"
+  },
+  "sectionWatch": {
+    "refresher": {
+      "text": "Ensure students recall previous observations.",
+      "detail": "Watch for students who struggle to remember the shapes from the previous Explore. Guide them by mentioning the objects again."
+    },
+    "concept": {
+      "text": "Check understanding of shape features.",
+      "detail": "Observe if students grasp the difference between a curved edge and straight sides/corners. Use the bangle and matchbox as clear examples."
+    },
+    "realLife": {
+      "text": "Confirm connection to real-world examples.",
+      "detail": "Ensure students connect the abstract shapes to the concrete examples of rangoli and match-sticks. Listen for correct shape names."
+    },
+    "challenge": {
+      "text": "Monitor shape identification and construction.",
+      "detail": "Circulate to observe pairs identifying shapes in the rangoli. Watch the students at the front to ensure they can construct the basic shapes with matchsticks."
+    },
+    "levelSet": {
+      "text": "Gauge shape feature recognition.",
+      "detail": "Listen to partner discussions to see if students can apply the idea of straight vs. curved edges to new objects like the door and window."
+    },
+    "explore": {
+      "text": "Encourage observation of shapes in daily life.",
+      "detail": "Ensure the instructions are clear for students to observe shapes in their environment, preparing them for the next lesson."
+    }
+  },
+  "materialsUsed": [
+    "matchsticks",
+    "bangle",
+    "blackboard",
+    "textbook"
+  ],
+  "pagesCited": [],
+  "figureRefs": [],
+  "timings": {
+    "refresher": 4,
+    "concept": 6,
+    "realLife": 5,
+    "challenge": 8,
+    "levelSet": 4,
+    "explore": 3
+  },
+  "topic": "4. Let us observe the shapes in a rangoli.",
+  "subtopic": "",
+  "pageRange": [
+    null,
+    null
+  ],
+  "bookMoves": [
+    {
+      "ord": 1,
+      "type": "activity",
+      "gist": "Introduces Sita and Gita making rangoli and asks to observe it.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "4. Let us observe the shapes in a rangoli. Sita and Gita are very interested in making rangoli. They are making rangolis on a festival. Let us observe this lovely rangoli."
+    },
+    {
+      "ord": 2,
+      "type": "activity",
+      "gist": "Asks to identify and color specific shapes in the rangoli.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "Identify these shapes , , , , , in the rangoli. (i) Identify the shape and colour it. Black, Green, Red, Yellow, Blue Identify the above shapes in the picture given below. Fill in those shapes with the same colours."
+    },
+    {
+      "ord": 3,
+      "type": "activity",
+      "gist": "Introduces Suresh making shapes with match-sticks.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "5. Let's play with match-sticks. Suresh made these shapes using match-sticks."
+    },
+    {
+      "ord": 4,
+      "type": "activity",
+      "gist": "Asks to make various shapes using match-sticks with specified numbers of sticks.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "(i) Make shapes using match-sticks (A) Make a using 8 sticks (B) Make a using 8 sticks (C) Make a using 5 sticks (D) Make a using 12 sticks (E) Make a using 12 sticks (F) Make a using 12 sticks"
+    },
+    {
+      "ord": 5,
+      "type": "activity",
+      "gist": "Asks to determine how many different shapes can be formed using various numbers of match-sticks.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "(ii) (A) How many diﬀ erent shapes can be formed using 8 sticks? Write the answer in the box. (B) How many diﬀ erent shapes can be formed using 5 sticks? Write the answer in the box. (C) How many diﬀ erent shapes can be formed using 12 sticks? Write the answer in the box. (D) How many diﬀ erent shapes can be formed using 6 sticks? Write the answer in the box."
+    },
+    {
+      "ord": 6,
+      "type": "activity",
+      "gist": "Asks to observe different floorings, identify shapes, and draw them.",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "6. See the three types of ﬂ ooring in diﬀ erent houses. Identify the shapes in it. Draw the shapes in the given blanks."
+    }
+  ],
+  "_meta": {
+    "masteryTarget": "shapes are defined by their properties, not just their appearance",
+    "selectedActivity": "Matchstick Shape Challenge",
+    "activitySource": "library",
+    "selectedContext": "School",
+    "formats": {
+      "refresher": "one-question quick round on the previous scene",
+      "realLife": "festival preparation scene",
+      "challenge": "pair race against a shared target",
+      "levelSet": "one-thing-I-can-now-do share",
+      "explore": "what-would-happen-if question"
+    },
+    "plannedMinutes": {
+      "refresher": 4,
+      "concept": 6,
+      "realLife": 5,
+      "challenge": 8,
+      "levelSet": 4,
+      "explore": 3
+    },
+    "plannedHook": {
+      "scene": "The class has identified various shapes in a rangoli pattern and from classroom objects.",
+      "object": "A bangle and a matchbox, with their shapes discussed.",
+      "question": "Can these shapes fit together without leaving any gaps?",
+      "answeredNextLesson": "Some shapes, like the matchbox's rectangular faces, can fit together without gaps."
+    },
+    "plannedBridge": null,
+    "provenance": {
+      "pages": [
+        null,
+        null
+      ],
+      "textbookExcerptChars": 0,
+      "knowledgeExtracted": {
+        "concepts": 2,
+        "competencies": 6,
+        "vocabulary": 4,
+        "contexts": 4
+      },
+      "canonicalLibraryIdsUsed": {},
+      "canonicalEntriesSeededHere": {},
+      "activity": {
+        "name": "Matchstick Shape Challenge",
+        "source": "library",
+        "id": "6dcbcc79-198b-4dec-a0dc-8229a40c7f52"
+      },
+      "context": "School",
+      "sectionFormats": {
+        "refresher": "one-question quick round on the previous scene",
+        "realLife": "festival preparation scene",
+        "challenge": "pair race against a shared target",
+        "levelSet": "one-thing-I-can-now-do share",
+        "explore": "what-would-happen-if question"
+      },
+      "plannedMinutes": {
+        "refresher": 4,
+        "concept": 6,
+        "realLife": 5,
+        "challenge": 8,
+        "levelSet": 4,
+        "explore": 3
+      }
+    },
+    "sectionCitations": {
+      "concept": "Textbook, no ingested textbook pages (context assembly) — concepts: Geometric shapes, Properties of shapes; vocabulary: rangoli, shapes, match-sticks, flooring. Resolved against the shared canonical library.",
+      "realLife": "Textbook-named context(s) (context assembly): rangoli, match-sticks, houses, flooring.",
+      "levelSet": "Free (generation) — the misconception this section is meant to surface: \"the circle is not a shape because it has no corners\".",
+      "explore": "Free (generation) — planned to open on: \"The class has identified various shapes in a rangoli pattern and from classroom objects.\".",
+      "refresher": "Built entirely from the previous topic's Explore (planning + generation) — no new textbook or library lookup for this section.",
+      "challenge": "Activity \"Matchstick Shape Challenge\" — Pedagogy Library (activity selection), matched on 0 competenc(ies)."
+    },
+    "revision": 2
+  },
+  "figures": [],
+  "extras": {
+    "Challenge": {
+      "text": "Explore more matchstick shapes.",
+      "detail": "Using the matchsticks, can pairs create a shape with 5 sides? How many sticks would that need?"
+    }
+  }
+}

@@ -33,8 +33,18 @@ LEVEL_GUIDANCE = {
 }
 
 
-def engagement_level_guidance(grade) -> str:
+def engagement_level_guidance(grade, plain: bool = False) -> str:
+    """`plain` is prep_flow's --plain-language flag (see its own help text:
+    "wording only — short sentences, everyday words; same numbers and
+    thinking demand as the grade"): it constrains SENTENCES, never the
+    cognitive level LEVEL_GUIDANCE already sets — a Level 3 class stays at
+    Level 3 reasoning, just said in shorter words."""
     level = engagement_level(grade)
-    return f"""ENGAGEMENT LEVEL — this class is Level {level} of 4 (Level 1 = youngest & simplest, Level 4 = oldest & most advanced). Pitch EVERYTHING — the Explore scene, the Challenge, the language, the examples — to this level:
+    guidance = f"""ENGAGEMENT LEVEL — this class is Level {level} of 4 (Level 1 = youngest & simplest, Level 4 = oldest & most advanced). Pitch EVERYTHING — the Explore scene, the Challenge, the language, the examples — to this level:
 {LEVEL_GUIDANCE[level]}
 Non-negotiable at every level: it must be EASY to understand AND genuinely fun to follow — never dry, never too babyish for the level, never over their heads."""
+    if plain:
+        guidance += """
+
+PLAIN LANGUAGE MODE — wording only, never the thinking demand: short sentences, everyday words, as if explaining to a teacher who is still learning English. Keep the SAME numbers, the SAME reasoning steps, and the SAME grade-level thinking demand as above — simplify the sentences, never the ideas."""
+    return guidance

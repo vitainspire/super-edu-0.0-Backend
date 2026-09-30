@@ -484,3 +484,155 @@ def render_prep_material_markdown(material: dict, topic: str = "", subtopic: str
         out.append(", ".join(parts) + f" (Total: {total} min)")
 
     return "\n".join(out)
+
+
+# ── prep_flow/deps.py re-exports ──────────────────────────────────────────────
+#
+# prep_flow/deps.py imports these three names "just in case", for whichever
+# downstream package (prep_flow, generation, validation_flow) ends up needing
+# them. As it stands, only one has a real caller:
+# validation_flow/checks.py:1526 calls validate_visuals(material.get("visuals"))
+# for real, on every generated sheet — its signature and behaviour below match
+# that call site, not a guess. validate_material and _section_bullets remain
+# placeholders (`grep -rn "validate_material(\|section_bullets(" prep_flow/
+# generation/ validation_flow/` outside deps.py itself returns nothing) —
+# if one of them gains a real caller, that call site is the contract to build
+# to, not this stub.
+
+# Mirrors prep_flow/sections.py's _CONTAINERS — kept as a plain local copy
+# rather than importing prep_flow from here, since app/lib must not depend on
+# prep_flow (only the reverse). Keep the two in sync by hand if a section
+# changes shape.
+_SECTION_CONTAINERS = {
+    "refresher": ("previousTopicRefresher", "recap"),
+    "concept": ("concept", None),
+    "realLife": ("realLife", "points"),
+    "challenge": ("challenge", "points"),
+    "levelSet": ("levelSet", "points"),
+    "explore": ("explore", "points"),
+}
+
+
+def _section_bullets(material: dict, section: str) -> list:
+    """A section's bullet list regardless of container shape: `concept` is
+    bare, the rest are wrapped in {"points": [...]}, refresher's live under
+    "recap" — and _as_section_dict's existing tolerance for a dropped wrapper
+    applies here too."""
+    key, subkey = _SECTION_CONTAINERS.get(section, (section, "points"))
+    value = material.get(key)
+    if subkey is None:
+        if isinstance(value, dict):
+            return value.get("points") or value.get("recap") or []
+        return value if isinstance(value, list) else []
+    section_dict = _as_section_dict(value)
+    bullets = section_dict.get(subkey)
+    return bullets if isinstance(bullets, list) else []
+
+
+def validate_material(material: dict) -> list[str]:
+    """Structural sanity only — not a quality gate (that's prep_flow/gate.py's
+    job on a golden fixture, a different kind of check entirely). Returns a
+    list of problem descriptions; empty means nothing structural was wrong."""
+    problems = []
+    if not isinstance(material, dict):
+        return ["material is not a dict"]
+    for section in _SECTION_CONTAINERS:
+        if section == "refresher" and not material.get("previousTopicRefresher"):
+            continue  # legitimately absent when there's no prior topic
+        bullets = _section_bullets(material, section)
+        if not bullets:
+            problems.append(f'"{section}" has no bullets')
+        elif len(bullets) != 3:
+            problems.append(f'"{section}" has {len(bullets)} bullets, expected 3')
+        for b in bullets:
+            if not isinstance(b, dict) or not (b.get("text") or "").strip():
+                problems.append(f'"{section}" has a bullet with no text')
+                break
+    if not (material.get("objective") or "").strip():
+        problems.append("objective is missing")
+    return problems
+
+
+def validate_visuals(visuals) -> list[str]:
+    """Shape problems in the "visuals" block, as human-readable issues.
+
+    This is validation_flow/checks.py's real, live caller
+    (`validate_visuals(material.get("visuals"))`) -- unlike validate_material
+    and _section_bullets above, which prep_flow/deps.py re-exports but nothing
+    in prep_flow, generation, or validation_flow actually calls yet.
+
+    Checked harder than the prose sections because the failure is silent in a
+    worse way: a missing bullet is visible on the prep sheet, but an object set
+    where nothing shares the key attribute produces a comparison screen with no
+    correct answer — which surfaces in front of a class, not in review.
+
+    Absent visuals is not an issue. Lessons generated before the block existed
+    have none, and Classroom Mode falls back to text screens for those rather
+    than refusing to run.
+    """
+    if visuals is None:
+        return []
+    if not isinstance(visuals, dict):
+        return ["visuals is not an object"]
+
+    issues: list[str] = []
+    objects = visuals.get("objects")
+    key = (visuals.get("keyAttribute") or "").strip()
+    decoys = [d for d in (visuals.get("decoyAttributes") or []) if isinstance(d, str)]
+
+    if not key:
+        issues.append("visuals.keyAttribute is missing — nothing decides what matches")
+    if not isinstance(objects, list) or len(objects) < 3:
+        issues.append(f"visuals.objects has {len(objects) if isinstance(objects, list) else 0}, expected 4-6")
+        return issues
+
+    values: list[str] = []
+    for i, o in enumerate(objects, 1):
+        if not isinstance(o, dict):
+            issues.append(f"visuals.objects[{i}] is not an object")
+            continue
+        if not (o.get("label") or "").strip():
+            issues.append(f"visuals.objects[{i}] has no label")
+        attrs = o.get("attributes")
+        if not isinstance(attrs, dict):
+            issues.append(f"visuals.objects[{i}] ('{o.get('label')}') has no attributes")
+            continue
+        if key and key not in attrs:
+            issues.append(f"visuals.objects[{i}] ('{o.get('label')}') is missing the key attribute '{key}'")
+        elif key:
+            values.append(str(attrs[key]))
+        for d in decoys:
+            if d not in attrs:
+                issues.append(f"visuals.objects[{i}] ('{o.get('label')}') is missing decoy attribute '{d}'")
+
+    # The two conditions that make a comparison screen buildable at all.
+    if values:
+        if len(set(values)) == 1:
+            issues.append(f"every object has the same '{key}' — no wrong choice can be shown")
+        elif len(values) == len(set(values)):
+            issues.append(f"every object has a different '{key}' — no correct match can be shown")
+
+    # A decoy only teaches anything if it varies WITHIN a key-attribute group. When
+    # it doesn't, the object set looks correct field-by-field but no misconception
+    # screen can be built from it, which is a silent loss of the most valuable
+    # screens rather than an error.
+    usable = [o for o in objects if isinstance(o, dict) and isinstance(o.get("attributes"), dict)]
+    for decoy in decoys:
+        groups: dict[str, set] = {}
+        for o in usable:
+            attrs = o["attributes"]
+            if key in attrs and decoy in attrs:
+                groups.setdefault(str(attrs[key]), set()).add(str(attrs[decoy]))
+        if groups and not any(len(v) > 1 for v in groups.values()):
+            issues.append(
+                f"decoy '{decoy}' never varies among objects sharing the same '{key}' — "
+                f"no misconception screen can be built from it")
+
+    riddle = visuals.get("riddle")
+    if isinstance(riddle, dict):
+        if not (riddle.get("answer") or "").strip():
+            issues.append("visuals.riddle has no answer")
+        if not [c for c in (riddle.get("clues") or []) if isinstance(c, str) and c.strip()]:
+            issues.append("visuals.riddle has no clues")
+
+    return issues

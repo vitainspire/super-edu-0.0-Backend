@@ -12,8 +12,9 @@ from .routes import (
     health, misc, admin_auth, admin_schools, admin_classes, admin_teachers,
     admin_timetable, admin_misc, admin_students, admin_grade_syllabus, admin_schedule_ai,
     admin_substitutes, teacher, student, scanner, ai_routes, ai_routes2, vision_routes, scanner_ai_routes,
-    admin_syllabus_pdf, admin_textbooks, simulation_routes, smart_lesson_routes, media_routes,
-    admin_canonical, admin_pedagogy, images, prep_material_routes, admin_notifications,
+    admin_syllabus_pdf, admin_textbooks, admin_textbook_scrape, simulation_routes, smart_lesson_routes,
+    media_routes, admin_canonical, admin_pedagogy, images, prep_material_routes, admin_notifications,
+    argus_routes, textbook_catalog_routes,
 )
 
 app = FastAPI(title="EduTeach backend")
@@ -99,8 +100,15 @@ app.include_router(admin_students.router, prefix="/api/admin/schools")
 app.include_router(admin_grade_syllabus.router, prefix="/api/admin/schools")
 app.include_router(admin_syllabus_pdf.router, prefix="/api/admin/schools")
 app.include_router(admin_textbooks.router, prefix="/api/admin/schools")
+app.include_router(admin_textbook_scrape.router, prefix="/api/admin/schools")
 app.include_router(admin_substitutes.router, prefix="/api/admin/schools")
 app.include_router(admin_notifications.router, prefix="/api/admin/schools")
+# Phase 1 of the Argus agent-loop rollout — additive, sits alongside
+# admin_misc.router's /ask-intent classifier, which is untouched.
+app.include_router(argus_routes.router, prefix="/api/admin/schools")
+# Mirror of the published-textbook service — what prep material is
+# grounded in (see app/lib/textbook_catalog.py).
+app.include_router(textbook_catalog_routes.router, prefix="/api/admin/schools")
 app.include_router(admin_schedule_ai.router, prefix="/api/admin")
 # Cross-school curated libraries — no :schoolId in the path, gated by
 # require_any_admin. Prefixes are the ones each module's docstring declares.

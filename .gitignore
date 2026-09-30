@@ -1,4 +1,5 @@
 venv/
+venv_py310_backup/
 __pycache__/
 *.pyc
 .env
@@ -11,3 +12,15 @@ __pycache__/
 # the cost and quality comparisons behind the extraction-format choice, and are
 # small enough to keep as the record of it.
 scripts/prep_material_test_output/
+
+# Textbook PDFs staged by app/lib/textbook_scrape_jobs.py (the "Fetch a
+# textbook" admin panel). These are real, often 100MB+, source PDFs meant to
+# be picked up by the manual pdf pipeline next -- never repo content.
+var/textbook_scrapes/
+
+# A generated chapter's result, backed up here BEFORE its DB save is
+# attempted (prep_batch_jobs.py's save_published_chapter_lessons /
+# recover_chapter_save) -- insurance against losing paid-for LLM output to a
+# save failure. Cleared automatically once persistence succeeds; anything
+# left here is real per-school generated content, never repo material.
+var/chapter_save_backups/

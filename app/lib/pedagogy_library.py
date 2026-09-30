@@ -42,6 +42,32 @@ def _now() -> str:
 
 # ── Stage 2: the pedagogy lookup a lesson generator actually calls ───────────
 
+def _retrying(fn, *, attempts: int = 2):
+    """Run `fn()`, retrying once on a transient connection error before
+    giving up. Same reasoning and same fix as canonical_mapping.py's helper
+    of the same name: `create_admin_client()` (supabase_clients.py) is a
+    process-wide singleton connection pool, reused by every topic's lookup
+    running concurrently in context_assembly_node's fan-out — a connection
+    Supabase's edge quietly closed shows up here as things like
+    `ConnectionTerminated` or `StreamIDTooLowError` on whichever request was
+    mid-flight. Without this, ONE dropped connection on ONE of the four
+    queries below silently cost that topic its entire Pedagogy Library
+    match — observed losing 5 of 12 topics to invented activities in a run
+    where the library had real matches for all of them.
+    """
+    last_exc = None
+    for attempt in range(1, attempts + 1):
+        try:
+            return fn()
+        except Exception as exc:
+            last_exc = exc
+            if attempt >= attempts:
+                raise
+            print(f"[PEDAGOGY] transient error ({exc}), retrying "
+                  f"({attempt}/{attempts - 1} retries left)")
+    raise last_exc  # pragma: no cover — loop always returns or raises above
+
+
 def get_recommended_activities(
     ac, competency_ids: list, resource_level: int = None, grade_band: str = None,
 ) -> list:
@@ -58,11 +84,11 @@ def get_recommended_activities(
     if not competency_ids:
         return []
 
-    comp_links = (
+    comp_links = _retrying(lambda: (
         ac.table("activity_template_competencies")
         .select("activity_template_id, competency_id")
-        .in_("competency_id", competency_ids).execute().data or []
-    )
+        .in_("competency_id", competency_ids).execute()
+    )).data or []
     if not comp_links:
         return []
 
@@ -71,24 +97,29 @@ def get_recommended_activities(
         matched_by_template.setdefault(link["activity_template_id"], set()).add(link["competency_id"])
     template_ids = list(matched_by_template)
 
-    q = ac.table("activity_templates").select("*").in_("id", template_ids)
-    if grade_band:
-        q = q.eq("grade_band", grade_band)
-    templates = q.execute().data or []
+    def _fetch_templates():
+        q = ac.table("activity_templates").select("*").in_("id", template_ids)
+        if grade_band:
+            q = q.eq("grade_band", grade_band)
+        return q.execute()
+
+    templates = _retrying(_fetch_templates).data or []
     if resource_level is not None:
         templates = [t for t in templates if (t.get("resource_level") or 0) <= resource_level]
     if not templates:
         return []
 
     matched_ids = [t["id"] for t in templates]
-    context_links = (
+    context_links = _retrying(lambda: (
         ac.table("activity_template_contexts").select("activity_template_id, context_id")
-        .in_("activity_template_id", matched_ids).execute().data or []
-    )
+        .in_("activity_template_id", matched_ids).execute()
+    )).data or []
     context_ids = list({link["context_id"] for link in context_links})
     contexts_by_id = {}
     if context_ids:
-        rows = ac.table("contexts").select("id, name, category").in_("id", context_ids).execute().data or []
+        rows = _retrying(lambda: (
+            ac.table("contexts").select("id, name, category").in_("id", context_ids).execute()
+        )).data or []
         contexts_by_id = {r["id"]: r for r in rows}
 
     contexts_by_template: dict = {}

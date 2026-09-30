@@ -10,12 +10,67 @@ The rich ontology is mapped down to the syllabus editor's shape:
 so the existing review-and-save UI can consume it unchanged.
 """
 
+import asyncio
+import base64
+import os
+import re
 import threading
 import time
 import uuid
 from pathlib import Path
+from typing import Optional
 
+from .google_drive_upload import upload_to_google_drive
 from .pdf_intake import discard
+
+# A dedicated Apps Script deployment, separate from the one scanned answer
+# papers use — its own folder is hardcoded on the script side, so syllabus
+# PDFs can never land in the scan-upload folder or vice versa. Archiving is
+# best-effort and isolated from the extraction result below — a Drive outage
+# must never turn a working extraction into a failed job.
+SYLLABUS_DRIVE_UPLOAD_URL = os.environ.get("GOOGLE_DRIVE_SYLLABUS_UPLOAD_URL")
+SYLLABUS_DRIVE_UPLOAD_SECRET = os.environ.get("GOOGLE_DRIVE_SYLLABUS_UPLOAD_SECRET")
+
+_UNSAFE_FILENAME_CHARS = re.compile(r"[^\w.-]+")
+
+
+def _archive_filename(board: Optional[str], grade: Optional[str], subject: Optional[str], filename: str) -> str:
+    """e.g. "CBSE_Grade5_Science_textbook.pdf" — board/grade/subject are admin
+    free text (including a custom board/subject name), so each part is
+    sanitized on its own before joining; a missing part is just omitted
+    rather than failing the archive over it."""
+    parts = []
+    if board and board.strip():
+        parts.append(_UNSAFE_FILENAME_CHARS.sub("", board.strip().replace(" ", "")))
+    if grade and grade.strip():
+        parts.append(_UNSAFE_FILENAME_CHARS.sub("", f"Grade{grade.strip()}".replace(" ", "")))
+    if subject and subject.strip():
+        parts.append(_UNSAFE_FILENAME_CHARS.sub("", subject.strip().replace(" ", "")))
+    parts.append(filename)
+    return "_".join(p for p in parts if p)
+
+
+# Temporarily disabled: the OpenRouter key this pipeline calls is currently
+# rejected account-wide (every call, including a bare balance check, returns
+# 401 "User not found"), which surfaced as a raw AI error on the upload panel
+# even though the Drive archive step above it succeeds independently. Flip
+# back to True once that key is reactivated/replaced — nothing else about
+# this pipeline needs to change.
+AI_EXTRACTION_ENABLED = False
+
+
+def _archive_to_drive(pdf_path: Path, filename: str, board: Optional[str], grade: Optional[str], subject: Optional[str]) -> None:
+    if not SYLLABUS_DRIVE_UPLOAD_URL or not SYLLABUS_DRIVE_UPLOAD_SECRET:
+        return
+    try:
+        pdf_base64 = base64.b64encode(pdf_path.read_bytes()).decode()
+        archive_name = _archive_filename(board, grade, subject, filename)
+        asyncio.run(upload_to_google_drive(
+            pdf_base64, archive_name, "application/pdf",
+            upload_url=SYLLABUS_DRIVE_UPLOAD_URL, secret=SYLLABUS_DRIVE_UPLOAD_SECRET,
+        ))
+    except Exception as e:
+        print(f"[syllabus-pdf] Drive archive failed, continuing without it: {e}")
 
 _JOBS: dict[str, dict] = {}
 _LOCK = threading.Lock()
@@ -134,6 +189,9 @@ def start_extraction(
     language: str,
     extraction_format: str | None = None,
     model_tier: str | None = None,
+    board: str | None = None,
+    grade: str | None = None,
+    subject: str | None = None,
 ) -> str:
     """Kick off a background extraction job and return its id immediately.
 
@@ -143,6 +201,9 @@ def start_extraction(
     extraction_format / model_tier are resolved here rather than in the worker
     so the job record can report what it is actually running with from the
     moment it is created — the poller shows it while extraction is in progress.
+
+    board/grade/subject are for the Drive archive filename only (see
+    _archive_to_drive) — optional, and have no bearing on extraction itself.
     """
     from .vision_extraction import resolve_extraction_format, resolve_model_tier, model_for_tier
 
@@ -162,13 +223,14 @@ def start_extraction(
             "modelTier": tier,
             "model": model_for_tier(tier),
             "warnings": [],
+            "aiSkipped": False,
             "createdAt": _now(),
             "finishedAt": 0,
         }
 
     thread = threading.Thread(
         target=_run_job,
-        args=(job_id, work_dir, pdf_path, filename, language, fmt, tier),
+        args=(job_id, work_dir, pdf_path, filename, language, fmt, tier, board, grade, subject),
         name=f"syllabus-pdf-{job_id[:8]}",
         daemon=True,
     )
@@ -184,9 +246,28 @@ def _run_job(
     language: str,
     extraction_format: str | None = None,
     model_tier: str | None = None,
+    board: str | None = None,
+    grade: str | None = None,
+    subject: str | None = None,
 ):
     try:
         _update(job_id, status="running", progress=1, message="Reading PDF…")
+        _archive_to_drive(pdf_path, filename, board, grade, subject)
+
+        if not AI_EXTRACTION_ENABLED:
+            _update(
+                job_id,
+                status="done",
+                progress=100,
+                message="Saved to Drive. AI topic extraction is temporarily switched off — add topics manually below.",
+                topics=[],
+                ontology=None,
+                warnings=[],
+                aiSkipped=True,
+                filename=filename,
+                finishedAt=_now(),
+            )
+            return
 
         # Imported lazily so a missing OPENROUTER_API_KEY (or PyMuPDF) surfaces as a
         # job error rather than crashing server startup.

@@ -1,0 +1,10 @@
+T1 (Shalini and Rajani like drawing pictures.):
+  timing (simple): extra WILL be added to ['challenge'] after repair
+  duplication (simple): none found
+T2 (4. Let us observe the shapes in a rangoli.):
+  timing (simple): extra WILL be added to ['Challenge'] after repair
+  duplication (simple): none found
+T3 (This floor is formed using ___ shapes.):
+  timing (simple): extra WILL be added to ['Challenge'] after repair
+  duplication (simple): none found
+extras applied post-repair to: [1, 2, 3]

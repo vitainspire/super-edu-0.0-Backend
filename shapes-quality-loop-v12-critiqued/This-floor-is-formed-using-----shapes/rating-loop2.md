@@ -1,0 +1,24 @@
+# Rating — This floor is formed using ___ shapes. — Loop 2
+
+*Book heading: This floor is formed using ___ shapes.*  |  Judge model: `anthropic/claude-haiku-4.5`
+
+**Targetable average: 2.89/5** (3/9 at 4+) — what the fix loop can move
+
+*Overall average including blocked dimensions: 2.70/5*
+
+Excluded from the targetable score (cannot be moved by rewriting):
+
+- **textbookGrounding** — this chapter has no page numbers in the source textbook API
+
+| Dimension | Score | Revisable? | Reason |
+|---|---|---|---|
+| Diagnostic thinking | 2/5 | yes | The sheet says 'watch for varied arrangements' and 'students grasp tiling vs. gaps' but gives no if-then moves. If a child arranges matchboxes with gaps, or insists bangles can tile, there is no prescribed response—only observation. |
+| Below-level support | 2/5 | yes | The Refresher asks children to recall home observations ('what they noticed about the sides and corners of a door'), but offers no fallback if a child cannot articulate this or has not made that observation. The Concept then jumps straight to drawing rectangles and circles on the board. |
+| Real-world learning | 3/5 | yes | Real Life section names real objects (floor tiles, brick walls, bangles) and asks children to imagine or observe them, but stops at observation: 'Explain that tiles fit tightly, making the floor smooth and strong.' The Explore section asks children to 'look at a brick wall' and 'notice' patterns, but does not ask them to solve or decide anything—only to see. |
+| Exploration | 4/5 | no (format ceiling) | Explore tasks are concrete and cost nothing: 'Look at a brick wall in your village,' 'Find patterns on a footpath,' 'Look at a bicycle wheel.' Each is self-checkable (a child can verify they found the object and observed it). The only minor gap is that 'imagine trying to cover a floor with many bicycle wheels' asks for imagination rather than a concrete observation, but the other two tasks are strong. |
+| Creativity | 4/5 | no (format ceiling) | Challenge section explicitly invites varied solutions: 'Students try different patterns' and 'Teacher watches for varied arrangements, not just one solution.' The matchbox arrangement task has multiple right answers. Bangles and matchboxes are open-ended enough that children can explore different configurations. |
+| Teacher usability | 3/5 | yes | Timings are clear (30 min total, each section timed). Materials are listed. What to say is scripted in most sections. But 'what to do if it goes sideways' is absent: if children cannot arrange matchboxes, if the floor tiles are not visible from the back rows, if a child finishes the challenge in 2 minutes, there is no fallback or extension. The sheet also does not say how to manage 30–60 children arranging matchboxes on slates simultaneously. |
+| Continuity across lessons | 2/5 | yes | The Refresher asks about 'straight sides and corners from home objects' and recalls 'shape properties from the previous lesson,' but the prep sheet does not cite what the previous lesson's Explore actually was. The connection is stated in the Planning Note but not grounded in a concrete handoff (e.g., 'Yesterday you found objects with straight edges; today we'll see how those edges help shapes fit together'). |
+| Content precision | 4/5 | no (format ceiling) | The core claim—that shapes with straight edges fit without gaps and curved shapes leave gaps—is correct and pitched appropriately for Grade 3. The vocabulary (straight sides, corners, gaps, tiling) is grade-appropriate. One minor imprecision: the sheet says 'Curved edges leave gaps when shapes are placed together' and draws two circles 'touching at one point,' but this is a simplification rather than an error; it works for Grade 3 intuition. |
+| Textbook grounding | 1/5 | no (format ceiling) | The 'WHERE EACH PART CAME FROM IN THE BOOK' section lists eight tasks but every single one shows 'page None.' No actual page numbers are cited. The Planning Note says the chapter is 'Shapes and spatial understanding' and the section is 'This floor is formed using ___ shapes,' but no specific textbook pages are linked to any activity, making it impossible to verify alignment or for a teacher to cross-check. |
+| Classroom realism | 2/5 | yes | Two logistics failures: (1) In Concept, the teacher 'draws two rectangles side-by-side on the blackboard' and 'draws two circles side-by-side'—children in the back rows of a 30–60 child classroom cannot see the detail of whether edges touch or gaps exist. (2) In Challenge, 'pairs arrange matchboxes on their slate' and 'pairs arrange bangles on their slate'—with 30–60 children and one teacher, managing 15–30 pairs simultaneously, observing each arrangement, and drawing one on the board is not feasible in 6 minutes without a fallback (e.g., whole-class demo first, then pair work, or a rotation). |

@@ -5,9 +5,59 @@ from pydantic import BaseModel
 
 from ..lib.supabase_clients import create_admin_client
 from ..lib.admin_queries import fetch_school_classes
+from ..lib.generation_mode import recompute_grade_subject_mode
 from ..deps import require_admin
 
 router = APIRouter()
+
+
+# GET /{schoolId}/grade-syllabus/generation-mode?grade=&subject= — always
+# recomputes fresh (cheap, deterministic, no AI call) before returning, so an
+# admin viewing this never sees a stale suggestion.
+@router.get("/{schoolId}/grade-syllabus/generation-mode")
+def get_generation_mode(schoolId: str, grade: Optional[str] = None, subject: Optional[str] = None, admin: dict = Depends(require_admin)):
+    if not grade or not subject:
+        raise HTTPException(status_code=400, detail="grade and subject are required")
+    ac = create_admin_client()
+    mode = recompute_grade_subject_mode(ac, schoolId, grade, subject)
+    row = (
+        ac.table("grade_subject_feedback_profiles").select("generation_mode, mode_set_by, mode_updated_at")
+        .eq("school_id", schoolId).eq("grade", grade).eq("subject", subject).maybe_single().execute()
+    )
+    data = row.data if row else None
+    return {
+        "mode": mode or "opt_in",
+        "setBy": (data or {}).get("mode_set_by") or "auto",
+        "updatedAt": (data or {}).get("mode_updated_at"),
+    }
+
+
+class GenerationModeBody(BaseModel):
+    grade: str
+    subject: str
+    mode: str  # 'opt_in' | 'full_personalization'
+
+
+# PATCH /{schoolId}/grade-syllabus/generation-mode — an admin's deliberate
+# choice. Marked mode_set_by='admin' so recompute_grade_subject_mode never
+# silently overwrites it again — from here on the auto-similarity check is
+# advisory only for this grade+subject.
+@router.patch("/{schoolId}/grade-syllabus/generation-mode")
+def set_generation_mode(schoolId: str, body: GenerationModeBody, admin: dict = Depends(require_admin)):
+    if body.mode not in ("opt_in", "full_personalization"):
+        raise HTTPException(status_code=400, detail="mode must be opt_in or full_personalization")
+    ac = create_admin_client()
+    ac.table("grade_subject_feedback_profiles").upsert({
+        "school_id": schoolId, "grade": body.grade, "subject": body.subject,
+        "generation_mode": body.mode, "mode_set_by": "admin",
+        "mode_updated_at": _iso_now(),
+    }, on_conflict="school_id,grade,subject").execute()
+    return {"ok": True}
+
+
+def _iso_now() -> str:
+    from datetime import datetime, timezone
+    return datetime.now(timezone.utc).isoformat()
 
 
 def _find_class_teacher(class_id: str, ac) -> Optional[str]:
@@ -79,8 +129,17 @@ def get_grade_syllabus(schoolId: str, grade: Optional[str] = None, subject: Opti
         raise HTTPException(status_code=400, detail="subject is required")
 
     ac = create_admin_client()
+    # Scoped through classes, not syllabus_topics' own school_id — see the
+    # comment on patch_grade_syllabus_progression below: that column is a
+    # denormalised copy that a write path used to omit, so a query filtered on
+    # it directly can miss real rows (or, here, the column doesn't even exist
+    # on this deployment's syllabus_topics table).
+    class_ids = [c["id"] for c in fetch_school_classes(schoolId, ac) if c["grade"] == grade]
+    if not class_ids:
+        return {"topics": []}
+
     data = (
-        ac.table("syllabus_topics").select("*").eq("school_id", schoolId).eq("grade", grade)
+        ac.table("syllabus_topics").select("*").in_("class_id", class_ids)
         .eq("subject", subject).order("order_index").execute().data or []
     )
 
@@ -114,9 +173,12 @@ def post_grade_syllabus(schoolId: str, body: GradeSyllabusTopicBody, admin: dict
     sections = [c for c in all_classes if c["grade"] == body.grade]
     if not sections:
         raise HTTPException(status_code=400, detail=f"No classes found for grade {body.grade}.")
+    class_ids = [s["id"] for s in sections]
 
+    # Same class-scoping as the GET route above — syllabus_topics.school_id
+    # is not a reliable (or, here, not even an existing) filter.
     existing = (
-        ac.table("syllabus_topics").select("order_index").eq("school_id", schoolId).eq("grade", body.grade)
+        ac.table("syllabus_topics").select("order_index").in_("class_id", class_ids)
         .eq("subject", subject).order("order_index", desc=True).limit(1).execute().data or []
     )
     next_index = (existing[0]["order_index"] if existing and existing[0].get("order_index") is not None else -1) + 1
@@ -127,7 +189,7 @@ def post_grade_syllabus(schoolId: str, body: GradeSyllabusTopicBody, admin: dict
     rows = [
         {
             "id": str(uuid.uuid4()), "class_id": sec["id"], "teacher_id": teacher_ids[i],
-            "grade": body.grade, "subject": subject, "school_id": schoolId, "definition_id": definition_id,
+            "grade": body.grade, "subject": subject, "definition_id": definition_id,
             "topic": topic, "description": (body.description or "").strip(), "week_number": body.weekNumber,
             "order_index": next_index, "is_completed": False,
         }

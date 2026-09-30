@@ -4,7 +4,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from ..lib.supabase_clients import create_admin_client
+from ..lib.supabase_clients import create_admin_client, retry_supabase
 from ..lib.admin_queries import (
     fetch_school_teachers, remove_teacher_from_school,
     update_teacher_workload_limits, update_teacher_subjects,
@@ -46,26 +46,33 @@ def post_teacher(schoolId: str, body: TeacherBody, admin: dict = Depends(require
 
     ac = create_admin_client()
     try:
-        auth_res = ac.auth.admin.create_user({
+        auth_res = retry_supabase(lambda: ac.auth.admin.create_user({
             "email": body.email.strip().lower(), "password": body.password, "email_confirm": True,
             "user_metadata": {"name": body.name.strip(), "role": "teacher"},
-        })
+        }))
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
     teacher_id = auth_res.user.id
-    school_res = ac.table("schools").select("name").eq("id", schoolId).maybe_single().execute()
+    school_res = retry_supabase(lambda: ac.table("schools").select("name").eq("id", schoolId).maybe_single().execute())
     school_name = (school_res.data or {}).get("name", "") if school_res else ""
 
     try:
-        ac.table("teachers").insert({
+        retry_supabase(lambda: ac.table("teachers").insert({
             "id": teacher_id, "user_id": teacher_id, "name": body.name.strip(),
             "school_name": school_name, "school_id": schoolId,
             "subject": subject_list[0] if subject_list else "", "subjects": subject_list,
             "grade": "", "phone": "", "language_preference": "english", "teacher_code": _gen_code(),
-        }).execute()
+        }).execute())
     except Exception as e:
-        ac.auth.admin.delete_user(teacher_id)
+        # Best-effort: if even the retried cleanup fails, the auth user is
+        # left orphaned (no teachers row) rather than the account silently
+        # existing with no way to sign in -- the next attempt with this same
+        # email hits "already registered" and needs manual cleanup.
+        try:
+            retry_supabase(lambda: ac.auth.admin.delete_user(teacher_id))
+        except Exception:
+            pass
         raise HTTPException(status_code=500, detail=str(e))
 
     return {"ok": True}
