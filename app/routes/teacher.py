@@ -4,6 +4,8 @@ from fastapi import APIRouter, Request, Depends, HTTPException
 from pydantic import BaseModel
 
 from ..lib.supabase_clients import create_admin_client, get_anon_client
+from ..lib.subject_aliases import subject_matches
+from ..lib.lesson_thumbnails import first_lesson_image
 from ..lib.admin_queries import (
     fetch_published_academic_events, fetch_school_announcements,
     fetch_teacher_availability_for_teacher, create_pending_leave_request,
@@ -914,12 +916,20 @@ def get_shared_prep_material(
         if not school_id:
             return {"lesson": None}
 
+        # topicDefinitionId, when given, is already an exact unique key -- no
+        # subject filtering on that path. The topic-name fallback has no such
+        # key, so it widens to subject_matches() instead of .eq("subject",
+        # ...): a period labelled "Science" must still find a lesson saved
+        # under "Environmental Studies" (subject_aliases.py).
         q = (
-            ac.table("shared_prep_materials").select("lesson, subtopic")
-            .eq("school_id", school_id).eq("grade", grade).eq("subject", subject)
+            ac.table("shared_prep_materials").select("lesson, subtopic, subject")
+            .eq("school_id", school_id).eq("grade", grade)
         )
-        q = q.eq("topic_definition_id", topicDefinitionId) if topicDefinitionId else q.ilike("topic", topic)
-        rows = q.execute().data or []
+        if topicDefinitionId:
+            rows = q.eq("topic_definition_id", topicDefinitionId).execute().data or []
+        else:
+            rows = [r for r in (q.ilike("topic", topic).execute().data or [])
+                    if subject_matches(r.get("subject"), subject)]
         if not rows:
             return {"lesson": None}
         want_sub = (subtopic or "").strip().lower()
@@ -928,6 +938,148 @@ def get_shared_prep_material(
     except Exception as e:
         print(f"[teacher/prep-materials/shared] fetch failed: {e}")
         return {"lesson": None}
+
+
+# GET /api/teacher/prep-materials/my-grades — every grade this teacher
+# teaches, with the subject(s) they teach in it, for "Browse My Library" (the
+# teacher-side counterpart to the admin's "Browse Shared Library").
+#
+# Collapsed by grade, NOT by class/section -- a first version of this listed
+# each class separately ("Grade 5 A", "Grade 5 B"), but shared material is
+# keyed by school+grade+subject only, never by section (see
+# shared_prep_materials's own schema): every section of the same grade reads
+# the exact same content. Listing sections as separate options was actively
+# misleading, not just redundant -- it implied a real choice where there
+# wasn't one. Reuses _my_class_ids (below) for "which classes" and
+# teacher_class_assignments.subject for "which subject in each" -- the
+# authoritative source, NOT teachers.subject/grade, which admin_queries.py's
+# own docstring notes is "never actually set". A grade with no subject on
+# record in any of its sections is silently skipped -- there is nothing to
+# look up a shared lesson by without one.
+@router.get("/prep-materials/my-grades")
+def list_my_grades(teacher_id: str = Depends(require_teacher)):
+    ac = create_admin_client()
+    class_ids = _my_class_ids(ac, teacher_id)
+    if not class_ids:
+        return {"grades": []}
+
+    class_rows = ac.table("classes").select("id, grade").in_("id", class_ids).execute().data or []
+    grade_by_class = {c["id"]: c["grade"] for c in class_rows}
+
+    asg_rows = (
+        ac.table("teacher_class_assignments").select("class_id, subject")
+        .eq("teacher_id", teacher_id).execute()
+    ).data or []
+    subjects_by_grade: dict[str, set[str]] = {}
+    for r in asg_rows:
+        grade = grade_by_class.get(r["class_id"])
+        if grade and r.get("subject"):
+            subjects_by_grade.setdefault(grade, set()).add(r["subject"])
+
+    grades = [{"grade": g, "subjects": sorted(subs)} for g, subs in subjects_by_grade.items()]
+    grades.sort(key=lambda x: x["grade"])
+    return {"grades": grades}
+
+
+def _my_school_id(ac, teacher_id: str) -> Optional[str]:
+    """This teacher's school, via whichever of their own classes has one set
+    -- teacher.py has no Depends() that injects school_id directly (see
+    require_teacher's own docstring), and every one of a teacher's classes is
+    at the same school in practice, so the first hit is sufficient."""
+    class_ids = _my_class_ids(ac, teacher_id)
+    if not class_ids:
+        return None
+    rows = ac.table("classes").select("school_id").in_("id", class_ids).execute().data or []
+    return next((r["school_id"] for r in rows if r.get("school_id")), None)
+
+
+# GET /api/teacher/prep-materials/shared-topics — list side of Browse My
+# Library, paired with the detail route right below. Same list/detail split
+# as GET /prep-materials/shared above (that one wants a specific topic
+# already in mind; this is for when the teacher doesn't and wants to see
+# what's there). Also the same split the admin panel's own shared-topics
+# endpoints use (admin_misc.py) -- kept as teacher.py's own version rather
+# than reusing that route directly, since this one derives school_id from the
+# teacher's own classes instead of taking a schoolId path param, and is
+# scoped to a teacher, not gated by require_admin.
+#
+# `title`/`rawTopic` split: the saved `topic` string is sometimes a real
+# technical description of what's taught, and sometimes just the textbook's
+# own heading/caption copied as the topic name (Node 1 doesn't always rename
+# it) -- e.g. "AGRICULTURE - CROPS 2" as a topic name tells a teacher nothing
+# about what that period actually covers. `lesson.objective` is ALWAYS the
+# real technical description, confirmed against every topic in this school's
+# own saved data, so it's shown as the title; the original `topic` is kept as
+# `rawTopic` for reference, but only when it actually differs -- otherwise
+# the same text would show twice.
+@router.get("/prep-materials/shared-topics")
+def list_my_shared_topics(grade: str, subject: str, teacher_id: str = Depends(require_teacher)):
+    # subject_matches(), not .eq() -- a teacher assigned "Science" must also
+    # see material saved under "Environmental Studies" (subject_aliases.py).
+    ac = create_admin_client()
+    school_id = _my_school_id(ac, teacher_id)
+    if not school_id:
+        return {"chapters": []}
+    rows = (
+        ac.table("shared_prep_materials")
+        .select("topic_definition_id, topic, subtopic, order_index, subject, lesson, chapter_title")
+        .eq("school_id", school_id).eq("grade", grade)
+        .order("order_index").execute()
+    ).data or []
+
+    # Grouped by chapter_title (migration 024) -- a topic saved before that
+    # migration, or by the older non-chapter engine, has none, and groups
+    # under the null bucket instead of being dropped or mis-sorted into a
+    # chapter it was never actually part of. Group order is "first topic
+    # encountered" (order_index order, since rows are already sorted by it),
+    # not alphabetical -- that keeps a chapter's own topics reading in their
+    # real teaching order across chapters too. The null bucket sorts last
+    # regardless of where its topics first appear, since "ungrouped" reads
+    # better as a catch-all at the end than interleaved with real chapters.
+    groups: dict[Optional[str], list[dict]] = {}
+    for r in rows:
+        if not subject_matches(r.get("subject"), subject):
+            continue
+        lesson = r.get("lesson") or {}
+        raw_topic = r["topic"]
+        title = (lesson.get("objective") or raw_topic or "").strip() or raw_topic
+        groups.setdefault(r.get("chapter_title"), []).append({
+            "topicDefinitionId": r["topic_definition_id"],
+            "title": title,
+            "rawTopic": raw_topic if raw_topic.strip().lower() != title.strip().lower() else None,
+            "subtopic": r.get("subtopic"),
+            "orderIndex": r.get("order_index"),
+            "thumbnailUrl": first_lesson_image(lesson),
+        })
+
+    chapters = [
+        {"chapterTitle": chapter_title, "topics": topics}
+        for chapter_title, topics in groups.items() if chapter_title is not None
+    ]
+    if None in groups:
+        chapters.append({"chapterTitle": None, "topics": groups[None]})
+    return {"chapters": chapters}
+
+
+@router.get("/prep-materials/shared-topics/{topicDefinitionId}")
+def get_my_shared_topic_lesson(
+    topicDefinitionId: str, grade: str, subject: str, teacher_id: str = Depends(require_teacher),
+):
+    # Looked up by topicDefinitionId + grade alone, not subject -- see
+    # admin_misc.py's get_shared_topic_lesson for why: this id may have
+    # matched the list above under subject's alias, not subject itself.
+    ac = create_admin_client()
+    school_id = _my_school_id(ac, teacher_id)
+    if not school_id:
+        raise HTTPException(status_code=404, detail="Not found")
+    row = (
+        ac.table("shared_prep_materials").select("lesson, topic")
+        .eq("school_id", school_id).eq("grade", grade)
+        .eq("topic_definition_id", topicDefinitionId).maybe_single().execute()
+    ).data
+    if not row:
+        raise HTTPException(status_code=404, detail="Not found")
+    return {"lesson": row.get("lesson"), "topic": row.get("topic")}
 
 
 class EnsureStockBody(BaseModel):

@@ -357,6 +357,35 @@ def _first_open_bullet(lesson: dict):
     return None, None
 
 
+def _lesson_has_image(lesson: dict) -> bool:
+    """Ground truth for "does this lesson already show a picture" -- checks
+    every bullet directly, rather than trusting `lesson["figureRefs"]`.
+
+    `figureRefs` is NOT reliable for this: generation/compose.py has the
+    model self-report which figure ids it INTENDS to cite as part of its own
+    JSON output, before any bullet has actually been matched to a picture.
+    compose.py only validates that a self-reported id is a real figure that
+    exists on this topic's pages -- it never checks that the id actually made
+    it into a bullet's visible text. attach_cited_figures then unions its own
+    (real, bullet-text-matched) attachments into figureRefs rather than
+    replacing it, so a model's unfulfilled self-report survives untouched
+    forever if no bullet's text ever literally contained that id.
+
+    Measured for real (Grade 5 EVS ch2, this exact pipeline run): "Explain
+    why farmers save seeds" carried figureRefs=["img_c5ch2_17"] while every
+    bullet in every section had image=None -- a phantom citation that then
+    made attach_by_position and generate_board_sketch both believe this
+    lesson already had a picture, skipping the very fallbacks that exist to
+    catch a lesson with no picture at all. The topic shipped with nothing."""
+    from prep_flow.sections import SECTION_ORDER, bullets_of
+
+    for section in SECTION_ORDER:
+        for bullet in (bullets_of(lesson, section) or []):
+            if isinstance(bullet, dict) and (bullet.get("image") or {}).get("url"):
+                return True
+    return False
+
+
 def attach_by_position(lessons: list, figures: list, used_ids: set) -> int:
     """Real textbook pictures, spent on lessons a page-based pass left empty --
     for chapters with no <!-- page N --> markers at all, where attach_figures
@@ -392,7 +421,7 @@ def attach_by_position(lessons: list, figures: list, used_ids: set) -> int:
     """
     from prep_flow.sections import SECTION_ORDER, bullets_of
 
-    empty = [l for l in lessons if not (l.get("figureRefs") or [])]
+    empty = [l for l in lessons if not _lesson_has_image(l)]
     spare = sorted(
         (f for f in (figures or []) if f.get("href") and f["id"] not in used_ids),
         key=lambda f: (f.get("order") is None, f.get("order") or 0),
@@ -437,8 +466,8 @@ def attach_by_position(lessons: list, figures: list, used_ids: set) -> int:
 
 async def generate_board_sketch(lesson: dict, key_parts: list) -> bool:
     """The LAST resort, after every real textbook picture has been tried: an
-    AI-generated board sketch of whatever `explore.imageFocus` asked the
-    teacher to draw by hand.
+    AI-generated board sketch for a lesson that has real content but still
+    reached here with no picture at all.
 
     WHY THIS EXISTS AT ALL. `explore.imageFocus` ("one short phrase: the
     single most useful thing to sketch on the board") has been in the
@@ -447,19 +476,34 @@ async def generate_board_sketch(lesson: dict, key_parts: list) -> bool:
     else. For a topic that is itself about shapes and spatial reasoning, a
     sentence is a weak substitute for the sketch.
 
+    `imageFocus` is preferred when present (it's the model's own considered
+    answer to "what's worth sketching here"), but its absence must not mean
+    "nothing to draw" -- measured for real (Grade 5 EVS ch2): several real,
+    substantive topics (real objective, real bullets) simply had no
+    `imageFocus` and no real picture either, and used to ship with nothing.
+    Falls back to `objective` -- always a short, technical description of
+    what the topic teaches when the topic is real at all (see
+    prep_pipeline_bridge's own title-extraction logic elsewhere) -- so a real
+    topic still gets something worth looking at.
+
+    Genuinely empty topics (no objective, no bullets anywhere -- a
+    generation gap, not a missing-image gap) are NOT patched over here: with
+    no bullet to hang a picture on, `_first_open_bullet` returns None below
+    and this still correctly does nothing. An image cannot fix a lesson that
+    has no content to illustrate.
+
     Costs one real image-generation call. Only fires when NOTHING else
     reached this lesson: no page-based picture, no positional-fallback
-    picture, and only when there is a concrete thing to draw at all
-    (`imageFocus` present). Reuses the exact generate_illustration /
-    store_illustration pair smart_lesson_routes.py's old engine already
-    calls for the identical job -- one working image pipeline, not two.
-    Never raises: a failed image is a normal sheet, same contract as the
-    function it mirrors.
+    picture, and only when there is a concrete thing to draw at all. Reuses
+    the exact generate_illustration / store_illustration pair
+    smart_lesson_routes.py's old engine already calls for the identical job
+    -- one working image pipeline, not two. Never raises: a failed image is a
+    normal sheet, same contract as the function it mirrors.
     """
-    if lesson.get("figureRefs"):
+    if _lesson_has_image(lesson):
         return False
     explore = lesson.get("explore") or {}
-    focus = str(explore.get("imageFocus") or "").strip()
+    focus = str(explore.get("imageFocus") or lesson.get("objective") or "").strip()
     if not focus:
         return False
     section, bullet = _first_open_bullet(lesson)
@@ -578,12 +622,12 @@ def _cache_get(book_id: str, chapter_number: int) -> Optional[dict]:
     apply whenever rather than as a release gate.
     """
     try:
-        from .supabase_clients import create_admin_client
-        row = (
+        from .supabase_clients import create_admin_client, retry_supabase
+        row = retry_supabase(lambda: (
             create_admin_client().table("prep_chapter_cache")
             .select("payload").eq("cache_key", chapter_cache_key(book_id, chapter_number))
             .maybe_single().execute()
-        )
+        ))
         payload = (row.data or {}).get("payload") if row else None
         return payload if isinstance(payload, dict) and payload.get("lessons") else None
     except Exception as e:
@@ -601,8 +645,8 @@ def _cache_put(book_id: str, chapter_number: int, result: dict) -> None:
     if not (result.get("lessons") or []):
         return
     try:
-        from .supabase_clients import create_admin_client
-        create_admin_client().table("prep_chapter_cache").upsert({
+        from .supabase_clients import create_admin_client, retry_supabase
+        retry_supabase(lambda: create_admin_client().table("prep_chapter_cache").upsert({
             "cache_key": chapter_cache_key(book_id, chapter_number),
             "book_id": book_id,
             "chapter_number": int(chapter_number),
@@ -613,7 +657,7 @@ def _cache_put(book_id: str, chapter_number: int, result: dict) -> None:
             "shipped": result.get("shipped"),
             "needs_review": result.get("needsReview"),
             "total": result.get("total"),
-        }, on_conflict="cache_key").execute()
+        }, on_conflict="cache_key").execute())
     except Exception as e:
         print(f"[prep-pipeline] chapter cache write failed (result still returned): {e}")
 
@@ -806,7 +850,23 @@ async def generate_chapter_lessons(
         # Runs ahead of the page-based pass because a real id spelled out
         # inside a bullet's own text is a stronger signal than "this page
         # maps to this section", and must not be second-guessed by it.
-        figures_attached += attach_cited_figures(lesson, chapter_figures or [], used_figure_ids)
+        #
+        # A FRESH set for this call, not used_figure_ids directly -- a
+        # citation is the model independently naming a real figure as
+        # relevant to THIS lesson's own bullet, and two different topics in
+        # the same chapter can both genuinely be about the same picture (a
+        # seed-shortage photo is relevant to both "compare farming methods"
+        # and "why farmers save seeds"). Chapter-wide exhaustion is correct
+        # for attach_figures/attach_by_position below (spreading GENERIC
+        # pictures thinly), but was silently dropping a real, deliberate
+        # citation the moment an earlier topic happened to cite the same id
+        # first -- measured for real on this exact chapter (Grade 5 EVS ch2):
+        # two topics each cited img_c5ch2_17 by name, and only the first one
+        # ever got the picture. Still merged into used_figure_ids right after,
+        # so the later passes see it as chapter-wide spent, same as before.
+        cited_ids_this_lesson: set = set()
+        figures_attached += attach_cited_figures(lesson, chapter_figures or [], cited_ids_this_lesson)
+        used_figure_ids |= cited_ids_this_lesson
         figures_attached += attach_figures(lesson, chapter_figures or [], used_figure_ids)
         # Same reasoning for the citation cleanup: repair rewrites sections,
         # so anything stripped earlier would come back.
@@ -849,12 +909,14 @@ async def generate_chapter_lessons(
     figures_attached += attach_by_position(
         [entry["lesson"] for entry in lessons], chapter_figures or [], used_figure_ids)
 
-    # Pass 3: AI, last resort, real cost. Only the lessons still empty after
-    # both real-picture passes, and only those with something concrete to
-    # sketch -- see generate_board_sketch's own docstring.
+    # Pass 3: AI, last resort, real cost. Every lesson still empty after both
+    # real-picture passes is tried -- generate_board_sketch itself now decides
+    # whether there's really something to draw (imageFocus, or failing that
+    # the topic's own objective) and does nothing for a genuinely empty
+    # topic (see its own docstring for both cases).
     ai_sketches = 0
     if generate_ai_images:
-        still_empty = [e for e in lessons if not (e["lesson"].get("figureRefs") or [])]
+        still_empty = [e for e in lessons if not _lesson_has_image(e["lesson"])]
         if still_empty:
             key_base = [str(grade), subject, chapter_title]
             results = await asyncio.gather(*(

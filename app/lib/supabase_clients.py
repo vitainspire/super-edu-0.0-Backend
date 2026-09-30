@@ -53,6 +53,57 @@ def create_admin_client() -> Client:
     return client
 
 
+def reset_admin_client() -> None:
+    """Drop this thread's cached admin client so the next create_admin_client()
+    builds a fresh one -- a fresh httpx connection, not the same pooled one.
+
+    Exists for retry_supabase() below: a long-running job (a real chapter
+    generation can run for minutes between DB touches, all the LLM calls in
+    between) can hold this thread's one client, and its one connection, idle
+    long enough for a network hop in between (a router, a load balancer, a
+    firewall) to close it without telling either side. The next call then
+    dies with something like `SSL: UNEXPECTED_EOF_WHILE_READING` -- a dead
+    socket, not a real Supabase or auth problem. Recreating the client and
+    trying once more is the fix; the old connection was never coming back."""
+    _local.admin_client = None
+
+
+def retry_supabase(build_and_run):
+    """Run a zero-arg callable that builds AND executes one Supabase query
+    fresh each time (e.g. `lambda: create_admin_client().table(...).execute()`
+    -- never close over an `ac` captured before the call, since a retry must
+    see the client reset_admin_client() just dropped). Retries exactly once,
+    resetting the client first, on ANY exception -- not just a fixed list of
+    known network-error strings.
+
+    That used to be narrower (a marker list: "SSL", "EOF", ...), on the theory
+    that a genuine bug (a bad query, a constraint violation) shouldn't be
+    silently retried. In practice that list needed patching twice in one day
+    for two different real, transient connection errors it didn't recognize
+    (an SSL EOF, then a plain WinError 10060 timeout) -- each one a caller
+    losing the benefit of the retry until the string was added by hand. A
+    genuine (non-network) error gains nothing from retrying, but loses
+    nothing either: it fails the same way one call later, having cost one
+    harmless extra attempt. And for save_published_chapter_lessons
+    specifically, the caller this exists for, a failure here is never
+    silently swallowed either way -- the backup file in
+    var/chapter_save_backups/ (see prep_batch_jobs.py) means an unretryable
+    failure still costs nothing, just a manual (free) recovery. Retrying
+    broadly is strictly safer than maintaining a list that real production
+    errors keep finding the edges of.
+
+    Callers must only wrap a single query, not a block containing more than
+    one write -- retrying re-runs the whole callable, and re-running an
+    already-succeeded write alongside a failed one is exactly the bug this
+    must not introduce."""
+    try:
+        return build_and_run()
+    except Exception as e:
+        print(f"[supabase] query failed, resetting client and retrying once: {type(e).__name__}: {e}")
+        reset_admin_client()
+        return build_and_run()
+
+
 def get_anon_client() -> Client:
     """Used only to verify a bearer token via auth.get_user(token) — mirrors
     backend/src/lib/supabase-anon.ts."""

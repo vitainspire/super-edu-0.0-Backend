@@ -32,13 +32,64 @@ than waiting for ensure_stock()'s automatic top-up to reach it.
 """
 import asyncio
 import datetime
+import json
+import os
 import threading
 import time
 import uuid
 from typing import Optional
 
-from .supabase_clients import create_admin_client
+from .supabase_clients import create_admin_client, retry_supabase
 from .textbook_grounding import MIN_TITLE_OVERLAP, title_score
+
+# Insurance against exactly what save_published_chapter_lessons's own
+# real-money spend is exposed to: the DB save is the ONLY part of that
+# function that can still fail after every retry (a genuine, sustained
+# outage, not just one stale connection) -- and by the time it runs, the
+# LLM work is already paid for. Writing the computed result here BEFORE
+# attempting to save it means that failure can never cost the run its
+# result: recover_chapter_save() below replays only the free DB-write half
+# from this file, no LLM call involved, whenever it's run again. Cleared the
+# moment persistence actually succeeds -- a leftover file here always means
+# "this one didn't finish saving," never a duplicate of one that did.
+_BACKUP_DIR = os.path.join("var", "chapter_save_backups")
+
+
+def _backup_path(school_id: str, book_id: str, chapter_number: int) -> str:
+    safe_book_id = "".join(c if c.isalnum() or c in "-_" else "_" for c in book_id)
+    return os.path.join(_BACKUP_DIR, f"{school_id}__{safe_book_id}__{chapter_number}.json")
+
+
+def _write_chapter_backup(school_id: str, book_id: str, chapter_number: int, result: dict) -> str:
+    os.makedirs(_BACKUP_DIR, exist_ok=True)
+    path = _backup_path(school_id, book_id, chapter_number)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump({"school_id": school_id, "book_id": book_id, "chapter_number": chapter_number,
+                   "result": result}, f)
+    return path
+
+
+def _clear_chapter_backup(school_id: str, book_id: str, chapter_number: int) -> None:
+    try:
+        os.remove(_backup_path(school_id, book_id, chapter_number))
+    except FileNotFoundError:
+        pass
+
+
+def recover_chapter_save(backup_path: str, teacher_id: Optional[str] = None) -> dict:
+    """Replays ONLY the DB-save half of a chapter run whose result was
+    computed and backed up but never (or not fully) persisted -- reads the
+    real, already-generated `result` back from disk and hands it straight to
+    _persist_generated_chapter(), so this costs nothing: no book_id/chapter
+    re-fetch, no LLM call, nothing OpenRouter can bill for. Call this by hand
+    (or from a small script) with the path a failed save's own log line
+    printed. Clears the backup file itself on success, same as a normal run."""
+    with open(backup_path, "r", encoding="utf-8") as f:
+        saved = json.load(f)
+    outcome = _persist_generated_chapter(
+        saved["school_id"], saved["book_id"], saved["chapter_number"], saved["result"], teacher_id)
+    _clear_chapter_backup(saved["school_id"], saved["book_id"], saved["chapter_number"])
+    return outcome
 
 _PROGRESS: dict[str, dict] = {}
 _LOCK = threading.Lock()
@@ -288,6 +339,42 @@ async def save_published_chapter_lessons(
     prep_batches row, no background thread, since this targets one chosen
     book/chapter directly rather than draining a school's syllabus backlog.
 
+    The real money is spent by the time `result` comes back below -- so it's
+    backed up to disk (_write_chapter_backup) BEFORE _persist_generated_chapter
+    is even attempted. A save failure that survives retry_supabase's one retry
+    (a sustained outage, not just one stale connection) still leaves that
+    result sitting in var/chapter_save_backups/, recoverable later via
+    recover_chapter_save() for free -- no re-fetch, no LLM call. The backup is
+    cleared the moment persistence actually succeeds.
+
+    Raises ValueError if this school has no classes for the chapter's grade
+    (nothing to fan a new topic out to). Propagates PublishedBookNotFound /
+    PipelineError from the bridge for a bad book_id/chapter_number or a
+    chapter the pipeline couldn't generate usable material from.
+    """
+    from .prep_pipeline_bridge import generate_lessons_from_published_book
+
+    result = await generate_lessons_from_published_book(book_id, chapter_number)
+    backup_path = _write_chapter_backup(school_id, book_id, chapter_number, result)
+    try:
+        outcome = _persist_generated_chapter(school_id, book_id, chapter_number, result, teacher_id)
+    except Exception as e:
+        print(f"[prep-batch] save failed after generation already completed -- "
+              f"result is safe, not lost, at {backup_path}: {e}")
+        print(f"[prep-batch] once the underlying issue clears, recover for free with: "
+              f"recover_chapter_save({backup_path!r})")
+        raise
+    _clear_chapter_backup(school_id, book_id, chapter_number)
+    return outcome
+
+
+def _persist_generated_chapter(
+    school_id: str, book_id: str, chapter_number: int, result: dict, teacher_id: Optional[str] = None,
+) -> dict:
+    """The DB-only half of save_published_chapter_lessons -- everything after
+    the LLM work is done, split out so recover_chapter_save() can replay just
+    this part against an already-computed (and backed-up) `result`.
+
     A generated topic that title-matches (>= MIN_TITLE_OVERLAP, the same
     scheme _pipeline_lessons_for_todo uses) an existing syllabus_topics
     definition_id for this school+grade+subject is saved under that
@@ -298,27 +385,26 @@ async def save_published_chapter_lessons(
     and syllabus_persist.persist_extraction both use — so the shared material
     has a topic to hang off of at all. This is exactly what manual seeding
     did by hand earlier in this project; here it's the reusable version.
-
-    Raises ValueError if this school has no classes for the chapter's grade
-    (nothing to fan a new topic out to). Propagates PublishedBookNotFound /
-    PipelineError from the bridge for a bad book_id/chapter_number or a
-    chapter the pipeline couldn't generate usable material from.
     """
-    from .prep_pipeline_bridge import generate_lessons_from_published_book
-
-    result = await generate_lessons_from_published_book(book_id, chapter_number)
     grade, subject = result["grade"], result["subject"]
     lessons = result.get("lessons") or []
 
-    ac = create_admin_client()
-    existing_topics = _grade_subject_topics(ac, school_id, grade, subject)
+    # retry_supabase() below, not a plain ac.table(...).execute(): by the time
+    # execution reaches here, generate_lessons_from_published_book() has
+    # already spent the real money (the LLM calls) -- a stale pooled
+    # connection dying on the save must not cost that run its result. See
+    # supabase_clients.retry_supabase's own docstring for why this happens on
+    # a job that runs for minutes between DB touches.
+    existing_topics = retry_supabase(
+        lambda: _grade_subject_topics(create_admin_client(), school_id, grade, subject))
     order_by_def = {t["definitionId"]: t["orderIndex"] for t in existing_topics}
     next_order = max(order_by_def.values(), default=-1) + 1
     used_definition_ids: set[str] = set()
 
     class_ids = [
         c["id"] for c in
-        (ac.table("classes").select("id").eq("school_id", school_id).eq("grade", grade).execute().data or [])
+        (retry_supabase(lambda: create_admin_client().table("classes").select("id")
+            .eq("school_id", school_id).eq("grade", grade).execute()).data or [])
     ]
 
     saved = created_topics = matched_topics = 0
@@ -344,21 +430,27 @@ async def save_published_chapter_lessons(
             order_index = next_order
             next_order += 1
             now = _now_iso()
-            ac.table("syllabus_topics").insert([{
+            retry_supabase(lambda: create_admin_client().table("syllabus_topics").insert([{
                 "id": str(uuid.uuid4()), "class_id": class_id, "teacher_id": teacher_id,
                 "grade": grade, "subject": subject, "definition_id": definition_id,
                 "topic": title, "description": "", "order_index": order_index,
                 "is_completed": False, "page_start": result.get("pageStart"),
                 "page_end": result.get("pageEnd"), "created_at": now,
-            } for class_id in class_ids]).execute()
+            } for class_id in class_ids]).execute())
             created_topics += 1
 
         used_definition_ids.add(definition_id)
-        ac.table("shared_prep_materials").upsert({
+        # book_id/chapter_number/chapter_title: migration 024. Lets the
+        # browse views group topics by the real chapter they came from
+        # instead of one flat list mixing every chapter (and every old-
+        # engine topic, which has none of these three) together.
+        retry_supabase(lambda: create_admin_client().table("shared_prep_materials").upsert({
             "school_id": school_id, "grade": grade, "subject": subject,
             "topic_definition_id": definition_id, "topic": title, "subtopic": None,
             "order_index": order_index, "lesson": lesson, "batch_id": None,
-        }, on_conflict="school_id,grade,subject,topic_definition_id").execute()
+            "book_id": book_id, "chapter_number": chapter_number,
+            "chapter_title": result.get("chapterTitle"),
+        }, on_conflict="school_id,grade,subject,topic_definition_id").execute())
         saved += 1
 
     return {

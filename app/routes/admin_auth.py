@@ -9,7 +9,7 @@ from pydantic import BaseModel
 from supabase import create_client
 from supabase_auth.errors import AuthApiError
 
-from ..lib.supabase_clients import create_admin_client
+from ..lib.supabase_clients import create_admin_client, retry_supabase
 from ..lib.admin_queries import fetch_admin, fetch_school, upsert_admin, create_school
 from ..lib.logger import api_log, get_client_ip
 from ..lib.rate_limit import check_auth_rate_limit
@@ -20,6 +20,20 @@ router = APIRouter()
 
 def _auth_client():
     return create_client(os.environ["NEXT_PUBLIC_SUPABASE_URL"], os.environ["NEXT_PUBLIC_SUPABASE_ANON_KEY"])
+
+
+def _retry_auth(fn):
+    """Like retry_supabase, but for the per-request auth client: a dropped
+    connection to Supabase Auth is retried once, while a real rejection
+    (AuthApiError -- wrong password, unknown email, email already registered)
+    is never retried, since retrying it just reproduces the same verdict."""
+    try:
+        return fn()
+    except AuthApiError:
+        raise
+    except Exception as e:
+        print(f"[admin_auth] transient auth failure, retrying once: {type(e).__name__}: {e}")
+        return fn()
 
 
 class LoginBody(BaseModel):
@@ -51,7 +65,7 @@ def login(body: LoginBody, request: Request):
 
     try:
         supabase = _auth_client()
-        auth_res = supabase.auth.sign_in_with_password({"email": body.email, "password": body.password})
+        auth_res = _retry_auth(lambda: supabase.auth.sign_in_with_password({"email": body.email, "password": body.password}))
     except AuthApiError as e:
         # A real rejection from Supabase Auth (wrong password, unknown email,
         # unconfirmed email, etc.) — genuinely a 401.
@@ -71,7 +85,7 @@ def login(body: LoginBody, request: Request):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     ac = create_admin_client()
-    admin = fetch_admin(auth_res.user.id, ac)
+    admin = retry_supabase(lambda: fetch_admin(auth_res.user.id, ac))
     if not admin:
         supabase.auth.sign_out()
         api_log("admin/login", ip, (time.time() - t0) * 1000, False, "forbidden")
@@ -101,7 +115,7 @@ def register(body: RegisterBody, request: Request):
 
     supabase = _auth_client()
     try:
-        signup_res = supabase.auth.sign_up({"email": body.email, "password": body.password})
+        signup_res = _retry_auth(lambda: supabase.auth.sign_up({"email": body.email, "password": body.password}))
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e) or "Sign up failed")
 
@@ -114,7 +128,7 @@ def register(body: RegisterBody, request: Request):
     now = datetime.now(timezone.utc).isoformat()
 
     try:
-        create_school(
+        retry_supabase(lambda: create_school(
             {
                 "id": school_id,
                 "name": body.schoolName,
@@ -123,8 +137,8 @@ def register(body: RegisterBody, request: Request):
                 "createdAt": now,
             },
             ac,
-        )
-        upsert_admin({"id": admin_id, "userId": admin_id, "name": body.name, "email": body.email, "schoolId": school_id, "createdAt": now}, ac)
+        ))
+        retry_supabase(lambda: upsert_admin({"id": admin_id, "userId": admin_id, "name": body.name, "email": body.email, "schoolId": school_id, "createdAt": now}, ac))
     except Exception as e:
         ac.table("schools").delete().eq("id", school_id).execute()
         ac.auth.admin.delete_user(admin_id)
@@ -136,7 +150,7 @@ def register(body: RegisterBody, request: Request):
         return {"requiresEmailConfirmation": True}
 
     try:
-        signin_res = supabase.auth.sign_in_with_password({"email": body.email, "password": body.password})
+        signin_res = _retry_auth(lambda: supabase.auth.sign_in_with_password({"email": body.email, "password": body.password}))
     except Exception:
         raise HTTPException(status_code=500, detail="Registered but sign-in failed. Please log in manually.")
 

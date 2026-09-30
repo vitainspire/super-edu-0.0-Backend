@@ -13,6 +13,12 @@ def get_client_ip(req: Request) -> str:
     real_ip = req.headers.get("x-real-ip")
     if real_ip:
         return real_ip
+    # No reverse proxy in front (local dev, or a host that doesn't set either
+    # header) -- fall back to the actual socket peer rather than bucketing
+    # every caller together under the literal string "unknown", which is a
+    # shared rate limit for everyone and a self-inflicted denial of service.
+    if req.client and req.client.host:
+        return req.client.host
     return "unknown"
 
 
