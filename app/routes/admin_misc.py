@@ -231,6 +231,15 @@ def get_prep_materials(schoolId: str, admin: dict = Depends(require_admin)):
     Each row carries `source` ("taught" | "generated") so the frontend knows
     which detail endpoint to call for the lesson body.
 
+    `className` is a REAL class name or "" -- never a chapter title. A
+    "generated" row isn't tied to one specific class (it's shared across
+    every section teaching that grade+subject), so it has no className; its
+    own `chapterTitle` is a separate field. These two used to be collapsed
+    into one `className` field (a generated row's chapter title standing in
+    for the class name it didn't have), which meant the admin UI's "class"
+    filter dropdown listed chapter titles alongside real class names --
+    confusing, and wrong for a control literally labelled "All classes".
+
     Deliberately excludes the "lesson" column for BOTH sources: fetching the
     full generated lesson (which can carry embedded image references) for
     every row at once is what made this endpoint time out in practice against
@@ -271,6 +280,7 @@ def get_prep_materials(schoolId: str, admin: dict = Depends(require_admin)):
                 "source": "taught",
                 "teacherName": (teacher or {}).get("name") or "Unknown teacher",
                 "className": (cls or {}).get("name") or "Unknown class",
+                "chapterTitle": None,
                 "grade": r.get("grade") or (cls or {}).get("grade") or "",
                 "subject": r.get("subject") or "",
                 "topic": r.get("topic"),
@@ -290,7 +300,8 @@ def get_prep_materials(schoolId: str, admin: dict = Depends(require_admin)):
             "source": "generated",
             "topicDefinitionId": r.get("topic_definition_id"),
             "teacherName": "Generated from textbook",
-            "className": r.get("chapter_title") or "",
+            "className": "",
+            "chapterTitle": r.get("chapter_title") or "",
             "grade": r.get("grade") or "",
             "subject": r.get("subject") or "",
             "topic": r.get("topic"),
