@@ -259,6 +259,58 @@ def attach_cited_figures(lesson: dict, figures: list, used_ids: set) -> int:
     return attached
 
 
+_STOPWORDS = {
+    "the", "a", "an", "is", "are", "was", "were", "of", "in", "on", "at", "to",
+    "for", "and", "or", "this", "that", "these", "those", "with", "from", "by",
+    "it", "its", "as", "be", "been", "has", "have", "had", "will", "can",
+    "their", "his", "her", "he", "she", "they", "you", "your", "we", "our",
+    "i", "not", "but", "into", "than", "then", "so", "if", "how", "what",
+    "which", "who", "do", "does", "did", "about", "each", "some", "one",
+    "two", "three", "page", "pages",
+}
+
+
+def _content_words(text: str) -> set:
+    words = set()
+    for w in re.findall(r"[a-z]+", (text or "").lower()):
+        if len(w) <= 2 or w in _STOPWORDS:
+            continue
+        # Cheap plural normalization ("chairs" -> "chair") so a bullet saying
+        # "count the chairs" still matches a caption saying "a chair" --
+        # measured for real in this fix's own verification test: an exact
+        # singular/plural mismatch silently failed a genuinely correct match.
+        if len(w) > 4 and w.endswith("s") and not w.endswith("ss"):
+            w = w[:-1]
+        words.add(w)
+    return words
+
+
+def _figure_relevant_to_bullet(figure: dict, bullet: dict) -> bool:
+    """A real photo counts as relevant to THIS bullet only if its caption
+    shares a genuine content word with what the bullet actually says --
+    being printed on the same page, or next in reading order, is a
+    candidate FILTER (narrows down "a picture from roughly the right part
+    of the book"), never proof by itself that the picture is what this
+    specific bullet is teaching.
+
+    Without this check, both attach_figures and attach_by_position picked
+    "the next spare real picture" and stapled it onto whichever bullet
+    happened to be first in the section -- on a chapter with several real
+    photos of similar objects (measured for real: Grade 3 Maths ch1, several
+    photos of chairs used across different shape-counting exercises), that
+    meant Concept, Real Life and Challenge each got a DIFFERENT chair photo,
+    none of them verified to be the chair that section's own bullet was
+    actually talking about. A caption-less figure can never be verified this
+    way and is therefore never treated as relevant -- silence is safer than
+    a guess here.
+    """
+    caption_words = _content_words(figure.get("caption") or "")
+    if not caption_words:
+        return False
+    bullet_words = _content_words(f"{bullet.get('text') or ''} {bullet.get('detail') or ''}")
+    return bool(caption_words & bullet_words)
+
+
 def attach_figures(lesson: dict, figures: list, used_ids: Optional[set] = None) -> int:
     """Hang the chapter's real pictures on the bullets that teach from them.
 
@@ -273,8 +325,16 @@ def attach_figures(lesson: dict, figures: list, used_ids: Optional[set] = None) 
 
     WHICH PICTURE GOES WHERE comes from the sheet's own `bookMoves`: every move
     records the page it was read from AND the section it was staged into, so a
-    picture printed on page 27 lands in whichever part of the period actually
-    uses page 27. That is the pipeline's own answer, not a guess made here.
+    picture printed on page 27 is a CANDIDATE for whichever part of the period
+    actually uses page 27 -- but page co-location alone is not enough to pick
+    which specific bullet it belongs to (see _figure_relevant_to_bullet): a
+    page can carry several real photos of similar objects, each one meant for
+    a different bullet, and attaching "whichever is first available" to
+    "whichever bullet is first in the section" used to scatter mismatched
+    real photos across a topic's own sections. Only a page-colocated figure
+    that ALSO shares a content word with the specific bullet it would attach
+    to is used; a section with real candidates but no bullet-level match is
+    left bare, for the AI-fallback pass to fill in accurately instead.
 
     One picture per section, because that is all the renderer shows. Returns
     how many were attached, and never raises — a sheet with no figures is a
@@ -320,20 +380,28 @@ def attach_figures(lesson: dict, figures: list, used_ids: Optional[set] = None) 
         if any(isinstance(b, dict) and (b.get("image") or {}).get("url") for b in bullets):
             continue
 
-        for page in pages_for_section.get(section, []):
-            figure = next((f for f in by_page.get(page, []) if f["id"] not in used_ids), None)
+        candidates = [f for page in pages_for_section.get(section, [])
+                      for f in by_page.get(page, []) if f["id"] not in used_ids]
+        if not candidates:
+            continue
+
+        for bullet in bullets:
+            if not isinstance(bullet, dict):
+                continue
+            figure = next((f for f in candidates
+                           if f["id"] not in used_ids and _figure_relevant_to_bullet(f, bullet)), None)
             if not figure:
                 continue
-            target = next((b for b in bullets if isinstance(b, dict)), None)
-            if target is None:
-                break
-            target["image"] = {"url": figure["href"]}
+            bullet["image"] = {"url": figure["href"]}
             if figure.get("caption"):
-                target["image"]["caption"] = figure["caption"]
+                bullet["image"]["caption"] = figure["caption"]
             used_ids.add(figure["id"])
             this_lesson.add(figure["id"])
             attached += 1
             break
+        # else: no bullet in this section matched any page-colocated
+        # candidate on actual content -- left bare rather than forcing an
+        # unrelated real photo onto it (see this function's own docstring).
 
     if this_lesson:
         # The field the generation schema already declares and the model kept
@@ -342,19 +410,26 @@ def attach_figures(lesson: dict, figures: list, used_ids: Optional[set] = None) 
     return attached
 
 
-def _first_open_bullet(lesson: dict):
-    """The first bullet, anywhere in the sheet, that doesn't already carry a
-    picture -- what generate_board_sketch (the last-resort AI pass, below)
-    hangs its one sketch on. Explore first: its `imageFocus` is written
-    specifically to be sketched, so it is the section most likely to
-    actually need one."""
+def _section_bullets_needing_image(lesson: dict) -> list:
+    """Every (section, bullet) pair still without a picture after all three
+    real-image passes -- one candidate per section, its own first bullet,
+    since only one picture is ever shown per section (see attach_figures's
+    docstring). What generate_board_sketch (the AI pass, below) now fills in
+    PER BUCKET, not once for the whole lesson: a lesson can have several
+    genuinely different sections each needing their own accurate picture,
+    and generating one sketch for the lesson and calling the rest done left
+    the other buckets with nothing at all."""
     from prep_flow.sections import SECTION_ORDER, bullets_of
 
-    for section in ("explore", *SECTION_ORDER):
-        for bullet in (bullets_of(lesson, section) or []):
-            if isinstance(bullet, dict) and not (bullet.get("image") or {}).get("url"):
-                return section, bullet
-    return None, None
+    out = []
+    for section in SECTION_ORDER:
+        bullets = bullets_of(lesson, section) or []
+        if any(isinstance(b, dict) and (b.get("image") or {}).get("url") for b in bullets):
+            continue
+        bullet = next((b for b in bullets if isinstance(b, dict)), None)
+        if bullet is not None:
+            out.append((section, bullet))
+    return out
 
 
 def _lesson_has_image(lesson: dict) -> bool:
@@ -414,6 +489,18 @@ def attach_by_position(lessons: list, figures: list, used_ids: set) -> int:
     shows (see attach_figures's own docstring) -- this is the same policy,
     applied with ORDER standing in for PAGE, not a different one.
 
+    SAME CONTENT CHECK AS attach_figures, for the same reason: "next in this
+    lesson's own chunk" is only a candidate filter, not proof the picture is
+    what a specific bullet is teaching. A chunk assigned to one topic can
+    hold several real photos of similar objects (measured for real: this
+    exact Grade 3 Maths chapter, several photos of chairs across different
+    shape-counting exercises) -- picking blindly used to put a different
+    chair photo in Concept, Real Life and Challenge, none of them verified
+    to match what that section's own bullet actually says. Only a candidate
+    that shares a content word with the specific bullet it would attach to
+    is used; a section with spare candidates but no bullet-level match is
+    left bare, for the AI-fallback pass to fill in accurately instead.
+
     Runs ONLY on lessons attach_figures left with zero pictures -- a lesson
     that already got one from the page-based pass keeps it untouched. Runs
     ONLY on sections a lesson's own model output left with no picture of its
@@ -446,28 +533,43 @@ def attach_by_position(lessons: list, figures: list, used_ids: set) -> int:
                 continue
             if any(isinstance(b, dict) and (b.get("image") or {}).get("url") for b in bullets):
                 continue
-            figure = next((f for f in chunk if f["id"] not in used_ids), None)
-            if not figure:
+            if not any(f["id"] not in used_ids for f in chunk):
                 break  # this lesson's own chunk is spent -- later sections stay bare
-            target = next((b for b in bullets if isinstance(b, dict)), None)
-            if target is None:
-                continue
-            target["image"] = {"url": figure["href"]}
-            if figure.get("caption"):
-                target["image"]["caption"] = figure["caption"]
-            used_ids.add(figure["id"])
-            this_lesson.add(figure["id"])
-            attached += 1
+
+            for bullet in bullets:
+                if not isinstance(bullet, dict):
+                    continue
+                figure = next((f for f in chunk
+                               if f["id"] not in used_ids and _figure_relevant_to_bullet(f, bullet)), None)
+                if not figure:
+                    continue
+                bullet["image"] = {"url": figure["href"]}
+                if figure.get("caption"):
+                    bullet["image"]["caption"] = figure["caption"]
+                used_ids.add(figure["id"])
+                this_lesson.add(figure["id"])
+                attached += 1
+                break
+            # else: nothing left in this lesson's chunk matched any bullet in
+            # this section on actual content -- left bare (see docstring).
 
         if this_lesson:
             lesson["figureRefs"] = sorted(set(lesson.get("figureRefs") or []) | this_lesson)
     return attached
 
 
-async def generate_board_sketch(lesson: dict, key_parts: list) -> bool:
+async def generate_board_sketch(lesson: dict, section: str, bullet: dict, key_parts: list) -> bool:
     """The LAST resort, after every real textbook picture has been tried: an
-    AI-generated board sketch for a lesson that has real content but still
-    reached here with no picture at all.
+    AI-generated board sketch for ONE section's bullet that has real content
+    but still reached here with no picture at all.
+
+    PER BUCKET, NOT PER LESSON. Each of a lesson's sections can genuinely be
+    about a different thing, and a section whose real picture got rejected
+    as irrelevant (see attach_figures/attach_by_position's own docstrings)
+    still deserves an accurate picture of its OWN, not silence just because
+    some other section already got a sketch. The caller
+    (_section_bullets_needing_image) already narrowed this down to one
+    open bullet per section still needing one.
 
     WHY THIS EXISTS AT ALL. `explore.imageFocus` ("one short phrase: the
     single most useful thing to sketch on the board") has been in the
@@ -476,38 +578,25 @@ async def generate_board_sketch(lesson: dict, key_parts: list) -> bool:
     else. For a topic that is itself about shapes and spatial reasoning, a
     sentence is a weak substitute for the sketch.
 
-    `imageFocus` is preferred when present (it's the model's own considered
-    answer to "what's worth sketching here"), but its absence must not mean
-    "nothing to draw" -- measured for real (Grade 5 EVS ch2): several real,
-    substantive topics (real objective, real bullets) simply had no
-    `imageFocus` and no real picture either, and used to ship with nothing.
-    Falls back to `objective` -- always a short, technical description of
-    what the topic teaches when the topic is real at all (see
-    prep_pipeline_bridge's own title-extraction logic elsewhere) -- so a real
-    topic still gets something worth looking at.
+    `imageFocus` is only ever written for the explore section (that's the
+    schema's own scope for it); every other section has no equivalent
+    author-written hint, so its own bullet text/detail IS what gets
+    illustrated -- the same content a teacher would otherwise read aloud.
+    Falls back to the topic's `objective` only when a bullet has no text of
+    its own to work from, so a real topic still gets something worth
+    looking at rather than nothing.
 
-    Genuinely empty topics (no objective, no bullets anywhere -- a
-    generation gap, not a missing-image gap) are NOT patched over here: with
-    no bullet to hang a picture on, `_first_open_bullet` returns None below
-    and this still correctly does nothing. An image cannot fix a lesson that
-    has no content to illustrate.
-
-    Costs one real image-generation call. Only fires when NOTHING else
-    reached this lesson: no page-based picture, no positional-fallback
-    picture, and only when there is a concrete thing to draw at all. Reuses
-    the exact generate_illustration / store_illustration pair
-    smart_lesson_routes.py's old engine already calls for the identical job
-    -- one working image pipeline, not two. Never raises: a failed image is a
-    normal sheet, same contract as the function it mirrors.
+    Costs one real image-generation call PER SECTION this reaches, not one
+    per lesson. Reuses the exact generate_illustration / store_illustration
+    pair smart_lesson_routes.py's old engine already calls for the identical
+    job -- one working image pipeline, not two. Never raises: a failed image
+    is a normal sheet, same contract as the function it mirrors.
     """
-    if _lesson_has_image(lesson):
-        return False
     explore = lesson.get("explore") or {}
-    focus = str(explore.get("imageFocus") or lesson.get("objective") or "").strip()
+    focus = str(explore.get("imageFocus") or "").strip() if section == "explore" else ""
     if not focus:
-        return False
-    section, bullet = _first_open_bullet(lesson)
-    if bullet is None:
+        focus = str(bullet.get("text") or lesson.get("objective") or "").strip()
+    if not focus:
         return False
 
     from .ai import generate_illustration, illustration_key, store_illustration
@@ -541,7 +630,8 @@ Clean and genuinely explanatory -- a child should understand the idea just by lo
         lesson["figureRefs"] = sorted(set(lesson.get("figureRefs") or []) | {"ai-sketch"})
         return True
     except Exception as e:                                 # noqa: BLE001
-        print(f"[prep-pipeline] board-sketch generation failed (sheet ships without it): {e}")
+        print(f"[prep-pipeline] board-sketch generation failed for section {section!r} "
+              f"(sheet ships without it): {e}")
         return False
 
 
@@ -909,20 +999,21 @@ async def generate_chapter_lessons(
     figures_attached += attach_by_position(
         [entry["lesson"] for entry in lessons], chapter_figures or [], used_figure_ids)
 
-    # Pass 3: AI, last resort, real cost. Every lesson still empty after both
-    # real-picture passes is tried -- generate_board_sketch itself now decides
-    # whether there's really something to draw (imageFocus, or failing that
-    # the topic's own objective) and does nothing for a genuinely empty
-    # topic (see its own docstring for both cases).
+    # Pass 3: AI, last resort, real cost -- PER SECTION now, not once per
+    # lesson. _section_bullets_needing_image finds every (section, bullet)
+    # still without a picture after both real-image passes; each one that
+    # has real content to draw gets its own accurate sketch instead of the
+    # lesson getting one picture and its other empty sections staying bare.
     ai_sketches = 0
     if generate_ai_images:
-        still_empty = [e for e in lessons if not _lesson_has_image(e["lesson"])]
-        if still_empty:
-            key_base = [str(grade), subject, chapter_title]
-            results = await asyncio.gather(*(
-                generate_board_sketch(entry["lesson"], [*key_base, entry["topic"]])
-                for entry in still_empty
-            ))
+        key_base = [str(grade), subject, chapter_title]
+        tasks = [
+            generate_board_sketch(entry["lesson"], section, bullet, [*key_base, entry["topic"]])
+            for entry in lessons
+            for section, bullet in _section_bullets_needing_image(entry["lesson"])
+        ]
+        if tasks:
+            results = await asyncio.gather(*tasks)
             ai_sketches = sum(1 for made in results if made)
             figures_attached += ai_sketches
 
