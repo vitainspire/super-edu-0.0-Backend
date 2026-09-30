@@ -114,3 +114,11 @@ def get_anon_client() -> Client:
         client = create_client(url, anon_key)
         _local.anon_client = client
     return client
+
+
+def reset_anon_client() -> None:
+    """Drop this thread's cached anon client -- same dead-socket fix as
+    reset_admin_client() above, for deps.py's require_user() retry, which
+    runs on every /api/teacher/* and /api/admin/* request and so hits this
+    thread-local client far more often than the admin one."""
+    _local.anon_client = None

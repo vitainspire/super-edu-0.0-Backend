@@ -5,8 +5,9 @@ dependency, it runs before the route body, raising HTTPException to short-circui
 returning without next())."""
 from typing import Optional
 from fastapi import Header, HTTPException, Depends
+from supabase_auth.errors import AuthApiError
 
-from .lib.supabase_clients import get_anon_client, create_admin_client
+from .lib.supabase_clients import get_anon_client, reset_anon_client, create_admin_client
 from .lib.admin_queries import fetch_admin
 from .lib.student_auth import verify_student_cookie
 from .lib.scanner_auth import verify_school_token
@@ -19,6 +20,24 @@ def _bearer_token(authorization: Optional[str]) -> Optional[str]:
     return token or None
 
 
+def _get_user(token: str):
+    """Like admin_auth.py's _retry_auth: a dropped connection to Supabase Auth
+    (SSL EOF, WinError 10060, ...) is retried once, while a real rejection
+    (AuthApiError -- expired/invalid token) is never retried, since retrying
+    it just reproduces the same verdict. Every /api/teacher/* and
+    /api/admin/* route runs through this on every request, so an unretried
+    transient error here used to surface as a blanket 401 across the whole
+    app rather than the one call that actually failed."""
+    try:
+        return get_anon_client().auth.get_user(token)
+    except AuthApiError:
+        raise
+    except Exception as e:
+        print(f"[deps] transient auth failure, resetting client and retrying once: {type(e).__name__}: {e}")
+        reset_anon_client()
+        return get_anon_client().auth.get_user(token)
+
+
 def require_user(authorization: Optional[str] = Header(None)) -> dict:
     """Replaces the Next.js/Express bearer-token check — verifies the Supabase
     access token the frontend attaches on every call."""
@@ -27,8 +46,9 @@ def require_user(authorization: Optional[str] = Header(None)) -> dict:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
     try:
-        res = get_anon_client().auth.get_user(token)
-    except Exception:  # noqa: BLE001 — invalid/expired JWT raises AuthApiError
+        res = _get_user(token)
+    except Exception as e:
+        print(f"[deps] require_user failed: {type(e).__name__}: {e}")
         raise HTTPException(status_code=401, detail="Unauthorized")
 
     user = res.user if res else None
