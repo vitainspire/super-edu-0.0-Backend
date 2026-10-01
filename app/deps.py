@@ -20,22 +20,32 @@ def _bearer_token(authorization: Optional[str]) -> Optional[str]:
     return token or None
 
 
-def _get_user(token: str):
+def _get_user(token: str, attempts: int = 3):
     """Like admin_auth.py's _retry_auth: a dropped connection to Supabase Auth
-    (SSL EOF, WinError 10060, ...) is retried once, while a real rejection
+    (SSL EOF, WinError 10060, ...) is retried, while a real rejection
     (AuthApiError -- expired/invalid token) is never retried, since retrying
     it just reproduces the same verdict. Every /api/teacher/* and
     /api/admin/* route runs through this on every request, so an unretried
     transient error here used to surface as a blanket 401 across the whole
-    app rather than the one call that actually failed."""
-    try:
-        return get_anon_client().auth.get_user(token)
-    except AuthApiError:
-        raise
-    except Exception as e:
-        print(f"[deps] transient auth failure, resetting client and retrying once: {type(e).__name__}: {e}")
-        reset_anon_client()
-        return get_anon_client().auth.get_user(token)
+    app rather than the one call that actually failed.
+
+    THREE ATTEMPTS, NOT TWO -- same reasoning as retry_supabase's own bump:
+    measured for real, a single retry still wasn't enough. A genuinely dead
+    session still ends in a real 401 one attempt later; this only costs
+    anything when the connection recovers partway through, which is exactly
+    the case worth paying for."""
+    last_exc: Exception | None = None
+    for attempt in range(1, attempts + 1):
+        try:
+            return get_anon_client().auth.get_user(token)
+        except AuthApiError:
+            raise
+        except Exception as e:
+            last_exc = e
+            print(f"[deps] transient auth failure (attempt {attempt}/{attempts}): {type(e).__name__}: {e}")
+            if attempt < attempts:
+                reset_anon_client()
+    raise last_exc
 
 
 def require_user(authorization: Optional[str] = Header(None)) -> dict:

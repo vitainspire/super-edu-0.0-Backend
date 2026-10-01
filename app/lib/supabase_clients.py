@@ -68,13 +68,12 @@ def reset_admin_client() -> None:
     _local.admin_client = None
 
 
-def retry_supabase(build_and_run):
+def retry_supabase(build_and_run, attempts: int = 3):
     """Run a zero-arg callable that builds AND executes one Supabase query
     fresh each time (e.g. `lambda: create_admin_client().table(...).execute()`
     -- never close over an `ac` captured before the call, since a retry must
-    see the client reset_admin_client() just dropped). Retries exactly once,
-    resetting the client first, on ANY exception -- not just a fixed list of
-    known network-error strings.
+    see the client reset_admin_client() just dropped). Retries on ANY
+    exception -- not just a fixed list of known network-error strings.
 
     That used to be narrower (a marker list: "SSL", "EOF", ...), on the theory
     that a genuine bug (a bad query, a constraint violation) shouldn't be
@@ -92,16 +91,28 @@ def retry_supabase(build_and_run):
     broadly is strictly safer than maintaining a list that real production
     errors keep finding the edges of.
 
+    THREE ATTEMPTS, NOT TWO. A single retry was the original fix, but a real
+    production run (a teacher's own session, every /api/teacher/* endpoint)
+    measured both the first attempt AND the one retry hitting the same SSL
+    EOF back to back -- the connection was unstable for longer than one
+    reset-and-try-again covers. A third attempt costs nothing when the first
+    two already succeeded (the common case), and gives a sustained blip one
+    more real chance before the caller gives up and the user sees a failure.
+
     Callers must only wrap a single query, not a block containing more than
     one write -- retrying re-runs the whole callable, and re-running an
     already-succeeded write alongside a failed one is exactly the bug this
     must not introduce."""
-    try:
-        return build_and_run()
-    except Exception as e:
-        print(f"[supabase] query failed, resetting client and retrying once: {type(e).__name__}: {e}")
-        reset_admin_client()
-        return build_and_run()
+    last_exc: Exception | None = None
+    for attempt in range(1, attempts + 1):
+        try:
+            return build_and_run()
+        except Exception as e:
+            last_exc = e
+            print(f"[supabase] query failed (attempt {attempt}/{attempts}): {type(e).__name__}: {e}")
+            if attempt < attempts:
+                reset_admin_client()
+    raise last_exc
 
 
 def get_anon_client() -> Client:

@@ -22,18 +22,25 @@ def _auth_client():
     return create_client(os.environ["NEXT_PUBLIC_SUPABASE_URL"], os.environ["NEXT_PUBLIC_SUPABASE_ANON_KEY"])
 
 
-def _retry_auth(fn):
+def _retry_auth(fn, attempts: int = 3):
     """Like retry_supabase, but for the per-request auth client: a dropped
-    connection to Supabase Auth is retried once, while a real rejection
+    connection to Supabase Auth is retried, while a real rejection
     (AuthApiError -- wrong password, unknown email, email already registered)
-    is never retried, since retrying it just reproduces the same verdict."""
-    try:
-        return fn()
-    except AuthApiError:
-        raise
-    except Exception as e:
-        print(f"[admin_auth] transient auth failure, retrying once: {type(e).__name__}: {e}")
-        return fn()
+    is never retried, since retrying it just reproduces the same verdict.
+
+    THREE ATTEMPTS, NOT TWO -- same bump as retry_supabase and deps.py's
+    _get_user, for the same measured reason: a single retry sometimes wasn't
+    enough against a sustained connection blip."""
+    last_exc: Exception | None = None
+    for attempt in range(1, attempts + 1):
+        try:
+            return fn()
+        except AuthApiError:
+            raise
+        except Exception as e:
+            last_exc = e
+            print(f"[admin_auth] transient auth failure (attempt {attempt}/{attempts}): {type(e).__name__}: {e}")
+    raise last_exc
 
 
 class LoginBody(BaseModel):
