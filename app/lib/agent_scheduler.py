@@ -154,7 +154,7 @@ async def _deliver_performance_coaching(school_id: str, finding: dict, ac) -> No
             f"Headmaster Agent flagged a dip in {ctx['subject']} for {ctx['className']} "
             f"(test average {ctx['previousAvgPct']}% → {ctx['latestAvgPct']}%). {answer}"
         ),
-        thread="teacher", teacher_id=teacher_id,
+        thread="teacher", teacher_id=teacher_id, source_persona="headmaster",
     )
 
 

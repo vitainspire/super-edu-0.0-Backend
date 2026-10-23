@@ -33,6 +33,7 @@ def _to_app(r: dict) -> dict:
         "trace": r.get("trace") or [],
         "pendingConfirmation": r.get("pending_confirmation"),
         "link": r.get("link"),
+        "sourcePersona": r.get("source_persona"),
         "feedbackRequest": r.get("feedback_request"),
         "feedbackSubmittedAt": r.get("feedback_submitted_at"),
         "confirmedAt": r.get("confirmed_at"),
@@ -74,11 +75,19 @@ def save_message(
     link: dict | None = None,
     feedback_request: dict | None = None,
     admin_id: str | None = None,
+    source_persona: str | None = None,
     ac=None,
 ) -> dict | None:
     """Persists one message. Returns the saved row (app-shaped), or None if
     the table isn't there yet — callers should still be able to answer in the
-    chat even if history can't be saved, same degrade rule as argus_memory."""
+    chat even if history can't be saved, same degrade rule as argus_memory.
+
+    `source_persona` is separate from `sender`: a performance_watch coaching
+    message is still sent *as* this teacher's own agent (sender="teacher_agent",
+    so it lands in their one thread like everything else), but it originated
+    from the Headmaster Agent's own sweep — source_persona="headmaster" lets
+    the UI color-code that provenance instead of presenting it as an
+    indistinguishable My Agent message."""
     ac = ac or create_admin_client()
     payload = {
         "school_id": school_id,
@@ -90,6 +99,7 @@ def save_message(
         "trace": trace or [],
         "pending_confirmation": pending_confirmation,
         "link": link,
+        "source_persona": source_persona,
         "feedback_request": feedback_request,
         "created_at": _now(),
     }
