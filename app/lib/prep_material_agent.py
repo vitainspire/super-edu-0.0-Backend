@@ -18,6 +18,7 @@ instead of being fetched a second time.
 from .supabase_clients import create_admin_client
 from .textbook_grounding import fetch_textbook_grounding
 from ..routes.smart_lesson_routes import generate_smart_lesson
+from ..routes.teacher import get_shared_prep_material
 
 
 async def create_prep_material(
@@ -37,3 +38,36 @@ async def create_prep_material(
         subtopic=subtopic, textbook=textbook, below_grade_level=below_grade_level,
     )
     return {"grounded": True, "chapterTitle": textbook.get("chapterTitle"), **lesson}
+
+
+def find_existing_prep_material(
+    teacher_id: str, class_id: str, subject: str, topic: str,
+    subtopic: str = None, grade: str = None, ac=None,
+) -> dict:
+    """Checks two different tables, in order, same as before: this teacher's
+    own prep_materials (source='personal') first, then the shared pool
+    (shared_prep_materials). Zero generation cost — reads only. Shared by
+    teacher_agent.py's get_prep_material tool and
+    teacher_period_briefing.py's "show what's already ready" step, so there
+    is exactly one real lookup, not two copies of it."""
+    ac = ac or create_admin_client()
+    if grade is None:
+        class_row = ac.table("classes").select("grade").eq("id", class_id).maybe_single().execute().data
+        grade = (class_row or {}).get("grade")
+
+    personal = (
+        ac.table("prep_materials").select("lesson")
+        .eq("teacher_id", teacher_id).eq("class_id", class_id).ilike("topic", topic)
+        .order("created_at", desc=True).limit(1).execute().data or []
+    )
+    if personal:
+        return {"lesson": personal[0]["lesson"], "source": "personal"}
+
+    if grade:
+        shared = get_shared_prep_material(
+            classId=class_id, subject=subject, grade=grade, topic=topic,
+            subtopic=subtopic, teacher_id=teacher_id,
+        )
+        if shared.get("lesson") is not None:
+            return {"lesson": shared["lesson"], "source": "shared"}
+    return {"lesson": None}

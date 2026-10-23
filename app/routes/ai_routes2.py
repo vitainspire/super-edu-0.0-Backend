@@ -75,6 +75,55 @@ def _whole_if_int(x):
     return x
 
 
+def needs_interpretation(engagement: Optional[str], comprehension: Optional[str], pacing: Optional[str], other_feedback: Optional[str]) -> bool:
+    """The real cost-control rule this feature has always had: an all-yes,
+    no-note submission means nothing to adjust, so skip the LLM call
+    entirely. Pulled out so app/lib/teacher_agent.py's save_class_feedback
+    tool makes exactly the same call as this route always has, not a
+    second, possibly-looser copy of the rule."""
+    all_yes = all(v in (None, "yes") for v in (engagement, comprehension, pacing))
+    return not all_yes or bool((other_feedback or "").strip())
+
+
+async def interpret_lesson_feedback(
+    topic: str, subtopic: Optional[str], engagement: Optional[str], comprehension: Optional[str],
+    pacing: Optional[str], other_feedback: Optional[str], current_profile: Optional[str],
+) -> dict:
+    """The real LLM step behind POST /interpret-feedback, pulled out so
+    app/lib/teacher_agent.py's save_class_feedback tool can call it directly
+    — same reuse pattern as generate_smart_lesson's extraction. Pure
+    extraction, no behavior change; the route below is now a thin wrapper."""
+    answers_text = "\n".join(
+        f"- {label} -> {value}" for label, value in
+        [
+            ("Did students engage with the lesson?", engagement),
+            ("Was the topic too complex, or was it fine for this class?", comprehension),
+            ("Was the way we explained it relevant to the topic?", pacing),
+        ]
+        if value is not None
+    )
+
+    prompt = f"""A teacher just finished a lesson on "{topic}"{f' ({subtopic})' if subtopic else ''} and answered a quick post-class check-in:
+{answers_text}
+{f'Free-text note: {other_feedback}' if other_feedback else ''}
+
+This class's existing general-tendency profile (may be empty if this is the first flagged feedback): {current_profile or '(none yet)'}
+
+Produce two things:
+1. "topicInsight" — one short, specific sentence about what went wrong in THIS topic's lesson and what the next session on this exact topic should do differently (e.g. "Rushed through common denominators — recap with concrete objects before the next fractions session."). Specific enough to act on, not a vague restatement of the answers.
+2. "updatedProfile" — a revised version of the class's general-tendency profile, ONE short paragraph, folding in what this feedback reveals about the class in general (not just this topic) — e.g. pacing, engagement style, what kind of activities land. Build on the existing profile rather than replacing it wholesale; keep it to 2-3 sentences total.
+
+Return valid JSON only:
+{{"topicInsight": "...", "updatedProfile": "..."}}"""
+
+    raw = await call_ai([{"role": "user", "content": prompt}])
+    parsed = json.loads(raw)
+    return {
+        "topicInsight": parsed.get("topicInsight", ""),
+        "updatedProfile": parsed.get("updatedProfile", current_profile or ""),
+    }
+
+
 # POST /api/interpret-feedback — only called when post-class feedback had
 # something flagged (never on an all-"yes" submission, so this never runs on
 # a clean lesson). Turns vague yes/somewhat/no answers into one short, specific
@@ -90,36 +139,12 @@ async def interpret_feedback(body: InterpretFeedbackSchema, request: Request, us
 
     t0 = time.time()
     try:
-        answers_text = "\n".join(
-            f"- {label} -> {value}" for label, value in
-            [
-                ("Did students engage with the lesson?", body.engagement),
-                ("Was the topic too complex, or was it fine for this class?", body.comprehension),
-                ("Was the way we explained it relevant to the topic?", body.pacing),
-            ]
-            if value is not None
+        result = await interpret_lesson_feedback(
+            body.topic, body.subtopic, body.engagement, body.comprehension,
+            body.pacing, body.otherFeedback, body.currentProfile,
         )
-
-        prompt = f"""A teacher just finished a lesson on "{body.topic}"{f' ({body.subtopic})' if body.subtopic else ''} and answered a quick post-class check-in:
-{answers_text}
-{f'Free-text note: {body.otherFeedback}' if body.otherFeedback else ''}
-
-This class's existing general-tendency profile (may be empty if this is the first flagged feedback): {body.currentProfile or '(none yet)'}
-
-Produce two things:
-1. "topicInsight" — one short, specific sentence about what went wrong in THIS topic's lesson and what the next session on this exact topic should do differently (e.g. "Rushed through common denominators — recap with concrete objects before the next fractions session."). Specific enough to act on, not a vague restatement of the answers.
-2. "updatedProfile" — a revised version of the class's general-tendency profile, ONE short paragraph, folding in what this feedback reveals about the class in general (not just this topic) — e.g. pacing, engagement style, what kind of activities land. Build on the existing profile rather than replacing it wholesale; keep it to 2-3 sentences total.
-
-Return valid JSON only:
-{{"topicInsight": "...", "updatedProfile": "..."}}"""
-
-        result = await call_ai([{"role": "user", "content": prompt}])
-        parsed = json.loads(result)
         api_log("interpret-feedback", ip, (time.time() - t0) * 1000, False, "ok")
-        return {
-            "topicInsight": parsed.get("topicInsight", ""),
-            "updatedProfile": parsed.get("updatedProfile", body.currentProfile or ""),
-        }
+        return result
     except Exception as e:
         api_log("interpret-feedback", ip, (time.time() - t0) * 1000, False, "error", error=str(e))
         # Best-effort feature — a failed interpretation just means no adjustment

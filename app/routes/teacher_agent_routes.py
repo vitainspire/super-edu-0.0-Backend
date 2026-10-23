@@ -15,6 +15,7 @@ from ..lib.teacher_confirm_dispatch import execute_confirmed_teacher_action
 from ..lib.teacher_context import get_teacher_context
 from ..lib.agent_scheduler import maybe_run_teacher_daily_sweep
 from ..lib.teacher_period_briefing import maybe_run_period_briefings
+from ..lib.teacher_class_feedback import maybe_ask_class_feedback
 from ..lib.teacher_agent_memory import load_active_notes, archive_note_by_id
 from ..lib.group_chat_store import load_recent_messages, save_message, mark_confirmed
 from ..lib.logger import api_log, get_client_ip
@@ -45,6 +46,7 @@ async def get_agent_messages(limit: int = 50, teacher_id: str = Depends(require_
     # already uses for the admin side.
     await maybe_run_teacher_daily_sweep(teacher_id, ctx)
     await maybe_run_period_briefings(teacher_id, ctx)
+    await maybe_ask_class_feedback(teacher_id, ctx)
     return {"messages": load_recent_messages(ctx["schoolId"] or "", thread="teacher", teacher_id=teacher_id, limit=limit)}
 
 

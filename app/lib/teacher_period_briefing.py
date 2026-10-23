@@ -21,6 +21,8 @@ from .teacher_sweep import detect
 from .argus_sweep import _phrase_briefing
 from .argus_memory import record_findings, should_report, mark_reported
 from .group_chat_store import save_message
+from .prep_material_agent import find_existing_prep_material
+from .subject_aliases import subject_matches
 
 TABLE = "teacher_period_sweep_log"
 LEAD_MINUTES = 10
@@ -51,6 +53,62 @@ def _is_due(entry: dict, now_hm: str) -> bool:
     if not start or not end:
         return False
     return _minus_minutes(start, LEAD_MINUTES) <= now_hm <= end
+
+
+def resolve_period_topic(class_id: str, subject: str, date_str: str, period_number: int, ac) -> dict:
+    """What's actually being taught in one specific period — the pinned
+    session topic if one was set when the period was opened
+    (prep_session_topics, migration 0004), else the most recently created
+    prep_materials row for this class+subject (whatever was last
+    generated/used is the most likely thing actually taught). Shared by the
+    "show what's ready" step below and teacher_class_feedback.py's
+    "what should I ask about" step, so both agree on the same answer.
+
+    Matched via subject_matches(), not .eq("subject", ...) — confirmed
+    against real data that a timetable period's label ("environmental
+    science") and a saved prep_materials row's subject ("Environmental
+    Studies") are genuinely different strings for the same real subject, the
+    exact mismatch subject_aliases.py exists to handle. An exact match here
+    would silently never find real, already-saved material."""
+    try:
+        candidates = (
+            ac.table("prep_session_topics").select("topic, subtopic, subject")
+            .eq("class_id", class_id).eq("session_date", date_str).eq("period_number", period_number)
+            .execute().data or []
+        )
+    except Exception:
+        candidates = []
+    row = next((r for r in candidates if subject_matches(r.get("subject"), subject) and r.get("topic")), None)
+    if row:
+        return {"topic": row["topic"], "subtopic": row.get("subtopic")}
+
+    try:
+        rows = (
+            ac.table("prep_materials").select("topic, subtopic, subject")
+            .eq("class_id", class_id).order("created_at", desc=True).limit(20).execute().data or []
+        )
+    except Exception:
+        rows = []
+    match = next((r for r in rows if subject_matches(r.get("subject"), subject)), None)
+    return {"topic": match["topic"], "subtopic": match.get("subtopic")} if match else None
+
+
+def _material_readiness_line(teacher_id: str, entry: dict, subject: str, topic_info: dict, ac) -> str:
+    """Zero generation cost — only reads what's already there. A short
+    summary (objective, not the full lesson JSON) so this fits in a chat
+    bubble; "Open Prep Materials" is where the real sheet lives."""
+    existing = find_existing_prep_material(
+        teacher_id, entry["classId"], subject, topic_info["topic"],
+        subtopic=topic_info.get("subtopic"), ac=ac,
+    )
+    lesson = existing.get("lesson")
+    if not lesson:
+        return f'No prep material ready yet for "{topic_info["topic"]}" — ask me to generate one if you want it before class.'
+    objective = (lesson or {}).get("objective")
+    return (
+        f'Prep material for "{topic_info["topic"]}" is ready{f" — {objective}" if objective else ""}. '
+        "Open Prep Materials to see the full sheet."
+    )
 
 
 def _already_ran(teacher_id: str, period_number: int, run_date: str, ac) -> bool:
@@ -93,17 +151,27 @@ async def _brief_one(teacher_id: str, ctx: dict, entry: dict, run_date: str, ac)
     _record_ran(teacher_id, entry["classId"], period_number, run_date, ac)
 
     reportable = [f for f in diff["new"] + diff["recurring"] if should_report(f)]
-    if not reportable and not diff["resolved"]:
-        return
-
-    briefing = await _phrase_briefing(reportable, diff["resolved"])
-    mark_reported(ctx["schoolId"], [f["findingKey"] for f in reportable])
-
     prefix = f"Before {entry.get('className') or 'class'} (period {period_number}): "
-    save_message(
-        ctx["schoolId"], sender="teacher_agent", content=prefix + briefing,
-        thread="teacher", teacher_id=teacher_id,
-    )
+
+    if reportable or diff["resolved"]:
+        briefing = await _phrase_briefing(reportable, diff["resolved"])
+        mark_reported(ctx["schoolId"], [f["findingKey"] for f in reportable])
+        save_message(
+            ctx["schoolId"], sender="teacher_agent", content=prefix + briefing,
+            thread="teacher", teacher_id=teacher_id,
+        )
+
+    # Independent of whether the sweep above had anything to say — this is
+    # "what's ready for THIS class right now", not a finding with a cooldown.
+    # Zero generation cost: find_existing_prep_material only reads.
+    subject = entry.get("label") or ""
+    topic_info = resolve_period_topic(entry["classId"], subject, run_date, period_number, ac) if subject else None
+    if topic_info:
+        readiness = _material_readiness_line(teacher_id, entry, subject, topic_info, ac)
+        save_message(
+            ctx["schoolId"], sender="teacher_agent", content=prefix + readiness,
+            thread="teacher", teacher_id=teacher_id,
+        )
     for finding in reportable:
         action = finding.get("suggestedAction")
         if not action:

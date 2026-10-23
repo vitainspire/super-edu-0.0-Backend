@@ -28,6 +28,7 @@ it needs (`{"id": teacher_id}`) rather than a direct query — confirmed
 queries `teachers` by `user["id"]`), so this is a real, correct reuse, not a
 workaround.
 """
+import asyncio
 import json
 import time
 from collections import Counter
@@ -38,14 +39,17 @@ from .supabase_clients import create_admin_client
 from .teacher_context import get_teacher_context
 from .admin_queries import create_pending_leave_request, fetch_teacher_availability_for_teacher
 from .teacher_agent_memory import load_active_notes, save_note, archive_note_by_ref
+from .prep_material_agent import find_existing_prep_material
 from .ask_history import history_block
 from .logger import api_log
-from .schemas import TeacherTestUpsertSchema
+from .schemas import TeacherTestUpsertSchema, TeacherLessonFeedbackUpsertSchema
 from ..routes.teacher import (
     get_own_classes, get_students_by_classes, get_own_marks, get_attendance_by_classes,
-    get_student_doubts, get_own_timetable, get_own_profile, get_shared_prep_material,
-    upsert_own_test, _class_row_to_dto,
+    get_student_doubts, get_own_timetable, get_own_profile,
+    upsert_own_test, upsert_own_lesson_feedback, update_lesson_feedback_insight,
+    update_class_feedback_profile, _class_row_to_dto,
 )
+from ..routes.ai_routes2 import interpret_lesson_feedback, needs_interpretation
 
 MAX_STEPS = 6
 ALLOWED_LEAVE_REASONS = {"on_leave", "late_arrival", "official_duty", "other"}
@@ -139,11 +143,6 @@ def _tool_profile(teacher_id: str, ctx: dict, args: dict) -> dict:
 
 
 def _tool_get_prep_material(teacher_id: str, ctx: dict, args: dict) -> dict:
-    """Checks two different tables, in order — generate_prep_material saves
-    to this teacher's own prep_materials (source='personal'); the shared pool
-    (shared_prep_materials, one lesson per school+grade+subject+topic, read
-    by every section teaching it) is a separate table entirely. A personal
-    copy, when one exists, is the more specific answer and wins."""
     subject = (args.get("subject") or "").strip()
     topic = (args.get("topic") or "").strip()
     class_ref = (args.get("classRef") or "").strip()
@@ -155,23 +154,9 @@ def _tool_get_prep_material(teacher_id: str, ctx: dict, args: dict) -> dict:
     if match["kind"] == "ambiguous":
         return {"error": f'More than one class matches "{class_ref}": {", ".join(match["candidates"])} — which one?'}
     cls = match["class"]
-
-    ac = create_admin_client()
-    personal = (
-        ac.table("prep_materials").select("lesson")
-        .eq("teacher_id", teacher_id).eq("class_id", cls["id"]).ilike("topic", topic)
-        .order("created_at", desc=True).limit(1).execute().data or []
+    return find_existing_prep_material(
+        teacher_id, cls["id"], subject, topic, subtopic=args.get("subtopic"), grade=cls["grade"],
     )
-    if personal:
-        return {"lesson": personal[0]["lesson"], "source": "personal"}
-
-    shared = get_shared_prep_material(
-        classId=cls["id"], subject=subject, grade=cls["grade"], topic=topic,
-        subtopic=args.get("subtopic"), teacher_id=teacher_id,
-    )
-    if shared.get("lesson") is not None:
-        return {"lesson": shared["lesson"], "source": "shared"}
-    return {"lesson": None}
 
 
 # ---------------------------------------------------------------------------
@@ -493,6 +478,59 @@ def _tool_forget_note(teacher_id: str, ctx: dict, args: dict) -> dict:
     return {"forgotten": True}
 
 
+_FEEDBACK_RATINGS = {"yes", "somewhat", "no"}
+
+
+async def _tool_save_class_feedback(teacher_id: str, ctx: dict, args: dict) -> dict:
+    """No propose/confirm gate — same reasoning remember_note already
+    establishes: this only ever writes the teacher's own feedback about
+    their own lesson, the same thing Classroom Mode's existing feedback form
+    already does with no confirm step. Feeds classes.feedback_profile /
+    lesson_feedback.insight, already read back by every future generation
+    via prep_context.fetch_feedback_context — no new read path needed."""
+    class_ref = (args.get("classRef") or "").strip()
+    topic = (args.get("topic") or "").strip()
+    if not class_ref or not topic:
+        return {"error": "classRef and topic are both required."}
+    match = _match_class(teacher_id, class_ref)
+    if match["kind"] == "none":
+        return {"error": f'No class matching "{class_ref}".'}
+    if match["kind"] == "ambiguous":
+        return {"error": f'More than one class matches "{class_ref}": {", ".join(match["candidates"])} — which one?'}
+    cls = match["class"]
+
+    def _rating(key: str) -> str:
+        v = (args.get(key) or "").strip().lower()
+        return v if v in _FEEDBACK_RATINGS else None
+
+    engagement, comprehension, pacing = _rating("engagement"), _rating("comprehension"), _rating("pacing")
+    note = (args.get("note") or "").strip() or None
+    subtopic = args.get("subtopic")
+
+    import uuid
+    feedback_id = str(uuid.uuid4())
+    today = datetime.now(timezone.utc).date().isoformat()
+    upsert_own_lesson_feedback(
+        TeacherLessonFeedbackUpsertSchema(
+            id=feedback_id, classId=cls["id"], date=today, topic=topic, subtopic=subtopic,
+            engagement=engagement, comprehension=comprehension, pacing=pacing,
+            otherFeedback=note, createdAt=datetime.now(timezone.utc).isoformat(),
+        ),
+        teacher_id=teacher_id,
+    )
+
+    if needs_interpretation(engagement, comprehension, pacing, note):
+        ac = create_admin_client()
+        class_row = ac.table("classes").select("feedback_profile").eq("id", cls["id"]).maybe_single().execute().data
+        current_profile = (class_row or {}).get("feedback_profile")
+        interpreted = await interpret_lesson_feedback(topic, subtopic, engagement, comprehension, pacing, note, current_profile)
+        update_lesson_feedback_insight(feedback_id, interpreted["topicInsight"], teacher_id=teacher_id)
+        update_class_feedback_profile(cls["id"], interpreted["updatedProfile"], teacher_id=teacher_id)
+        return {"saved": True, "insight": interpreted["topicInsight"]}
+
+    return {"saved": True}
+
+
 TOOLS = {
     "get_my_classes": {
         "description": "List this teacher's own classes (owned + assigned).",
@@ -584,6 +622,17 @@ TOOLS = {
         "params": {"testId": "string, required", "scores": "list of {studentRef, score, feedback?}, required"},
         "side_effect": "action", "fn": _tool_record_marks_bulk,
     },
+    "save_class_feedback": {
+        "description": "Save the teacher's feedback on how a lesson went, after My Agent asks about one following a class. Feeds directly into future prep material for that class — saves immediately, no confirmation needed.",
+        "params": {
+            "classRef": "string, required", "topic": "string, required", "subtopic": "string, optional",
+            "engagement": "one of yes/somewhat/no, optional — did students engage with the lesson",
+            "comprehension": "one of yes/somewhat/no, optional — was the topic too complex or fine for this class",
+            "pacing": "one of yes/somewhat/no, optional — was the explanation well-paced/relevant",
+            "note": "string, optional — ONLY a specific concern, confusion, or problem worth flagging. Leave this out entirely for a purely positive reply with nothing to act on — restating 'it went great' here defeats the point, since a note is what decides whether this gets a deeper look.",
+        },
+        "fn": _tool_save_class_feedback,
+    },
     "remember_note": {
         "description": "Save a short note about this teacher's preferences or recurring concerns, to be remembered in future conversations too. Saves immediately, no confirmation needed.",
         "params": {"note": "string, required, under 240 characters"},
@@ -644,7 +693,13 @@ there?"), reply conversationally and ask what's needed — do not call a tool
 until there's an actual question or request to answer. When the
 teacher tells you a preference or a recurring concern worth carrying into
 future conversations, call remember_note to save it — not every fact already
-available from a tool, just what's worth remembering about THEM.
+available from a tool, just what's worth remembering about THEM. If the most
+recent message from you (in the conversation so far) asked how a lesson
+went, and the teacher is now replying to that, call save_class_feedback with
+your best reading of their answer (infer yes/somewhat/no for
+engagement/comprehension/pacing from what they actually said — don't ask
+them to restate it as those exact words) rather than just acknowledging
+conversationally.
 
 The teacher asked: "{question}"
 {history_block(history)}
@@ -682,7 +737,14 @@ Decide your next step. Return JSON only, no markdown, one of:
                 result = {"error": f'unknown tool "{tool_name}"'}
             else:
                 try:
-                    result = tool["fn"](teacher_id, ctx, args)
+                    # save_class_feedback needs to await interpret_lesson_feedback
+                    # — every other tool here is sync, so this conditionally
+                    # awaits only the one that is, same pattern argus_agent.py's
+                    # run_agent already uses for invoke_teacher_agent.
+                    if asyncio.iscoroutinefunction(tool["fn"]):
+                        result = await tool["fn"](teacher_id, ctx, args)
+                    else:
+                        result = tool["fn"](teacher_id, ctx, args)
                 except Exception as e:
                     result = {"error": str(e)}
 
