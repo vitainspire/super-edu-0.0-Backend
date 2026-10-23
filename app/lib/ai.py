@@ -234,7 +234,20 @@ async def _call_model(model: str, messages: list[dict], options: dict, use_json_
               f"incomplete — raise max_tokens for this call, or reduce how much it is "
               f"asked to write at once.")
 
-    return content
+    # Every caller here expects clean JSON (json_mode=True is the default),
+    # but json_mode is a request, not a guarantee -- a model can still wrap
+    # its answer in ```json fences even with it on, and did: a real,
+    # observed failure (run_teacher_agent's json.loads raising "Expecting
+    # value: line 1 column 1" on a genuinely successful, 110-character,
+    # finish_reason=stop response that was just fenced). Previously only
+    # call_ai's FALLBACK branch stripped fences before returning -- the
+    # primary path returned `content` as-is, so this exact failure could
+    # happen on the very first call, with no retry, for every caller that
+    # does json.loads(await call_ai(...)) with no repair logic of its own
+    # (teacher_agent.py, argus_agent.py, interpret_lesson_feedback, ...).
+    # Stripped once here instead, so every caller through _call_model --
+    # primary or fallback -- gets the same guarantee.
+    return _strip_fences(content)
 
 
 def _report(label: str, agent: str, model: str, prompt_chars: int, content: str,
@@ -305,7 +318,9 @@ async def call_ai(messages: list[dict], options: Optional[dict] = None) -> str:
             _on_success()
             _report(label, agent, FALLBACK_MODEL, prompt_chars, raw, fallback_started,
                     fallback_meta, fallback=True)
-            return _strip_fences(raw)
+            # _call_model already strips fences — kept as a plain return now
+            # that the guarantee lives in one place instead of two.
+            return raw
         except Exception as fallback_err:
             _on_failure()
             _note(label=label, model=FALLBACK_MODEL, prompt_chars=prompt_chars,
