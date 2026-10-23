@@ -6,6 +6,8 @@ by" behaviour and had started drifting into two copies of the same function.
 """
 from typing import Optional
 
+from .lesson_images import bullet_images
+
 
 def first_lesson_image(lesson: dict) -> Optional[str]:
     """The first real textbook image found anywhere in this lesson's
@@ -20,6 +22,8 @@ def first_lesson_image(lesson: dict) -> Optional[str]:
         return []
     for key in ("previousTopicRefresher", "concept", "realLife", "challenge", "levelSet", "explore"):
         for b in bullets_of(lesson.get(key)):
-            if isinstance(b, dict) and isinstance(b.get("image"), dict) and b["image"].get("url"):
-                return b["image"]["url"]
+            if not isinstance(b, dict):
+                continue
+            for im in bullet_images(b):
+                return im["url"]
     return None

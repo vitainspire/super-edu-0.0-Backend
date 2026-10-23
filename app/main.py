@@ -14,7 +14,7 @@ from .routes import (
     admin_substitutes, teacher, student, scanner, ai_routes, ai_routes2, vision_routes, scanner_ai_routes,
     admin_syllabus_pdf, admin_textbooks, admin_textbook_scrape, simulation_routes, smart_lesson_routes,
     media_routes, admin_canonical, admin_pedagogy, images, prep_material_routes, admin_notifications,
-    argus_routes, textbook_catalog_routes,
+    argus_routes, group_chat_routes, teacher_agent_routes, textbook_catalog_routes, public_report_routes,
 )
 
 app = FastAPI(title="EduTeach backend")
@@ -106,6 +106,7 @@ app.include_router(admin_notifications.router, prefix="/api/admin/schools")
 # Phase 1 of the Argus agent-loop rollout — additive, sits alongside
 # admin_misc.router's /ask-intent classifier, which is untouched.
 app.include_router(argus_routes.router, prefix="/api/admin/schools")
+app.include_router(group_chat_routes.router, prefix="/api/admin/schools")
 # Mirror of the published-textbook service — what prep material is
 # grounded in (see app/lib/textbook_catalog.py).
 app.include_router(textbook_catalog_routes.router, prefix="/api/admin/schools")
@@ -115,6 +116,8 @@ app.include_router(admin_schedule_ai.router, prefix="/api/admin")
 app.include_router(admin_canonical.router, prefix="/api/admin/canonical")
 app.include_router(admin_pedagogy.router, prefix="/api/admin/pedagogy")
 app.include_router(teacher.router, prefix="/api/teacher")
+app.include_router(teacher_agent_routes.router, prefix="/api/teacher")
+app.include_router(public_report_routes.router, prefix="/api/public")
 app.include_router(student.router, prefix="/api/student")
 app.include_router(scanner.router, prefix="/api/scanner")
 app.include_router(ai_routes.router, prefix="/api")

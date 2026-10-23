@@ -179,11 +179,65 @@ def _pb_operations(school_id: str, date_str: str, ac) -> list:
     return findings
 
 
+# ── syllabus_pace ───────────────────────────────────────────────────────────
+# The one playbook that isn't operations-flavored — academic pace, for the
+# Headmaster Agent's own daily sweep (see app/lib/agent_scheduler.py). The
+# other four playbooks above are all staffing/logistics, which is why the
+# Headmaster Agent had nothing of its own to proactively report until now.
+def _pb_syllabus_pace(school_id: str, date_str: str, ac, class_ids: list = None) -> list:
+    """class_ids restricts which classes are inspected (used by
+    app/lib/teacher_sweep.py to scope this down to one teacher's own
+    classes); None (the default) keeps the original school-wide behavior for
+    the Headmaster's own sweep."""
+    classes = fetch_school_classes(school_id, ac)
+    if class_ids is not None:
+        classes = [c for c in classes if c["id"] in set(class_ids)]
+    if not classes:
+        return []
+    class_ids = [c["id"] for c in classes]
+    class_by_id = {c["id"]: c for c in classes}
+
+    rows = ac.table("syllabus_topics").select("class_id, subject, is_completed").in_("class_id", class_ids).execute().data or []
+    if not rows:
+        return []
+
+    by_class_subject: dict = {}
+    for r in rows:
+        by_class_subject.setdefault((r["class_id"], r["subject"]), []).append(r)
+
+    # A coarse, deterministic bar, not a calendar-aware "expected pace" —
+    # there's no term-progress data to compare against, same kind of honest
+    # simplification the other playbooks already make explicit.
+    LOW_COMPLETION_THRESHOLD = 0.3
+    MIN_TRACKED_TOPICS = 3  # fewer than this and the ratio doesn't mean much yet
+
+    findings = []
+    for (class_id, subject), topic_rows in by_class_subject.items():
+        total = len(topic_rows)
+        if total < MIN_TRACKED_TOPICS:
+            continue
+        completed = sum(1 for r in topic_rows if r.get("is_completed"))
+        ratio = completed / total
+        if ratio >= LOW_COMPLETION_THRESHOLD:
+            continue
+        cls = class_by_id.get(class_id, {})
+        label = cls.get("name") or f'{cls.get("grade")} {cls.get("section")}'
+        findings.append(_finding(
+            "syllabus_pace", f"syllabus_pace:{class_id}:{subject}", "attention",
+            f"{label} is behind on {subject} syllabus ({completed}/{total} topics, {round(ratio * 100)}%)",
+            # No suggestedAction: pacing isn't something to auto-fix, the same
+            # reasoning _pb_readiness's "no students enrolled" finding uses.
+            "No fix can be auto-proposed — review pacing with the subject teacher.",
+        ))
+    return findings
+
+
 PLAYBOOKS = {
     "coverage": _pb_coverage,
     "readiness": _pb_readiness,
     "approvals": _pb_approvals,
     "operations": _pb_operations,
+    "syllabus_pace": _pb_syllabus_pace,
 }
 
 SEVERITY_ORDER = {"urgent": 0, "attention": 1, "info": 2}
@@ -264,7 +318,12 @@ async def run_sweep(
     """
     t0 = datetime.now(timezone.utc)
     detected = detect(school_id, playbooks, date_str)
-    diff = record_findings(school_id, detected)
+    # exclude_key_prefix keeps this call from treating a still-open
+    # teacher-scoped finding (app/lib/teacher_sweep.py) as resolved just
+    # because this school-wide detect() never looked for it; playbooks keeps
+    # it from doing the same to another persona's playbooks (see
+    # argus_memory.record_findings's docstring).
+    diff = record_findings(school_id, detected, playbooks=playbooks or list(PLAYBOOKS.keys()), exclude_key_prefix="teacher:")
 
     candidates = diff["new"] + diff["recurring"]
     reportable = [f for f in candidates if should_report(f)]

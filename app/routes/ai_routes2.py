@@ -16,6 +16,7 @@ from ..lib.schemas import (
     AskIntentSchema,
 )
 from ..lib.supabase_clients import create_admin_client
+from ..lib.textbook_grounding import fetch_textbook_grounding
 from ..lib.prep_context import gather_class_context, gather_topic_context, personalization_tier_line
 from ..lib.logger import api_log, get_client_ip
 from ..lib.rate_limit import check_rate_limit, check_vision_rate_limit
@@ -42,6 +43,27 @@ def _strip_and_match_obj(text: str) -> str:
     cleaned = re.sub(r"\s*```$", "", re.sub(r"^```(?:json)?\s*", "", text.strip(), flags=re.I), flags=re.I).strip()
     match = re.search(r"\{[\s\S]*\}", cleaned)
     return match.group(0) if match else cleaned
+
+
+async def _ground_in_textbook(admin, class_id: Optional[str], grade: str, subject: str, topic: str, subtopic: Optional[str] = None) -> Optional[dict]:
+    """Best-effort real-textbook excerpt for one topic, shared by the
+    worksheet/paper/workbook generators below — none of them had any textbook
+    grounding before this. Resolves school_id from class_id (same single lookup
+    smart_lesson_routes.py already does), then defers to
+    fetch_textbook_grounding(), which is itself fail-closed. Any failure here
+    (no class_id given, DB hiccup, grounding service down) just means the
+    caller proceeds ungrounded, exactly as it did before this existed."""
+    if not class_id:
+        return None
+    try:
+        class_row = admin.table("classes").select("school_id").eq("id", class_id).maybe_single().execute().data
+        school_id = (class_row or {}).get("school_id")
+        if not school_id:
+            return None
+        return await fetch_textbook_grounding(admin, school_id, grade, subject, topic, subtopic)
+    except Exception as e:
+        print(f"[ground_in_textbook] failed for topic '{topic}': {e}")
+        return None
 
 
 def _whole_if_int(x):
@@ -1185,6 +1207,22 @@ async def generate_paper(body: GeneratePaperSchema, request: Request):
         for t in body.topics
     )
 
+    # Best-effort real-textbook grounding per topic — capped to the first 5
+    # topics so a 30-topic paper can't blow out the prompt with excerpts.
+    admin = create_admin_client()
+    grounded_lines = []
+    for t in body.topics[:5]:
+        subtopic = t.subtopics[0] if t.subtopics else None
+        tb = await _ground_in_textbook(admin, body.classId, body.grade, body.subject, t.topic, subtopic)
+        if tb and tb.get("excerpt"):
+            grounded_lines.append(f'"{t.topic}": {tb["excerpt"][:600]}')
+    textbook_block = (
+        "\nReal textbook content to ground questions on these topics in — use its facts, "
+        "numbers, vocabulary and examples; never invent ones it does not contain:\n"
+        + "\n\n".join(grounded_lines) + "\n"
+        if grounded_lines else ""
+    )
+
     section_lines = "\n".join(
         f"Section {_PAPER_SECTION_LETTERS[i]} — {_PAPER_TYPE_LABELS.get(b.type, b.type)}: exactly {b.count} question{'s' if b.count > 1 else ''} × {b.marksEach} mark{'s' if b.marksEach > 1 else ''} each ("
         + ", ".join(filter(None, [
@@ -1207,6 +1245,7 @@ async def generate_paper(body: GeneratePaperSchema, request: Request):
 
     prompt = f"""You are generating a custom school exam paper from a teacher's template.
 Subject: {body.subject or 'General'} | Grade: {body.grade or '5'} | Total: {total_marks} marks{f' | Title: {body.title}' if body.title else ''}
+{textbook_block}
 
 Draw ALL questions from these chapters/topics (and the listed sub-topics where given). Spread questions across the topics; do not cover only the first one:
 {topic_lines}
@@ -1270,6 +1309,15 @@ async def generate_worksheet_route(body: GenerateWorksheetSchema, request: Reque
 
     total_marks = sum(d.count * d.marksEach for d in body.distribution)
 
+    admin = create_admin_client()
+    textbook = await _ground_in_textbook(admin, body.classId, body.grade, body.subject, body.topic)
+    textbook_block = (
+        f'\nGround every question in this real textbook excerpt below — use its facts, numbers, '
+        f'vocabulary and examples; never invent ones it does not contain:\n'
+        f'--- BEGIN TEXTBOOK ---\n{textbook["excerpt"][:3000]}\n--- END TEXTBOOK ---\n'
+        if textbook and textbook.get("excerpt") else ""
+    )
+
     dist_lines = "\n".join(
         f"Section {_SECTION_LETTERS[i]} — {_TYPE_LABELS.get(d.type, d.type)}: exactly {d.count} question{'s' if d.count > 1 else ''} × {d.marksEach} mark{'s' if d.marksEach > 1 else ''} each"
         for i, d in enumerate(body.distribution)
@@ -1290,7 +1338,7 @@ async def generate_worksheet_route(body: GenerateWorksheetSchema, request: Reque
 
     prompt = f"""You are generating a school exam worksheet.
 Subject: {body.subject} | Grade: {body.grade} | Topic: {body.topic} | Total: {total_marks} marks
-
+{textbook_block}
 {dist_lines}
 
 Rules:
@@ -1407,6 +1455,19 @@ async def generate_workbook(body: GenerateWorkbookSchema, request: Request):
     except Exception as e:
         print(f"[generate-workbook] context gathering failed, using minimal context: {e}")
 
+    # Real textbook excerpt per topic, alongside the ontology-only `grounding`
+    # above (that one only carries exercise-style examples, never the book's
+    # own words). Separate try — a failure here must not cost the ontology
+    # context already gathered.
+    try:
+        admin = create_admin_client()
+        for tc in topic_ctxs:
+            tc["textbookGrounding"] = await _ground_in_textbook(
+                admin, body.classId, body.grade, body.subject, tc["topic"], tc.get("subtopic"),
+            )
+    except Exception as e:
+        print(f"[generate-workbook] textbook grounding failed, continuing without it: {e}")
+
     difficulty = _difficulty_for_grade(body.grade)
 
     interests_line = (
@@ -1465,6 +1526,9 @@ async def generate_workbook(body: GenerateWorkbookSchema, request: Request):
             ("  Copy the STYLE of these real exercises for the \"textbook\" problem:\n" +
              "\n".join(f'    - [{e["type"]}] {e["text"]}' for e in tc["grounding"]["exercises"][:4])
              if tc.get("grounding") and tc["grounding"].get("exercises") else ""),
+            (f'  Real textbook content — ground every problem\'s facts/numbers/vocabulary in this, '
+             f'never invent ones it does not contain: {tc["textbookGrounding"]["excerpt"][:600]}'
+             if tc.get("textbookGrounding") and tc["textbookGrounding"].get("excerpt") else ""),
         ]))
         for i, tc in enumerate(topic_ctxs)
     )

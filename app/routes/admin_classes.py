@@ -1,3 +1,5 @@
+import os
+import time
 import uuid
 import random
 import string
@@ -13,6 +15,7 @@ from ..lib.admin_queries import (
     assign_teacher_to_class, remove_teacher_from_class, fetch_class_assignments,
 )
 from ..lib.student_code import gen_student_code
+from ..lib.report_share import sign_report_token
 from ..deps import require_admin
 
 router = APIRouter()
@@ -76,6 +79,38 @@ def delete_class(schoolId: str, body: ClassIdBody, admin: dict = Depends(require
 def get_class_students(schoolId: str, classId: str, admin: dict = Depends(require_admin)):
     ac = create_admin_client()
     return {"students": fetch_class_students(classId, ac)}
+
+
+@router.post("/{schoolId}/classes/{classId}/report-links")
+def create_class_report_links(schoolId: str, classId: str, admin: dict = Depends(require_admin)):
+    """One link per active student in this class, for the admin to forward to
+    parents (no automated send exists yet — see app/lib/report_share.py).
+    Mirrors teacher.py's create_student_report_link, mounted here since
+    'every student in one class' is an admin-level action, not a per-student
+    teacher one."""
+    ac = create_admin_client()
+    cls_res = ac.table("classes").select("id, school_id").eq("id", classId).maybe_single().execute()
+    cls = cls_res.data if cls_res else None
+    if not cls:
+        raise HTTPException(status_code=404, detail="Class not found")
+    if cls.get("school_id") and cls["school_id"] != schoolId:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    app_url = os.environ.get("NEXT_PUBLIC_APP_URL", "http://localhost:3000").rstrip("/")
+    expires_at = int(time.time()) + 30 * 24 * 60 * 60
+
+    students = [s for s in fetch_class_students(classId, ac) if s["isActive"]]
+    return {
+        "links": [
+            {
+                "studentId": s["id"],
+                "studentName": s["name"],
+                "rollNumber": s["rollNumber"],
+                "url": f"{app_url}/report/{sign_report_token(s['id'], expires_at)}",
+            }
+            for s in students
+        ]
+    }
 
 
 class DeleteStudentBody(BaseModel):

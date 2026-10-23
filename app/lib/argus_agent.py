@@ -10,6 +10,7 @@ look at the result, and decide whether it needs another one before
 answering — the actual reason/act/observe loop. It never generates a fact
 itself; every number or status it reports came back from a tool call.
 """
+import asyncio
 import json
 import time
 from datetime import datetime, timezone
@@ -700,13 +701,115 @@ TOOLS = {
 }
 
 
-def _tool_catalog_text() -> str:
+# ─── Group Chat personas ────────────────────────────────────────────────────
+# Two named subsets of the one TOOLS catalog above, not a second
+# implementation — every entry here is the exact same {description, params,
+# fn} dict already registered in TOOLS, just partitioned by whether the
+# question is about academic outcomes or day-to-day operations. TOOLS itself
+# is untouched (argus_sweep.py imports it directly by key), so nothing about
+# the existing /argus route or the proactive sweep changes.
+_HEADMASTER_KEYS = (
+    "get_overview", "get_teachers", "get_classes",
+    "get_students", "get_student_record",
+    "get_syllabus_status", "get_textbook_status", "get_exam_schedule",
+)
+_ADMIN_KEYS = (
+    "get_overview", "get_teachers", "get_classes",
+    "get_automation_log", "get_pending_leave_requests", "approve_leave", "reject_leave",
+    "get_substitutes_today", "assign_substitute", "mark_teacher_unavailable", "assign_teacher_to_class",
+    "get_announcements", "post_announcement", "get_calendar",
+)
+HEADMASTER_TOOLS = {k: TOOLS[k] for k in _HEADMASTER_KEYS}
+ADMIN_TOOLS = {k: TOOLS[k] for k in _ADMIN_KEYS}
+
+
+async def _tool_invoke_teacher_agent(school_id: str, args: dict) -> dict:
+    """The one coordination tool: lets the Headmaster Agent reach into a
+    specific teacher's own agent and get a REAL answer back — not a read of
+    a shared table, an actual nested run (see app/lib/teacher_agent.py).
+    Deliberately not a 'side_effect: action' tool — it's delegation, not a
+    write. If the teacher agent itself proposes a write, that's surfaced as
+    information only (`proposedAction`); the Headmaster never confirms an
+    action on a teacher's behalf — that stays the teacher's own call, in
+    their own thread."""
+    teacher_ref = (args.get("teacherRef") or "").strip()
+    question = (args.get("question") or "").strip()
+    if not teacher_ref or not question:
+        return {"error": "teacherRef and question are both required"}
+
+    ac = create_admin_client()
+    match = _match_teacher(school_id, teacher_ref, ac)
+    if match["kind"] == "none":
+        return {"error": f'No teacher matching "{teacher_ref}" at this school.'}
+    if match["kind"] == "ambiguous":
+        return {"error": f'More than one teacher matches "{teacher_ref}": {", ".join(match["candidates"])} — ask which one.'}
+    teacher = match["teacher"]
+
+    from .teacher_agent import run_teacher_agent
+    result = await run_teacher_agent(teacher["id"], question, [], "headmaster-invoke")
+
+    return {
+        "teacherName": teacher["name"],
+        "status": result["status"],
+        "answer": result.get("response"),
+        "proposedAction": result.get("label") if result["status"] == "pending_confirmation" else None,
+    }
+
+
+HEADMASTER_TOOLS = {
+    **HEADMASTER_TOOLS,
+    "invoke_teacher_agent": {
+        "description": (
+            "Ask a specific teacher's own Teacher Agent a question directly and get back its real "
+            "answer, grounded in that teacher's own class data — use this to check in on a specific "
+            "teacher/class rather than guessing from school-wide numbers alone."
+        ),
+        "params": {
+            "teacherRef": "string, required — the teacher's name, exactly as mentioned",
+            "question": "string, required — what to ask that teacher's agent",
+        },
+        "fn": _tool_invoke_teacher_agent,
+    },
+}
+
+PERSONAS = {
+    "headmaster": {
+        "label": "Headmaster Agent",
+        "tools": HEADMASTER_TOOLS,
+        "identity": (
+            "You are the Headmaster Agent, responsible for academic outcomes across every "
+            "subject and class in this school — syllabus pace, textbook readiness, individual "
+            "student performance, and exam timing. You are not responsible for staffing "
+            "logistics (leave, substitutes, announcements) — that is the Admin Agent's job. "
+            "You can check in directly with a specific teacher's own agent via "
+            "invoke_teacher_agent when a question needs that teacher's own perspective, rather "
+            "than guessing from school-wide numbers alone."
+        ),
+    },
+    "admin": {
+        "label": "Admin Agent",
+        "tools": ADMIN_TOOLS,
+        "identity": (
+            "You are the Admin Agent, responsible for keeping day-to-day school operations "
+            "running — leave requests, substitute coverage, staffing gaps, announcements, and "
+            "the calendar. You are not responsible for academic performance or curriculum "
+            "pacing — that is the Headmaster Agent's job."
+        ),
+    },
+}
+
+
+def _tool_catalog_text_for(tools: dict) -> str:
     lines = []
-    for name, spec in TOOLS.items():
+    for name, spec in tools.items():
         params = ", ".join(f"{k} ({v})" for k, v in spec["params"].items()) or "none"
         tag = " [ACTION — calling this only proposes it; nothing happens until a human confirms]" if spec.get("side_effect") == "action" else ""
         lines.append(f'- "{name}"{tag}: {spec["description"]} Params: {params}.')
     return "\n".join(lines)
+
+
+def _tool_catalog_text() -> str:
+    return _tool_catalog_text_for(TOOLS)
 
 
 def _scratchpad_text(scratchpad: list) -> str:
@@ -788,3 +891,118 @@ Decide your next step. Return JSON only, no markdown, one of:
         return {"status": "error", "response": "I didn't quite understand what to do with that — try rephrasing.", "trace": trace}
 
     return {"status": "step_limit", "response": "That took more steps than expected — try a more specific question.", "trace": trace}
+
+
+async def run_agent(persona: str, school_id: str, question: str, history: list, ip: str) -> dict:
+    """Same reason/act/observe loop as run_argus above, parameterized by
+    persona (see PERSONAS) instead of hardcoded to the one unified Argus
+    identity/toolset. Built for the Group Chat feature, where the Headmaster
+    Agent and Admin Agent are separate, visibly distinct participants rather
+    than one assistant covering everything. run_argus itself is untouched —
+    this is a sibling, not a replacement, so the existing (currently unused)
+    /argus route keeps behaving exactly as it always has."""
+    spec = PERSONAS.get(persona)
+    if spec is None:
+        return {"status": "error", "response": f'Unknown persona "{persona}".', "trace": []}
+
+    tools = spec["tools"]
+    scratchpad: list[dict] = []
+    trace: list[dict] = []
+
+    for step in range(MAX_STEPS):
+        prompt = f"""{spec["identity"]} Your scope is this one school only ({school_id}) —
+you have no visibility into any other school. You never state a fact
+yourself; every fact in your final answer must come from a tool result below,
+not from your own generation.
+
+The admin asked: "{question}"
+{history_block(history)}
+
+Tools available — call as many as you need, in any order, and call the same
+one again with different args if that's what answering needs:
+{_tool_catalog_text_for(tools)}
+
+Results gathered so far this run:
+{_scratchpad_text(scratchpad)}
+
+Decide your next step. Return JSON only, no markdown, one of:
+{{"action": "call_tool", "tool": "<name>", "args": {{...}}}}
+{{"action": "finish", "response": "<plain, simple-English answer to the admin>"}}
+"""
+        t0 = time.time()
+        try:
+            raw = await call_ai([{"role": "user", "content": prompt}])
+            decision = json.loads(raw)
+        except Exception as e:
+            api_log(f"group-chat-{persona}", ip, (time.time() - t0) * 1000, False, "error", error=str(e))
+            return {"status": "error", "response": "Something went wrong reasoning about that — try again.", "trace": trace}
+
+        action = decision.get("action")
+
+        if action == "finish":
+            api_log(f"group-chat-{persona}", ip, (time.time() - t0) * 1000, False, "ok")
+            return {"status": "answered", "response": decision.get("response") or "I didn't find anything that answers that.", "trace": trace}
+
+        if action == "call_tool":
+            tool_name = decision.get("tool")
+            args = decision.get("args") or {}
+            tool = tools.get(tool_name)
+            if not tool:
+                result = {"error": f'unknown tool "{tool_name}" for the {spec["label"]}'}
+            else:
+                try:
+                    # invoke_teacher_agent's body needs to await a real async
+                    # call into teacher_agent.py — this loop is already fully
+                    # async/sequential (no concurrency to fight, unlike a
+                    # threaded dispatch), so the clean way to let one tool be
+                    # async while every other (sync) tool is untouched is to
+                    # just check and await conditionally.
+                    if asyncio.iscoroutinefunction(tool["fn"]):
+                        result = await tool["fn"](school_id, args)
+                    else:
+                        result = tool["fn"](school_id, args)
+                except Exception as e:
+                    result = {"error": str(e)}
+
+            if isinstance(result, dict) and "proposal" in result:
+                api_log(f"group-chat-{persona}", ip, (time.time() - t0) * 1000, False, "ok")
+                trace.append({"tool": tool_name, "args": args, "ok": True})
+                return {"status": "pending_confirmation", "proposal": result["proposal"], "label": result.get("label"), "trace": trace}
+
+            scratchpad.append({"tool": tool_name, "args": args, "result": result})
+            trace.append({"tool": tool_name, "args": args, "ok": "error" not in result})
+            continue
+
+        return {"status": "error", "response": "I didn't quite understand what to do with that — try rephrasing.", "trace": trace}
+
+    return {"status": "step_limit", "response": "That took more steps than expected — try a more specific question.", "trace": trace}
+
+
+async def route_message(question: str, history: list) -> list:
+    """Cheap one-shot classifier deciding which persona(s) should answer a
+    Group Chat message — same spirit as the existing /ask-intent classifier
+    (ai_routes2.py/admin_misc.py), just routing to an agent persona instead of
+    a hardcoded frontend intent. Defaults to ["admin"] on any failure, since
+    the Admin Agent's toolset is the closer match to today's single-Argus
+    behavior (operations-flavored, covers more of the "what needs attention"
+    surface) — a safe fallback rather than silence."""
+    prompt = f"""A school admin posted this message in a group chat with two AI
+assistants: the Headmaster Agent (academic outcomes — student performance,
+syllabus pace, textbooks, exams) and the Admin Agent (day-to-day operations —
+leave, substitutes, announcements, calendar).
+
+Message: "{question}"
+{history_block(history)}
+
+Which assistant(s) should respond? Return JSON only, no markdown:
+{{"personas": ["headmaster"]}} or {{"personas": ["admin"]}} or
+{{"personas": ["headmaster", "admin"]}} if it genuinely needs both.
+Prefer a single persona unless the question clearly spans both domains.
+"""
+    try:
+        raw = await call_ai([{"role": "user", "content": prompt}])
+        decision = json.loads(raw)
+        personas = [p for p in (decision.get("personas") or []) if p in PERSONAS]
+        return personas or ["admin"]
+    except Exception:
+        return ["admin"]

@@ -34,6 +34,8 @@ from typing import Callable, Optional
 from prep_flow.llm import call_json
 from prep_flow.sections import BULLETS_PER_SECTION
 
+from .lesson_images import has_image as _bullet_has_image
+
 # Different family from GENERATION_MODEL (google/gemini-2.5-flash) on purpose
 # -- see the module docstring. Overridable so a cheaper or newer judge can be
 # swapped in without touching call sites.
@@ -187,7 +189,7 @@ def _sheet_text(lesson: dict) -> str:
         # A picture the class actually has in front of them is part of the
         # material, and "no visual support" is otherwise scored against a
         # sheet that has one.
-        has_image = any(isinstance(b, dict) and (b.get("image") or {}).get("url")
+        has_image = any(isinstance(b, dict) and _bullet_has_image(b)
                         for b in (bullets_of(lesson, section) or []))
         if has_image:
             head += " [has a printed textbook picture attached]"

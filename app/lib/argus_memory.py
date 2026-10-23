@@ -72,15 +72,32 @@ def _to_app(r: dict) -> dict:
     }
 
 
-def record_findings(school_id: str, findings: list, ac=None) -> dict:
-    """Upsert this sweep's detections and close anything that has stopped
-    being detected.
+def record_findings(
+    school_id: str, findings: list, ac=None,
+    playbooks: list = None, key_prefix: str = None, exclude_key_prefix: str = None,
+) -> dict:
+    """Upsert this sweep's detections and close anything in-scope that has
+    stopped being detected.
 
     Returns {"new": [...], "recurring": [...], "resolved": [...]} — the split
     the caller needs to decide what is worth telling a human. A finding is
     "new" the first time its key is seen (or the first time since it was
     resolved); "recurring" while it keeps being detected; "resolved" the
     sweep after it disappears.
+
+    Every persona/teacher sharing this one table only sees its own slice of
+    it: everything here is scoped by school_id, but a sweep that only ran a
+    subset of playbooks (e.g. the Admin Agent's 4 operations playbooks, never
+    the Headmaster's syllabus_pace) must not treat someone else's
+    still-open finding as "disappeared" just because this call didn't look
+    for it. `playbooks` restricts "resolve what I didn't re-detect" to rows
+    whose playbook this call actually swept; `key_prefix`/`exclude_key_prefix`
+    do the same thing by finding_key, which is how app/lib/teacher_sweep.py
+    isolates one teacher's own rows (key_prefix=f"teacher:{teacher_id}:")
+    from every other teacher's and from argus_sweep.py's school-wide rows
+    (which in turn pass exclude_key_prefix="teacher:" to stay out of every
+    teacher's own space). Omitting all three keeps the old "resolve anything
+    in the whole school not re-seen" behavior.
 
     Dismissed findings are left dismissed: re-detecting one does not
     un-silence it, otherwise "stop telling me about this" would last exactly
@@ -148,18 +165,28 @@ def record_findings(school_id: str, findings: list, ac=None) -> dict:
         enriched = {**f, "isNew": reopened, "lastReportedAt": prior.get("last_reported_at")}
         (result["new"] if reopened else result["recurring"]).append(enriched)
 
-    # Anything previously open that this sweep did not detect is genuinely
-    # gone — someone fixed it, here or elsewhere in the app.
+    # Anything previously open, in scope for this call, that it did not
+    # detect is genuinely gone — someone fixed it, here or elsewhere in the
+    # app. "In scope" is what keeps this from resolving another persona's or
+    # another teacher's still-open findings just because this call never
+    # looked for them (see the scope params above).
     for r in existing_rows:
-        if r["status"] == "open" and r["finding_key"] not in seen_keys:
-            try:
-                ac.table(TABLE).update({
-                    "status": "resolved", "resolved_at": _now(), "updated_at": _now(),
-                }).eq("id", r["id"]).execute()
-            except Exception as e:
-                print(f"[argus_memory] resolve {r['finding_key']} failed: {e}")
-                continue
-            result["resolved"].append(_to_app(r))
+        if r["status"] != "open" or r["finding_key"] in seen_keys:
+            continue
+        if playbooks is not None and r["playbook"] not in playbooks:
+            continue
+        if key_prefix is not None and not r["finding_key"].startswith(key_prefix):
+            continue
+        if exclude_key_prefix is not None and r["finding_key"].startswith(exclude_key_prefix):
+            continue
+        try:
+            ac.table(TABLE).update({
+                "status": "resolved", "resolved_at": _now(), "updated_at": _now(),
+            }).eq("id", r["id"]).execute()
+        except Exception as e:
+            print(f"[argus_memory] resolve {r['finding_key']} failed: {e}")
+            continue
+        result["resolved"].append(_to_app(r))
 
     return result
 

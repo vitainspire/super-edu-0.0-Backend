@@ -19,6 +19,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 
 from ..deps import require_user
 from ..lib.ai import generate_illustration, illustration_key, store_illustration
+from ..lib.lesson_images import add_image as _add_image
 from ..lib.logger import api_log, get_client_ip
 from ..lib.prep_context import (
     fetch_feedback_context, fetch_grounding, fetch_recent_challenge_activities,
@@ -94,7 +95,7 @@ _LESSON_SHAPE_AND_RULES = """Return ONLY valid JSON (no markdown, no extra text)
   },
   "textbookImages": [
     { "section": "concept", "imageId": "the id of a REAL illustration listed under the textbook pages, e.g. img_c5ch3_04" },
-    "... 0 to 3 items. Use these whenever a listed illustration genuinely fits a section — it is the picture the children already have in front of them, which no drawing can beat. Only ask for a drawing in "diagrams" for a section no listed picture suits. "section" must be one of "concept", "explore", "challenge", "refresher", "levelSet"; each id must be copied exactly from the list."
+    "... as many items as genuinely fit, not capped at one per section and not capped at one section per image. Propose EVERY listed illustration for EVERY section it genuinely helps explain — it is the picture the children already have in front of them, which no drawing can beat. The SAME imageId may appear more than once, under different sections, when that one picture is genuinely relevant to more than one of them (e.g. a chair photo useful for both "concept" and "challenge"). Only ask for a drawing in "diagrams" for a section no listed picture suits at all. "section" must be one of "concept", "explore", "challenge", "refresher", "levelSet"; each id must be copied exactly from the list. Never force an irrelevant picture onto a section just to fill it — leaving a section with no entry here is correct when nothing listed actually fits it."
   ],
   "diagrams": [
     { "section": "concept", "focus": "describe ONE clean, concrete picture that makes this section's worked example intuitive using REAL relatable objects a child knows — name the exact objects, their quantities/values and arrangement (e.g. 'a roti cut into 4 equal parts with 3 parts shaded to show 3/4', or 'seven ₹1 coins grouped together and three loose ₹1 coins to show 7 + 3'). Prefer real things over abstract number lines or place-value grids. Keep it to a single idea, numbers exactly matching the example, at most a couple of short labels — never a busy multi-diagram scene." },
@@ -585,13 +586,20 @@ This is a TEACHER'S prep sheet, not a student handout. The visible headline says
 
 # Reference illustrations — clean workbook-style figures that depict the
 # section's SPECIFIC worked example accurately, which the teacher SHOWS
-# students to explain that example. Hangs off the FIRST bullet of its section.
-# Generated in PARALLEL so several images cost about the same wall-time as
-# one, capped at 4. Never raises — a failed/timed-out image just leaves that
-# bullet image-less. illustration_key_parts is the caller's own identity for
-# the storage key — [class_id, topic, subtopic] for the live per-class route,
-# [school_id, grade, subject, topic] for the shared batch generator, since the
-# image belongs to whichever content actually used it. Mutates lesson in place.
+# students to explain that example. Hangs off the FIRST bullet of its section,
+# as a LIST: every real textbook image genuinely relevant to a section is
+# kept, not just one, and the same image may be relevant to more than one
+# section (the model proposes this directly in "textbookImages" — see the
+# schema's own instructions above). A section gets an AI-generated fallback
+# ONLY when it ends up with zero real images of its own — one per section,
+# never a top-up for a section that already has a real picture. Generated in
+# PARALLEL so several images cost about the same wall-time as one, capped at
+# 5 (one per section — there are never more than 5 sections here). Never
+# raises — a failed/timed-out image just leaves that bullet without one.
+# illustration_key_parts is the caller's own identity for the storage key —
+# [class_id, topic, subtopic] for the live per-class route, [school_id,
+# grade, subject, topic] for the shared batch generator, since the image
+# belongs to whichever content actually used it. Mutates lesson in place.
 async def generate_lesson_images(lesson: dict, textbook: Optional[dict], admin, illustration_key_parts: list) -> None:
     section_first_bullet = {
         "refresher": ((lesson.get("previousTopicRefresher") or {}).get("recap") or [None])[0],
@@ -601,8 +609,11 @@ async def generate_lesson_images(lesson: dict, textbook: Optional[dict], admin, 
         "levelSet": ((lesson.get("levelSet") or {}).get("points") or [None])[0],
     }
 
-    # Real textbook illustrations come first and win their section outright.
-    used_textbook_sections = set()
+    # Real textbook illustrations come first. Every valid pick is attached —
+    # a section can collect several images, and the same image can attach to
+    # more than one section — instead of the first pick for a section
+    # winning and every other relevant pick being thrown away.
+    sections_with_image = set()
     if textbook and textbook.get("images"):
         by_anchor = {i["imageId"]: i for i in textbook["images"]}
         picks = lesson.get("textbookImages") if isinstance(lesson.get("textbookImages"), list) else []
@@ -611,10 +622,10 @@ async def generate_lesson_images(lesson: dict, textbook: Optional[dict], admin, 
                 continue
             image = by_anchor.get(pick["imageId"].strip())
             bullet = section_first_bullet.get(pick["section"])
-            if not image or not bullet or pick["section"] in used_textbook_sections:
+            if not image or not bullet:
                 continue
-            bullet["image"] = {"url": f"/api/textbook-image/{image['id']}"}
-            used_textbook_sections.add(pick["section"])
+            if _add_image(bullet, {"url": f"/api/textbook-image/{image['id']}"}):
+                sections_with_image.add(pick["section"])
 
     diagram_reqs: list[dict] = []
 
@@ -623,7 +634,7 @@ async def generate_lesson_images(lesson: dict, textbook: Optional[dict], admin, 
             return
         if not section_first_bullet.get(section):
             return
-        if section in used_textbook_sections:
+        if section in sections_with_image:
             return
         if any(r["section"] == section for r in diagram_reqs):
             return
@@ -637,18 +648,26 @@ async def generate_lesson_images(lesson: dict, textbook: Optional[dict], admin, 
     def focus_for(section: str) -> Optional[str]:
         return next((d["focus"] for d in model_diagrams if d["section"] == section), None)
 
-    # Concept, Explore AND the Challenge activity ALWAYS get a picture, queued
-    # FIRST so they survive the image cap even when the model requested
-    # diagrams for other sections.
-    concept_bullet = section_first_bullet.get("concept") or {}
-    add_req("concept", focus_for("concept") or concept_bullet.get("text"))
-    explore_bullet = section_first_bullet.get("explore") or {}
-    add_req("explore", focus_for("explore") or (lesson.get("explore") or {}).get("imageFocus") or explore_bullet.get("text"))
-    challenge_bullet = section_first_bullet.get("challenge") or {}
-    add_req("challenge", focus_for("challenge") or challenge_bullet.get("text") or (lesson.get("challenge") or {}).get("activity"))
+    # EVERY section still without a real image gets a fallback request, not
+    # just concept/explore/challenge — a section is left imageless only when
+    # it has at least one real picture of its own. Each section's best
+    # available hint: the model's own diagram focus if it gave one, else
+    # explore's imageFocus for explore specifically, else the section's own
+    # first bullet text, else (last resort) the activity name or lesson
+    # objective, so a section still gets something worth drawing even with
+    # no author-written hint for it.
+    for section, bullet in section_first_bullet.items():
+        bullet = bullet or {}
+        if section == "explore":
+            hint = focus_for(section) or (lesson.get("explore") or {}).get("imageFocus") or bullet.get("text")
+        elif section == "challenge":
+            hint = focus_for(section) or bullet.get("text") or (lesson.get("challenge") or {}).get("activity")
+        else:
+            hint = focus_for(section) or bullet.get("text")
+        add_req(section, hint or lesson.get("objective"))
     for d in model_diagrams:
         add_req(d["section"], d["focus"])
-    final_reqs = diagram_reqs[:4]
+    final_reqs = diagram_reqs[:5]
 
     async def _generate_for(r: dict):
         bullet = section_first_bullet.get(r["section"])
@@ -671,24 +690,23 @@ Clean, accurate, and genuinely explanatory — a child should understand the ide
         # Into storage, not into the row — inlining the base64 is what made a
         # lesson 3MB.
         stored = await store_illustration(admin, generated["url"], illustration_key(illustration_key_parts + [r["section"]]))
-        bullet["image"] = {"url": stored or generated["url"]}
+        _add_image(bullet, {"url": stored or generated["url"], "aiGenerated": True})
 
     await asyncio.gather(*(_generate_for(r) for r in final_reqs))
 
 
 # POST /api/smart-lesson
-@router.post("/smart-lesson")
-async def smart_lesson(body: SmartLessonSchema, request: Request, user: dict = Depends(require_user)):
-    ip = get_client_ip(request)
-    allowed, _ = check_vision_rate_limit(ip)
-    if not allowed:
-        raise HTTPException(status_code=429, detail="Rate limit exceeded.")
-
-    t0 = time.time()
-    class_id, topic, subject, grade = body.classId, body.topic, body.subject, body.grade
-    subtopic, topic_definition_id, teacher_id = body.subtopic, body.topicDefinitionId, body.teacherId
-    context_note = body.contextNote
-
+async def generate_smart_lesson(
+    class_id: str, topic: str, subject: str, grade: str, teacher_id: Optional[str] = None,
+    subtopic: Optional[str] = None, topic_definition_id: Optional[str] = None,
+    context_note: Optional[str] = None,
+) -> dict:
+    """The real pipeline behind POST /smart-lesson, pulled out so
+    app/lib/teacher_agent.py's generate_prep_material tool can reuse the
+    whole thing (class context, both groundings, previous-topic, feedback
+    context, image generation) rather than re-deriving any of it. Pure
+    extraction — the route below is now a thin wrapper with identical
+    behavior."""
     admin = create_admin_client()
 
     # 1-3. Class size + interests, teaching profile, silent gap-awareness
@@ -726,7 +744,6 @@ async def smart_lesson(body: SmartLessonSchema, request: Request, user: dict = D
     )
     await generate_lesson_images(lesson, textbook, admin, [class_id, topic, subtopic])
 
-    api_log("smart-lesson", ip, (time.time() - t0) * 1000, False, "ok")
     return {
         "topic": topic,
         "subtopic": subtopic or None,
@@ -735,3 +752,20 @@ async def smart_lesson(body: SmartLessonSchema, request: Request, user: dict = D
         "totalStudents": total_students,
         "lesson": lesson,
     }
+
+
+@router.post("/smart-lesson")
+async def smart_lesson(body: SmartLessonSchema, request: Request, user: dict = Depends(require_user)):
+    ip = get_client_ip(request)
+    allowed, _ = check_vision_rate_limit(ip)
+    if not allowed:
+        raise HTTPException(status_code=429, detail="Rate limit exceeded.")
+
+    t0 = time.time()
+    result = await generate_smart_lesson(
+        class_id=body.classId, topic=body.topic, subject=body.subject, grade=body.grade,
+        teacher_id=body.teacherId, subtopic=body.subtopic,
+        topic_definition_id=body.topicDefinitionId, context_note=body.contextNote,
+    )
+    api_log("smart-lesson", ip, (time.time() - t0) * 1000, False, "ok")
+    return result

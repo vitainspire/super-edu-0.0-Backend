@@ -1,3 +1,5 @@
+import os
+import time
 from typing import Optional
 from datetime import date, datetime, timedelta, timezone
 from fastapi import APIRouter, Request, Depends, HTTPException
@@ -25,6 +27,9 @@ from ..lib.schemas import (
     PrepSessionTopicUpsertSchema,
 )
 from ..lib.peer_pair_progress import compute_avg_mastery, compute_progress_status
+from ..lib.student_overview import build_student_subject_overview
+from ..lib.exam_matching import find_matching_exam_event, build_student_exam_schedule
+from ..lib.report_share import sign_report_token
 from ..deps import require_user, require_teacher
 
 router = APIRouter()
@@ -604,7 +609,23 @@ def upsert_own_test(body: TeacherTestUpsertSchema, teacher_id: str = Depends(req
         "conducted_on": body.conductedOn, "term": body.term,
         "questions": json.dumps(body.questions) if body.questions is not None else None,
     }).execute()
-    return {"ok": True}
+
+    # Best-effort: if this test falls inside an admin-scheduled exam window
+    # for its class's grade, auto-link it so the progress report's
+    # "scheduled" placeholder flips to a real score. A failure here must
+    # never cost the teacher the test they just saved — same reasoning as
+    # the substitution-overlay try/except elsewhere in this file.
+    matched_exam = None
+    if body.classId:
+        try:
+            matched_exam = find_matching_exam_event(ac, body.classId, body.conductedOn)
+            if matched_exam:
+                ac.table("tests").update({"exam_event_id": matched_exam["id"]}).eq("id", body.id).execute()
+        except Exception as e:
+            print(f"[teacher/tests] exam auto-match failed (continuing): {e}")
+            matched_exam = None
+
+    return {"ok": True, "matchedExam": matched_exam}
 
 
 def _mark_row_to_dto(r: dict) -> dict:
@@ -1520,99 +1541,51 @@ def student_overview(studentId: str, user: dict = Depends(require_user)):
         if teacher.get("school_id") and cls.get("school_id") and teacher["school_id"] != cls["school_id"]:
             raise HTTPException(status_code=403, detail="Forbidden")
 
-        subjects: list[dict] = []
-        assignments = ac.table("teacher_class_assignments").select("teacher_id, subject").eq("class_id", cls["id"]).execute().data or []
-
-        if assignments and any(a.get("subject") for a in assignments):
-            for a in assignments:
-                t_res = ac.table("teachers").select("name").eq("id", a["teacher_id"]).maybe_single().execute()
-                t = t_res.data if t_res else None
-                subjects.append({
-                    "classId": cls["id"], "subjectName": a.get("subject") or "Subject",
-                    "teacherName": (t or {}).get("name") or "Unknown Teacher",
-                    "teacherId": a["teacher_id"], "studentRowId": student["id"],
-                })
-        else:
-            q = ac.table("classes").select("*").eq("grade", cls["grade"])
-            if cls.get("section"):
-                q = q.eq("section", cls["section"])
-            if cls.get("school_id"):
-                q = q.eq("school_id", cls["school_id"])
-            else:
-                q = q.eq("school_name", cls.get("school_name"))
-            all_classes = q.execute().data or []
-
-            for c in all_classes:
-                st_res = (
-                    ac.table("students").select("id").eq("class_id", c["id"])
-                    .eq("roll_number", student["roll_number"]).eq("is_active", True).maybe_single().execute()
-                )
-                st = st_res.data if st_res else None
-                if not st:
-                    continue
-                t_res = ac.table("teachers").select("name, subject").eq("id", c.get("teacher_id")).maybe_single().execute()
-                t = t_res.data if t_res else None
-                subjects.append({
-                    "classId": c["id"], "subjectName": (t or {}).get("subject") or c["name"],
-                    "teacherName": (t or {}).get("name") or "Unknown Teacher",
-                    "teacherId": c.get("teacher_id"), "studentRowId": st["id"],
-                })
-
-        subject_data = []
-        for s in subjects:
-            att_rows = ac.table("attendance").select("status").eq("student_id", s["studentRowId"]).eq("class_id", s["classId"]).execute().data or []
-            total_sessions = len(att_rows)
-            present_count = sum(1 for a in att_rows if a["status"] in ("present", "late"))
-            attendance_rate = present_count / total_sessions if total_sessions > 0 else 0
-
-            recent_marks: list[dict] = []
-            avg_score = 0
-            entry_added = False
-
-            if s.get("teacherId"):
-                tests = ac.table("tests").select("id, topic, total_marks, conducted_on").eq("teacher_id", s["teacherId"]).eq("class_id", s["classId"]).execute().data or []
-                if tests:
-                    test_ids = [t["id"] for t in tests]
-                    marks = ac.table("marks").select("test_id, score").eq("student_id", s["studentRowId"]).in_("test_id", test_ids).execute().data or []
-                    if marks:
-                        test_map = {t["id"]: t for t in tests}
-                        total_pct = sum((m["score"] / test_map[m["test_id"]]["total_marks"]) for m in marks if m["test_id"] in test_map)
-                        avg_score = total_pct / len(marks)
-
-                        all_marks = sorted(
-                            (
-                                {"topic": test_map[m["test_id"]]["topic"], "score": m["score"], "totalMarks": test_map[m["test_id"]]["total_marks"], "date": test_map[m["test_id"]]["conducted_on"]}
-                                for m in marks if m["test_id"] in test_map
-                            ),
-                            key=lambda x: x["date"], reverse=True,
-                        )
-                        total_tests = len(all_marks)
-                        recent_marks = all_marks[:5]
-                        subject_data.append({
-                            "classId": s["classId"], "subjectName": s["subjectName"], "teacherName": s["teacherName"],
-                            "attendanceRate": attendance_rate, "totalSessions": total_sessions,
-                            "avgScore": avg_score, "totalTests": total_tests, "recentMarks": recent_marks,
-                        })
-                        entry_added = True
-
-            if not entry_added:
-                subject_data.append({
-                    "classId": s["classId"], "subjectName": s["subjectName"], "teacherName": s["teacherName"],
-                    "attendanceRate": attendance_rate, "totalSessions": total_sessions,
-                    "avgScore": avg_score, "totalTests": len(recent_marks), "recentMarks": recent_marks,
-                })
-
-        return {
-            "student": {
-                "id": student["id"], "name": student["name"], "rollNumber": student["roll_number"],
-                "studentCode": student.get("student_code"), "grade": cls.get("grade") or "", "section": cls.get("section") or "",
-            },
-            "subjects": subject_data,
-        }
+        overview = build_student_subject_overview(ac, student, cls)
+        overview["examSchedule"] = build_student_exam_schedule(ac, student, cls)
+        return overview
     except HTTPException:
         raise
     except Exception as e:
         print(f"[teacher/student-overview] failed: {e}")
+        raise HTTPException(status_code=500, detail="Server error")
+
+
+# POST /api/teacher/student/{studentId}/report-link
+@router.post("/student/{studentId}/report-link")
+def create_student_report_link(studentId: str, teacher_id: str = Depends(require_teacher)):
+    """Mints a 30-day signed link a parent can open without logging in, showing
+    the same whole-child subject breakdown as student_overview above. See
+    app/lib/report_share.py for the token scheme and app/routes/public_report_routes.py
+    for what the link actually serves."""
+    try:
+        ac = create_admin_client()
+        teacher_res = ac.table("teachers").select("id, school_id").eq("id", teacher_id).maybe_single().execute()
+        teacher = teacher_res.data if teacher_res else None
+        if not teacher:
+            raise HTTPException(status_code=403, detail="Forbidden")
+
+        student_res = ac.table("students").select("id, class_id").eq("id", studentId).maybe_single().execute()
+        student = student_res.data if student_res else None
+        if not student:
+            raise HTTPException(status_code=404, detail="Student not found")
+
+        cls_res = ac.table("classes").select("school_id").eq("id", student["class_id"]).maybe_single().execute()
+        cls = cls_res.data if cls_res else None
+        if not cls:
+            raise HTTPException(status_code=404, detail="Class not found")
+
+        if teacher.get("school_id") and cls.get("school_id") and teacher["school_id"] != cls["school_id"]:
+            raise HTTPException(status_code=403, detail="Forbidden")
+
+        expires_at = int(time.time()) + 30 * 24 * 60 * 60
+        token = sign_report_token(studentId, expires_at)
+        app_url = os.environ.get("NEXT_PUBLIC_APP_URL", "http://localhost:3000").rstrip("/")
+        return {"url": f"{app_url}/report/{token}", "expiresAt": expires_at}
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[teacher/report-link] failed: {e}")
         raise HTTPException(status_code=500, detail="Server error")
 
 

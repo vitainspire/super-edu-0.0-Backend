@@ -11,21 +11,11 @@ from pydantic import BaseModel
 from ..lib.argus_agent import run_argus
 from ..lib.argus_sweep import run_sweep, PLAYBOOKS
 from ..lib.argus_memory import load_open_findings, dismiss_finding
-from ..lib.schemas import AdminAskIntentSchema, AnnouncementSchema
+from ..lib.schemas import AdminAskIntentSchema
 from ..lib.logger import api_log, get_client_ip
 from ..lib.rate_limit import check_rate_limit
+from ..lib.argus_confirm_dispatch import execute_confirmed_action
 from ..deps import require_admin
-# Reusing the exact same functions the admin's own Approve/Reject/Post
-# buttons already call — the confirm step below is the ONLY place that
-# executes a write, and it does so through this app's one real
-# implementation of each action, never a second copy of that logic.
-from .admin_substitutes import (
-    approve_leave_request, reject_leave_request, LeaveRequestDecisionBody,
-    patch_substitutes, UpdateAssignmentBody,
-    post_substitutes, MarkUnavailableBody,
-)
-from .admin_misc import post_announcement as admin_post_announcement
-from .admin_classes import post_assign_teacher, AssignTeacherBody
 
 router = APIRouter()
 
@@ -64,27 +54,7 @@ def argus_confirm(schoolId: str, body: ArgusConfirmBody, request: Request, admin
 
     t0 = time.time()
     try:
-        if body.tool == "approve_leave":
-            result = approve_leave_request(schoolId, LeaveRequestDecisionBody(**body.args), admin)
-        elif body.tool == "reject_leave":
-            result = reject_leave_request(schoolId, LeaveRequestDecisionBody(**body.args), admin)
-        elif body.tool == "post_announcement":
-            result = admin_post_announcement(schoolId, AnnouncementSchema(**body.args), admin)
-        elif body.tool == "assign_substitute":
-            result = patch_substitutes(schoolId, UpdateAssignmentBody(**body.args), admin)
-        elif body.tool == "mark_teacher_unavailable":
-            # Goes through the same route the admin's own "mark unavailable"
-            # control uses, so apply_teacher_absence runs and the resulting
-            # cover + notifications are published exactly as normal.
-            result = post_substitutes(schoolId, MarkUnavailableBody(**body.args), admin)
-        elif body.tool == "assign_teacher_to_class":
-            args = dict(body.args)
-            class_id = args.pop("classId", None)
-            if not class_id:
-                raise HTTPException(status_code=400, detail="classId is required.")
-            result = post_assign_teacher(schoolId, class_id, AssignTeacherBody(**args), admin)
-        else:
-            raise HTTPException(status_code=400, detail=f'"{body.tool}" is not a confirmable action.')
+        result = execute_confirmed_action(schoolId, body.tool, body.args, admin)
         api_log("argus-confirm", ip, (time.time() - t0) * 1000, False, "ok")
         return {"ok": True, "result": result}
     except HTTPException:

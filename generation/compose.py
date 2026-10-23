@@ -514,7 +514,16 @@ def _topic_block(spec: dict, plan: dict, selection: dict, include_pages: bool = 
         ]
         lines += [f"  {SECTION_LABELS.get(k, k)}: {v}" for k, v in formats.items()]
 
-    figures = [f for f in (spec.get("figures") or []) if (f.get("caption") or "").strip()]
+    # Previously this dropped any figure whose caption was empty -- but a
+    # missing caption means the captioning pass failed or was never run on
+    # it, not that the figure doesn't exist or isn't useful. The admin
+    # catalog already tracks illustrationCount separately from
+    # captionedCount for exactly this gap (app/routes/admin_textbooks.py),
+    # so uncaptioned illustrations are real and were being silently thrown
+    # away here. Keep every real figure; give the ones without a caption a
+    # fallback line so the model still knows it exists and where it sits,
+    # instead of never hearing about it at all.
+    figures = list(spec.get("figures") or [])
     # Captions arrive two different ways, and only one of them has ids.
     #
     # `spec["figures"]` is the structured form, from a classified ingest. Most
@@ -558,8 +567,19 @@ def _topic_block(spec: dict, plan: dict, selection: dict, include_pages: bool = 
             'the teacher to draw one. Reference a picture by its id in "figureRefs" and',
             "say in the bullet what to point at:",
         ]
-        lines += [f"  {f['id']} (page {f['page']}): {f['caption'][:220]}"
-                  for f in figures[:12]]
+        # Cap and truncation are a safety net against a pathological chapter,
+        # not a design target -- a real topic's page range has never come
+        # close to either number, so raising them costs nothing in the
+        # normal case and only matters the one time a chapter actually has
+        # this many figures on a window's pages.
+        lines += [
+            f"  {f['id']} (page {f['page']}): "
+            + ((f.get("caption") or "").strip()[:400]
+               or "(no caption recorded -- a real illustration is printed here. "
+                  "You may tell the class to look at it on this page, but since "
+                  "nothing describes its content, never say what it shows.)")
+            for f in figures[:40]
+        ]
         lines.append("  Only these ids exist. Never invent one, and never describe a "
                      "picture that is not listed here.")
 

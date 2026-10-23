@@ -1,0 +1,290 @@
+{
+  "_meta": {
+    "formats": {
+      "explore": "predict-then-test",
+      "levelSet": "draw-what-you-learned card",
+      "realLife": "walk-to-school scene",
+      "challenge": "team relay at the board",
+      "refresher": "hands-up recall of the previous object"
+    },
+    "provenance": {
+      "pages": [
+        null,
+        null
+      ],
+      "context": "classroom objects",
+      "activity": {
+        "id": null,
+        "name": "Perspective Drawing Challenge",
+        "source": "invented"
+      },
+      "plannedMinutes": {
+        "concept": 8,
+        "explore": 5,
+        "levelSet": 9,
+        "realLife": 5,
+        "challenge": 13,
+        "refresher": 4
+      },
+      "sectionFormats": {
+        "explore": "predict-then-test",
+        "levelSet": "draw-what-you-learned card",
+        "realLife": "walk-to-school scene",
+        "challenge": "team relay at the board",
+        "refresher": "hands-up recall of the previous object"
+      },
+      "knowledgeExtracted": {
+        "concepts": 2,
+        "contexts": 2,
+        "vocabulary": 1,
+        "competencies": 2
+      },
+      "textbookExcerptChars": 783,
+      "canonicalLibraryIdsUsed": {},
+      "canonicalEntriesSeededHere": {}
+    },
+    "plannedHook": {
+      "scene": "The classroom, with a chair placed in the middle, and children having just looked at it from one side.",
+      "object": "The chair.",
+      "question": "Does the chair always look like this?",
+      "answeredNextLesson": "by showing that the chair looks different from the front, side, and top."
+    },
+    "teluguReview": "unreviewed-draft",
+    "masteryTarget": "an object looks different from different places, but it is still the same object",
+    "plannedBridge": null,
+    "activitySource": "invented",
+    "plannedMinutes": {
+      "concept": 8,
+      "explore": 5,
+      "levelSet": 9,
+      "realLife": 5,
+      "challenge": 13,
+      "refresher": 4
+    },
+    "selectedContext": "classroom objects",
+    "sectionCitations": {
+      "concept": "Textbook, no ingested textbook pages (context assembly) — concepts: Different perspectives of an object, Top view; vocabulary: top view. Resolved against the shared canonical library.",
+      "explore": "Free (generation) — planned to open on: \"The classroom, with a chair placed in the middle, and children having just looked at it from one side.\".",
+      "levelSet": "Free (generation) — the misconception this section is meant to surface: \"the chair looks different from here, so it is a different chair\".",
+      "realLife": "Textbook-named context(s) (context assembly): chairs, pictures.",
+      "challenge": "Activity \"Perspective Drawing Challenge\" — invented for this topic; the Pedagogy Library had no match (activity selection).",
+      "refresher": "Built entirely from the previous topic's Explore (planning + generation) — no new textbook or library lookup for this section."
+    },
+    "selectedActivity": "Perspective Drawing Challenge",
+    "teluguBulletsTotal": 15,
+    "teluguBulletsApplied": 15
+  },
+  "floor": "Given a small object like a matchbox or a cup, a child can point to its top and confirm it is still the same object when viewed from above.",
+  "index": 1,
+  "topic": "Shalini and Rajani like drawing pictures.",
+  "concept": [
+    {
+      "text": "Observe an object from one position",
+      "image": {
+        "url": "/api/textbook-catalog/image/ts_scert_class3_maths_en/1/img_ts_scert_class3_maths_en_ch01_01",
+        "caption": "An illustration of a young girl in a blue school uniform showing a book to a woman in a blue sari, who is holding a book in her left hand. A wooden chair is visible behind the girl. The illustration depicts a scene from the lesson text."
+      },
+      "detail": "Place a small object like a matchbox or a cup on a desk at the front of the room. Ask students to observe it carefully from their seats. Wait for a few seconds for everyone to focus.",
+      "detail_te": "గది ముందు డెస్క్ మీద అగ్గిపెట్టె లేదా కప్పు వంటి చిన్న వస్తువును ఉంచండి. విద్యార్థులను వారి సీట్ల నుండి జాగ్రత్తగా గమనించమని అడగండి. అందరూ దృష్టి పెట్టడానికి కొన్ని సెకన్లు వేచి ఉండండి.",
+      "treatment_te": "cue"
+    },
+    {
+      "text": "Move and observe the same object",
+      "detail": "Move the object to a different spot, or turn it slightly, so it presents a noticeably different appearance to the class. Ask students if it looks the same or different. Wait for a few responses.",
+      "detail_te": "వస్తువును వేరే చోటికి మార్చండి లేదా కొద్దిగా తిప్పండి, తద్వారా అది తరగతికి స్పష్టంగా భిన్నమైన రూపాన్ని ఇస్తుంది. అది ఒకేలా ఉందా లేదా భిన్నంగా ఉందా అని విద్యార్థులను అడగండి. కొన్ని సమాధానాల కోసం వేచి ఉండండి.",
+      "treatment_te": "cue"
+    },
+    {
+      "text": "Confirm it is still the same object",
+      "detail": "Move the object around again, demonstrating how its appearance changes. Explain that even though it looks different, it is still the same matchbox or cup. Draw a simple top-down view of the object on the board as it's shown, then a side view next to it, making it clear they represent the same object.",
+      "detail_te": "వస్తువును మళ్ళీ కదిలించండి, దాని రూపం ఎలా మారుతుందో చూపించండి. అది భిన్నంగా కనిపించినప్పటికీ, అది ఇప్పటికీ అదే అగ్గిపెట్టె లేదా కప్పు అని వివరించండి. వస్తువును చూపించిన విధంగా బోర్డుపై ఒక సాధారణ 'top-down view' గీయండి, ఆపై దాని పక్కన 'side view' గీయండి, అవి ఒకే వస్తువును సూచిస్తాయని స్పష్టం చేయండి.",
+      "treatment_te": "cue"
+    }
+  ],
+  "explore": {
+    "points": [
+      {
+        "text": "Observe a cup from different angles",
+        "detail": "Tell students to take a cup at home and look at it from directly above. Ask them to notice what shape they see. Then tell them to look at the same cup from the side and notice how it looks different.",
+        "detail_te": "ఇంట్లో ఒక కప్పును తీసుకొని నేరుగా పై నుండి చూడమని విద్యార్థులకు చెప్పండి. వారు ఏ ఆకారాన్ని చూస్తారో గమనించమని వారిని అడగండి. అప్పుడు అదే కప్పును పక్క నుండి చూసి అది ఎలా భిన్నంగా కనిపిస్తుందో గమనించమని వారికి చెప్పండి.",
+        "treatment_te": "full"
+      },
+      {
+        "text": "Notice a plate from top and side",
+        "detail": "Tell students to observe a plate (thali) from directly above. Ask them to notice its shape. Then tell them to look at the same plate from the side and notice how thin it looks, even though it's still the same plate.",
+        "detail_te": "ఒక ప్లేట్‌ను (థాలీ) నేరుగా పై నుండి గమనించమని విద్యార్థులకు చెప్పండి. దాని ఆకారాన్ని గమనించమని వారిని అడగండి. అప్పుడు అదే ప్లేట్‌ను పక్క నుండి చూసి అది ఎంత సన్నగా కనిపిస్తుందో గమనించమని వారికి చెప్పండి, అది ఇప్పటికీ అదే ప్లేట్ అయినప్పటికీ.",
+        "treatment_te": "full"
+      },
+      {
+        "text": "Find a small box and see its top view",
+        "detail": "Tell students to find a small box, like a matchbox or a small container, at home. Ask them to look at it from directly above and try to see what shape the top makes. They should remember that shape for tomorrow.",
+        "detail_te": "ఇంట్లో ఒక చిన్న పెట్టెను, అగ్గిపెట్టె లేదా చిన్న కంటైనర్ వంటిది, కనుగొనమని విద్యార్థులకు చెప్పండి. దానిని నేరుగా పై నుండి చూసి, పైభాగం ఏ ఆకారాన్ని చేస్తుందో చూడటానికి ప్రయత్నించమని వారిని అడగండి. రేపటి కోసం ఆ ఆకారాన్ని వారు గుర్తుంచుకోవాలి.",
+        "treatment_te": "full"
+      }
+    ],
+    "imageFocus": "a cup"
+  },
+  "figures": [],
+  "timings": {
+    "concept": 8,
+    "explore": 5,
+    "levelSet": 9,
+    "realLife": 5,
+    "challenge": 13
+  },
+  "levelSet": {
+    "points": [
+      {
+        "text": "Recap: Object views change but object is same",
+        "detail": "Briefly recap that an object looks different when seen from different places, but it is still the same object. Have pairs look at a small stone and a leaf, one from above and one from the side, and tell each other if they look the same or different, and if they are still the same objects.",
+        "detail_te": "ఒక వస్తువును వేర్వేరు ప్రదేశాల నుండి చూసినప్పుడు అది భిన్నంగా కనిపిస్తుంది, కానీ అది ఇప్పటికీ అదే వస్తువు అని క్లుప్తంగా పునరావృతం చేయండి. జంటలు ఒక చిన్న రాయి మరియు ఆకును, ఒకటి పై నుండి మరియు ఒకటి పక్క నుండి చూసి, అవి ఒకేలా ఉన్నాయా లేదా భిన్నంగా ఉన్నాయా అని, మరియు అవి ఇప్పటికీ ఒకే వస్తువులా ఉన్నాయా అని ఒకరికొకరు చెప్పమని చెప్పండి.",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "Share what was most interesting today",
+        "detail": "Ask students to think about what they found most interesting or surprising today. Give them a moment to reflect, then invite a few students to share their thoughts with the class. Accept all responses without judgment.",
+        "detail_te": "ఈ రోజు వారికి అత్యంత ఆసక్తికరంగా లేదా ఆశ్చర్యకరంగా అనిపించిన దాని గురించి ఆలోచించమని విద్యార్థులను అడగండి. వారికి ఆలోచించడానికి ఒక క్షణం ఇవ్వండి, ఆపై కొందరు విద్యార్థులను తరగతితో వారి ఆలోచనలను పంచుకోమని ఆహ్వానించండి. అన్ని ప్రతిస్పందనలను తీర్పు లేకుండా అంగీకరించండి.",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "Notice objects from above on the way home",
+        "detail": "Tell students that on their way home, they should look at a bicycle or a cart from above. Ask them to notice which parts they can see clearly and which parts are hidden from that view. They should not draw or write anything, just observe.",
+        "detail_te": "ఇంటికి వెళ్ళేటప్పుడు, వారు సైకిల్ లేదా బండిని పై నుండి చూడాలని విద్యార్థులకు చెప్పండి. ఆ వీక్షణ నుండి ఏ భాగాలు స్పష్టంగా కనిపిస్తాయి మరియు ఏ భాగాలు దాగి ఉన్నాయో గమనించమని వారిని అడగండి. వారు ఏమీ గీయకూడదు లేదా వ్రాయకూడదు, కేవలం గమనించాలి.",
+        "treatment_te": "cue"
+      }
+    ]
+  },
+  "realLife": {
+    "points": [
+      {
+        "text": "Identify a well from above and side",
+        "image": {
+          "url": "/api/textbook-catalog/image/ts_scert_class3_maths_en/1/img_ts_scert_class3_maths_en_ch01_02",
+          "caption": "An illustration of a rectangular chair as viewed from the top, with a slightly textured, light brown seat and back, and darker brown armrests or side supports. The bottom edge shows two small, rounded feet."
+        },
+        "detail": "Describe a village well (kuan) from two perspectives: looking straight down into it, and looking at it from the side. Ask students to describe what they would see in each case. Explain that the well looks like a circle from above, but a tall structure from the side.",
+        "detail_te": "ఒక గ్రామంలోని బావిని (కున్) రెండు కోణాల నుండి వివరించండి: దానిలోకి నేరుగా చూసినప్పుడు, మరియు పక్క నుండి చూసినప్పుడు. ప్రతి సందర్భంలో వారు ఏమి చూస్తారో వివరించమని విద్యార్థులను అడగండి. బావి పై నుండి చూసినప్పుడు వృత్తంలా కనిపిస్తుంది, కానీ పక్క నుండి చూసినప్పుడు పొడవైన నిర్మాణంలా కనిపిస్తుందని వివరించండి.",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "Recognize a water pot from different views",
+        "detail": "Mention a matka (water pot) found in every home. Explain that looking at a matka from directly above shows a circular opening, but from the side, it shows a curved, round body. Point out that it's the same pot, just seen differently.",
+        "detail_te": "ప్రతి ఇంట్లో కనిపించే మట్కా (నీటి కుండ) గురించి చెప్పండి. మట్కాను నేరుగా పై నుండి చూస్తే వృత్తాకార ఓపెనింగ్ కనిపిస్తుంది, కానీ పక్క నుండి చూస్తే వక్రమైన, గుండ్రని శరీరం కనిపిస్తుందని వివరించండి. అది ఒకే కుండ అని, కానీ భిన్నంగా కనిపిస్తుందని చెప్పండి.",
+        "treatment_te": "cue"
+      },
+      {
+        "text": "A house roof from above and walls from side",
+        "detail": "Describe a house in the village. Ask students what they see if they imagine flying high above it (the roof). Then ask what they see if they are standing in front of it (walls, door, windows). Emphasize that it's the same house, but the view changes.",
+        "detail_te": "గ్రామంలోని ఒక ఇంటిని వివరించండి. దాని పైన ఎత్తులో ఎగురుతున్నట్లు ఊహించుకుంటే వారు ఏమి చూస్తారని విద్యార్థులను అడగండి (పైకప్పు). అప్పుడు దాని ముందు నిలబడి ఉంటే వారు ఏమి చూస్తారని అడగండి (గోడలు, తలుపు, కిటికీలు). అది ఒకే ఇల్లు అని, కానీ వీక్షణ మారుతుందని నొక్కి చెప్పండి.",
+        "treatment_te": "cue"
+      }
+    ]
+  },
+  "subtopic": "",
+  "bookMoves": [
+    {
+      "ord": 1,
+      "gist": "Introduces Shalini and Rajani who like drawing pictures.",
+      "type": "concept",
+      "section": "concept",
+      "fidelity": "faithful"
+    },
+    {
+      "ord": 2,
+      "gist": "Teacher asks students to draw chairs, leading to a disagreement between Shalini and Rajani.",
+      "type": "concept",
+      "section": "concept",
+      "fidelity": "faithful"
+    },
+    {
+      "ord": 3,
+      "gist": "Asks the reader if Shalini has drawn a chair and what they think.",
+      "type": "activity",
+      "section": "challenge",
+      "fidelity": "verbatim",
+      "verbatim": "Has Shalini drawn the picture of a chair? What do you think?"
+    },
+    {
+      "ord": 4,
+      "gist": "Teacher explains Shalini's drawing is a top view of a chair, showing other examples.",
+      "type": "concept",
+      "section": "concept",
+      "fidelity": "faithful"
+    }
+  ],
+  "challenge": {
+    "points": [
+      {
+        "text": "PLAY: Shalini's chair drawing",
+        "detail": "Direct students to the activity in their textbook where Shalini's chair drawing is shown. In pairs, ask students to discuss whether they think Shalini has drawn a chair or not, and why. Give them two minutes to talk, listening for agreement or disagreement.",
+        "detail_te": "శాలిని కుర్చీ డ్రాయింగ్ చూపిన వారి పాఠ్యపుస్తకంలోని కార్యాచరణకు విద్యార్థులను నిర్దేశించండి. జంటలుగా, శాలిని కుర్చీ గీసిందని వారు అనుకుంటున్నారా లేదా అని చర్చించమని అడగండి, మరియు ఎందుకు. వారికి మాట్లాడటానికి రెండు నిమిషాలు ఇవ్వండి, అంగీకారం లేదా అసమ్మతి కోసం వినండి.",
+        "treatment_te": "full"
+      },
+      {
+        "text": "REFLECT: Why views look different",
+        "detail": "Ask pairs to share their thoughts aloud. Encourage them to explain why they think the drawing is or isn't a chair. Listen for students who recognize the drawing as a chair from a different angle, or those who insist it's not a chair because it doesn't look 'normal'.",
+        "detail_te": "జంటలను వారి ఆలోచనలను బిగ్గరగా పంచుకోమని అడగండి. డ్రాయింగ్ కుర్చీ అని లేదా కాదని వారు ఎందుకు అనుకుంటున్నారో వివరించమని వారిని ప్రోత్సహించండి. డ్రాయింగ్ వేరే కోణం నుండి కుర్చీ అని గుర్తించిన విద్యార్థుల కోసం వినండి, లేదా అది 'normal' గా కనిపించనందున అది కుర్చీ కాదని పట్టుబట్టే వారి కోసం వినండి.",
+        "treatment_te": "full"
+      },
+      {
+        "text": "ACT: Confirming the top view",
+        "detail": "Confirm that Shalini's drawing is indeed a chair, but seen from directly above, known as a 'top view'. Explain that the shape of the seat and the backrest are visible from this angle, even if the legs are hidden. Draw a simple chair on the board, then draw its top view next to it, labelling it 'top view' as in the book.",
+        "detail_te": "శాలిని డ్రాయింగ్ నిజంగా కుర్చీ అని నిర్ధారించండి, కానీ నేరుగా పై నుండి చూసినప్పుడు, దీనిని 'top view' అని పిలుస్తారు. ఈ కోణం నుండి సీటు మరియు బ్యాక్‌రెస్ట్ ఆకారం కనిపిస్తుందని వివరించండి, కాళ్ళు కనిపించకపోయినా. బోర్డుపై ఒక సాధారణ కుర్చీని గీయండి, ఆపై దాని పక్కన దాని 'top view' గీయండి, పుస్తకంలో ఉన్నట్లుగా 'top view' అని లేబుల్ చేయండి.",
+        "treatment_te": "full"
+      }
+    ],
+    "activity": "If Shalini has drawn a chair and what they"
+  },
+  "objective": "Identify top view of an object",
+  "pageRange": [
+    null,
+    null
+  ],
+  "figureRefs": [
+    "img_ts_scert_class3_maths_en_ch01_01",
+    "img_ts_scert_class3_maths_en_ch01_02"
+  ],
+  "pagesCited": [],
+  "flexMinutes": 0,
+  "planningNote": "This period introduces the fundamental concept that objects look different from various perspectives while remaining the same object. It sets the stage for understanding specific views like front, side, and top.",
+  "sectionWatch": {
+    "concept": {
+      "text": "Children understanding object constancy",
+      "detail": "Watch for students who still believe a changed view means a different object. The demonstration and drawing on the board should reinforce that it's the same object, just seen from a new place. Ensure they connect the physical object to the drawing."
+    },
+    "explore": {
+      "text": "Focusing on top view of everyday objects",
+      "detail": "Ensure students understand the instruction to specifically look for the 'top view' of the objects. They should be able to differentiate it from other views, even if they don't yet know the names for those other views."
+    },
+    "levelSet": {
+      "text": "Confirming the concept of changing views",
+      "detail": "Listen for students who correctly identify that the stone and leaf look different but are the same. In the 'way home' point, ensure students understand they are looking for a 'top view' specifically, not just general observation."
+    },
+    "realLife": {
+      "text": "Connecting abstract idea to familiar objects",
+      "detail": "Observe if students can relate the concept of changing views to the familiar objects mentioned. If they struggle, re-emphasize that the object itself doesn't change, only how we see it from different positions. Use gestures to indicate 'above' and 'side'."
+    },
+    "challenge": {
+      "text": "Identifying top view in a drawing",
+      "detail": "Pay attention to pairs who struggle to accept Shalini's drawing as a chair. Guide them back to the idea that the view changes. The goal is for them to understand the drawing represents a 'top view' even if it doesn't look like a typical chair."
+    },
+    "refresher": null
+  },
+  "materialsUsed": [
+    "matchbox",
+    "cup",
+    "blackboard",
+    "chalk",
+    "stone",
+    "leaf"
+  ],
+  "teachingOrder": [
+    "refresher",
+    "concept",
+    "realLife",
+    "challenge",
+    "levelSet",
+    "explore"
+  ],
+  "previousTopicRefresher": null
+}

@@ -10,6 +10,14 @@ illustrations printed alongside it.
 Everything here fails closed. No confident match means no textbook grounding
 and the ontology grounding carries on alone — a lesson grounded in the WRONG
 chapter is far worse than one grounded in none.
+
+Subtopic-level slicing, for the catalog-mirror path (_fetch_from_catalog_mirror,
+which is every school right now), comes from a separate semantic-retrieval
+service (textbook_rag_client.py) once the chapter itself is confirmed
+available — best_match()'s own title-matching only resolves a subtopic that
+happens to share wording with an actual printed heading, which a real
+subtopic often doesn't. The retrieval call is best-effort and falls back to
+the existing whole-chapter excerpt on any failure.
 """
 import re
 from typing import Optional
@@ -151,6 +159,7 @@ async def _fetch_from_catalog_mirror(
     chapter["topics"] does — a whole-chapter grounding, not a sub-topic slice,
     but a real excerpt with real images beats none."""
     from .textbook_catalog import grounding_for_syllabus_chapter
+    from .textbook_rag_client import retrieve_textbook_content
 
     try:
         chapters = (
@@ -180,6 +189,40 @@ async def _fetch_from_catalog_mirror(
     )
     if not grounded or not grounded.get("text"):
         return None
+
+    # The chapter is confirmed available (grounded succeeded) — now try to
+    # narrow it to just this subtopic via semantic retrieval, which finds the
+    # right passage by meaning rather than requiring an exact heading-title
+    # match. Best-effort: any failure here (service down, book not indexed
+    # on that side, no query to search with) falls through to the existing
+    # whole-chapter excerpt below, unchanged.
+    rag_query = next((q for q in (subtopic, topic) if q and q.strip()), None)
+    rag = (
+        retrieve_textbook_content(grounded["bookId"], grounded.get("chapterNumber"), rag_query)
+        if rag_query else None
+    )
+    rag_chunks = (rag or {}).get("text") or []
+    if rag_chunks:
+        ordered = sorted(rag_chunks, key=lambda c: c.get("page_number") or 0)
+        full_excerpt = "\n\n".join(c["text"] for c in ordered)
+        excerpt = full_excerpt[:MAX_EXCERPT_CHARS]
+        images = [
+            {
+                "id": img["image_id"], "imageId": img["image_id"],
+                "caption": img.get("caption"), "sourcePage": img.get("page_number"),
+            }
+            for img in (rag.get("images") or [])
+        ]
+        return {
+            "chapterTitle": grounded.get("chapterTitle") or chapter.get("title"),
+            "chapterNumber": grounded.get("chapterNumber"),
+            "pageStart": grounded.get("pageStart"),
+            "pageEnd": grounded.get("pageEnd"),
+            "matchedTopic": rag_query,
+            "excerpt": excerpt,
+            "truncated": len(full_excerpt) > len(excerpt),
+            "images": images,
+        }
 
     excerpt = grounded["text"][:MAX_EXCERPT_CHARS]
     images = [

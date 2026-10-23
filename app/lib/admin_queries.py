@@ -1,5 +1,6 @@
 """Mirrors the subset of backend/src/lib/admin-queries.ts needed by the
 routes ported so far."""
+import json
 from typing import Optional
 
 
@@ -120,6 +121,7 @@ def delete_grade_subject(id_: str, ac) -> None:
 
 
 def _map_event(r: dict, force_published: Optional[bool] = None) -> dict:
+    raw_grades = r.get("grades")
     return {
         "id": r["id"],
         "schoolId": r["school_id"],
@@ -131,6 +133,11 @@ def _map_event(r: dict, force_published: Optional[bool] = None) -> dict:
         "startDate": r["start_date"],
         "endDate": r["end_date"],
         "description": r.get("description"),
+        # Which grades an "exam" category event applies to — None/absent means
+        # every grade (also the case for every holiday/term event, which never
+        # set this). JSON-encoded text column, same convention as tests.questions,
+        # not a native array/jsonb column.
+        "grades": json.loads(raw_grades) if raw_grades else None,
         "createdAt": r["created_at"],
     }
 
@@ -172,6 +179,7 @@ def upsert_academic_event(e: dict, ac) -> None:
             "start_date": e["startDate"],
             "end_date": e["endDate"],
             "description": e.get("description"),
+            "grades": json.dumps(e["grades"]) if e.get("grades") else None,
             "created_at": e["createdAt"],
         }
     ).execute()

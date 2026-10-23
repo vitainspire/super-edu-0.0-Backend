@@ -68,6 +68,10 @@ class AcademicEventSchema(BaseModel):
     startDate: str
     endDate: str
     description: Optional[str] = Field(default=None, max_length=LEN_TEXT)
+    # Which grades an "exam" category event applies to. None/omitted means
+    # every grade — preserves today's behavior for existing events and for
+    # every holiday/term event, which never set this.
+    grades: Optional[list[str]] = None
 
     @field_validator("startDate", "endDate")
     @classmethod
@@ -588,6 +592,9 @@ class GeneratePaperSchema(BaseModel):
     title: Optional[str] = Field(default=None, max_length=LEN_NAME)
     topics: list[PaperTopic] = Field(min_length=1, max_length=30)
     blocks: list[PaperBlock] = Field(min_length=1, max_length=12)
+    # Optional — lets the route ground questions in the real textbook excerpt
+    # for these topics. Omitted entirely means today's ungrounded behavior.
+    classId: Optional[str] = Field(default=None, max_length=36)
 
 
 class DistRow(BaseModel):
@@ -601,6 +608,9 @@ class GenerateWorksheetSchema(BaseModel):
     subject: str = Field(max_length=LEN_TOPIC)
     grade: str = Field(max_length=LEN_SHORT)
     distribution: list[DistRow] = Field(min_length=1)
+    # Optional — lets the route ground questions in the real textbook excerpt
+    # for this topic. Omitted entirely means today's ungrounded behavior.
+    classId: Optional[str] = Field(default=None, max_length=36)
 
 
 class WorksheetUpsertSchema(BaseModel):

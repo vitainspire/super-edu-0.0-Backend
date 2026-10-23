@@ -116,6 +116,7 @@ def post_academic_event(schoolId: str, body: AcademicEventBody, admin: dict = De
         "startDate": body.startDate,
         "endDate": body.endDate,
         "description": body.description,
+        "grades": body.grades,
         "createdAt": _now(),
     }
     upsert_academic_event(event, ac)
