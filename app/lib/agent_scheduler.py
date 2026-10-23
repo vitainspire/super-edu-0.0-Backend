@@ -15,7 +15,7 @@ playbooks entirely — this module's only job is turning a sweep's result into
 real chat messages on the right persona's individual thread, and remembering
 that it already did so today.
 """
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from .supabase_clients import create_admin_client
 from .argus_sweep import run_sweep
@@ -24,11 +24,39 @@ from .group_chat_store import save_message
 
 TABLE = "agent_sweep_log"
 
+# Fallback only — used when a school has no school_schedule configured yet.
 # ~7:30am / ~4:30pm IST, this app's schools being TS-SCERT/Indian-curriculum
-# per the textbook ingestion code elsewhere in this backend — adjust these if
-# that assumption is wrong for a given deployment.
-MORNING_TRIGGER_HOUR_UTC = 2
-EVENING_TRIGGER_HOUR_UTC = 11
+# per the textbook ingestion code elsewhere in this backend. Every real
+# school instead gets its own real bell-schedule times — see
+# _trigger_times_utc_hm below.
+DEFAULT_MORNING_TRIGGER_UTC_HM = "02:00"
+DEFAULT_EVENING_TRIGGER_UTC_HM = "11:00"
+
+
+def _ist_hm_to_utc_hm(hhmm: str) -> str:
+    t = datetime.strptime(hhmm, "%H:%M") - timedelta(hours=5, minutes=30)
+    return t.strftime("%H:%M")
+
+
+def _trigger_times_utc_hm(school_id: str, ac) -> tuple[str, str]:
+    """(morning, evening) trigger times, in UTC HH:MM, derived from the
+    school's own bell schedule (school_schedule.slots — the same template
+    admin_queries.fetch_school_schedule/the timetable generator already use)
+    instead of one hardcoded guess for every school. The earliest slot
+    start and latest slot end (periods AND breaks — the breaks still mark
+    the edges of the school day) give the real start/end of day. Falls back
+    to the old hardcoded assumption when the school hasn't configured one
+    yet — same graceful-degrade rule every table-backed lookup here follows."""
+    try:
+        row = ac.table("school_schedule").select("slots").eq("school_id", school_id).maybe_single().execute().data
+        slots = (row or {}).get("slots") or []
+        starts = [s["startTime"] for s in slots if s.get("startTime")]
+        ends = [s["endTime"] for s in slots if s.get("endTime")]
+        if starts and ends:
+            return _ist_hm_to_utc_hm(min(starts)), _ist_hm_to_utc_hm(max(ends))
+    except Exception as e:
+        print(f"[agent_scheduler] _trigger_times_utc_hm failed for school {school_id}, using defaults: {e}")
+    return DEFAULT_MORNING_TRIGGER_UTC_HM, DEFAULT_EVENING_TRIGGER_UTC_HM
 
 # Which playbooks run for which persona's sweep — the 4 existing playbooks
 # are all operations-flavored (Admin Agent's domain); syllabus_pace (added
@@ -103,10 +131,12 @@ async def maybe_run_daily_sweeps(school_id: str) -> None:
     now = datetime.now(timezone.utc)
     run_date = now.date().isoformat()
 
+    morning_hm, evening_hm = _trigger_times_utc_hm(school_id, ac)
+    now_hm = now.strftime("%H:%M")
     due_windows = []
-    if now.hour >= MORNING_TRIGGER_HOUR_UTC:
+    if now_hm >= morning_hm:
         due_windows.append("morning")
-    if now.hour >= EVENING_TRIGGER_HOUR_UTC:
+    if now_hm >= evening_hm:
         due_windows.append("evening")
     if not due_windows:
         return
@@ -149,10 +179,12 @@ async def maybe_run_teacher_daily_sweep(teacher_id: str, ctx: dict) -> None:
     now = datetime.now(timezone.utc)
     run_date = now.date().isoformat()
 
+    morning_hm, evening_hm = _trigger_times_utc_hm(ctx["schoolId"], ac)
+    now_hm = now.strftime("%H:%M")
     due_windows = []
-    if now.hour >= MORNING_TRIGGER_HOUR_UTC:
+    if now_hm >= morning_hm:
         due_windows.append("morning")
-    if now.hour >= EVENING_TRIGGER_HOUR_UTC:
+    if now_hm >= evening_hm:
         due_windows.append("evening")
     if not due_windows:
         return

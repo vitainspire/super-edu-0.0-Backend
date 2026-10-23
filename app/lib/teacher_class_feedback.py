@@ -82,6 +82,16 @@ async def _ask_one(teacher_id: str, ctx: dict, entry: dict, run_date: str, ac) -
         ctx["schoolId"], sender="teacher_agent",
         content=f'How did "{topic_info["topic"]}" go in {class_name}?',
         thread="teacher", teacher_id=teacher_id,
+        # Structured, not just the question text — lets the frontend render
+        # a real three-question + free-text card (same shape as Classroom
+        # Mode's own reflection screen) and submit it directly, without
+        # needing the LLM to interpret a free-text reply. The question text
+        # above stays too, so a teacher can still just type a reply if they
+        # prefer — save_class_feedback (teacher_agent.py) is that fallback.
+        feedback_request={
+            "classId": entry["classId"], "className": class_name, "subject": subject,
+            "topic": topic_info["topic"], "subtopic": topic_info.get("subtopic"),
+        },
     )
 
 

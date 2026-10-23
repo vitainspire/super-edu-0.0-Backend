@@ -32,6 +32,9 @@ def _to_app(r: dict) -> dict:
         "content": r["content"],
         "trace": r.get("trace") or [],
         "pendingConfirmation": r.get("pending_confirmation"),
+        "link": r.get("link"),
+        "feedbackRequest": r.get("feedback_request"),
+        "feedbackSubmittedAt": r.get("feedback_submitted_at"),
         "confirmedAt": r.get("confirmed_at"),
         "createdAt": r["created_at"],
     }
@@ -68,6 +71,8 @@ def save_message(
     teacher_id: str | None = None,
     trace: list | None = None,
     pending_confirmation: dict | None = None,
+    link: dict | None = None,
+    feedback_request: dict | None = None,
     admin_id: str | None = None,
     ac=None,
 ) -> dict | None:
@@ -84,6 +89,8 @@ def save_message(
         "content": content,
         "trace": trace or [],
         "pending_confirmation": pending_confirmation,
+        "link": link,
+        "feedback_request": feedback_request,
         "created_at": _now(),
     }
     try:
@@ -93,6 +100,17 @@ def save_message(
             print(f"[group_chat_store] save_message failed: {e}")
         return None
     return _to_app(rows[0]) if rows else None
+
+
+def mark_feedback_submitted(message_id: str, ac=None) -> bool:
+    ac = ac or create_admin_client()
+    try:
+        ac.table(TABLE).update({"feedback_submitted_at": _now()}).eq("id", message_id).execute()
+        return True
+    except Exception as e:
+        if not _table_missing(e):
+            print(f"[group_chat_store] mark_feedback_submitted failed: {e}")
+        return False
 
 
 def mark_confirmed(message_id: str, ac=None) -> bool:

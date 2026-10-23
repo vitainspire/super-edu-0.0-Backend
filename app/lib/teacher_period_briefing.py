@@ -93,22 +93,37 @@ def resolve_period_topic(class_id: str, subject: str, date_str: str, period_numb
     return {"topic": match["topic"], "subtopic": match.get("subtopic")} if match else None
 
 
-def _material_readiness_line(teacher_id: str, entry: dict, subject: str, topic_info: dict, ac) -> str:
-    """Zero generation cost — only reads what's already there. A short
-    summary (objective, not the full lesson JSON) so this fits in a chat
-    bubble; "Open Prep Materials" is where the real sheet lives."""
+def _material_readiness_line(teacher_id: str, entry: dict, subject: str, topic_info: dict, ac) -> dict:
+    """Zero generation cost — only reads what's already there. Returns
+    {"text", "href"} — href is a real link to the exact modal that already
+    shows this material (components/timetable/PrepMaterialModal.tsx, opened
+    today only by clicking a period card on the Timetable page); None when
+    there's nothing to link to yet."""
     existing = find_existing_prep_material(
         teacher_id, entry["classId"], subject, topic_info["topic"],
         subtopic=topic_info.get("subtopic"), ac=ac,
     )
     lesson = existing.get("lesson")
     if not lesson:
-        return f'No prep material ready yet for "{topic_info["topic"]}" — ask me to generate one if you want it before class.'
+        return {
+            "text": f'No prep material ready yet for "{topic_info["topic"]}" — ask me to generate one if you want it before class.',
+            "href": None,
+        }
+
     objective = (lesson or {}).get("objective")
-    return (
-        f'Prep material for "{topic_info["topic"]}" is ready{f" — {objective}" if objective else ""}. '
-        "Open Prep Materials to see the full sheet."
-    )
+    text = f'Prep material for "{topic_info["topic"]}" is ready{f" — {objective}" if objective else ""}.'
+
+    href = None
+    period_number = entry.get("periodNumber")
+    class_row = ac.table("classes").select("grade").eq("id", entry["classId"]).maybe_single().execute().data
+    grade = (class_row or {}).get("grade")
+    if grade and period_number is not None:
+        from urllib.parse import quote
+        href = (
+            f"/timetable?classId={entry['classId']}&subject={quote(subject)}"
+            f"&grade={quote(str(grade))}&periodNumber={period_number}"
+        )
+    return {"text": text, "href": href}
 
 
 def _already_ran(teacher_id: str, period_number: int, run_date: str, ac) -> bool:
@@ -169,8 +184,9 @@ async def _brief_one(teacher_id: str, ctx: dict, entry: dict, run_date: str, ac)
     if topic_info:
         readiness = _material_readiness_line(teacher_id, entry, subject, topic_info, ac)
         save_message(
-            ctx["schoolId"], sender="teacher_agent", content=prefix + readiness,
+            ctx["schoolId"], sender="teacher_agent", content=prefix + readiness["text"],
             thread="teacher", teacher_id=teacher_id,
+            link={"label": "Open Prep Materials", "href": readiness["href"]} if readiness["href"] else None,
         )
     for finding in reportable:
         action = finding.get("suggestedAction")

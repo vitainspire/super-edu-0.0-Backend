@@ -17,7 +17,7 @@ from ..lib.agent_scheduler import maybe_run_teacher_daily_sweep
 from ..lib.teacher_period_briefing import maybe_run_period_briefings
 from ..lib.teacher_class_feedback import maybe_ask_class_feedback
 from ..lib.teacher_agent_memory import load_active_notes, archive_note_by_id
-from ..lib.group_chat_store import load_recent_messages, save_message, mark_confirmed
+from ..lib.group_chat_store import load_recent_messages, save_message, mark_confirmed, mark_feedback_submitted
 from ..lib.logger import api_log, get_client_ip
 from ..lib.rate_limit import check_rate_limit
 from ..deps import require_teacher
@@ -117,6 +117,20 @@ class TeacherAgentForgetBody(BaseModel):
 @router.post("/agent/memory/forget")
 def post_agent_memory_forget(body: TeacherAgentForgetBody, teacher_id: str = Depends(require_teacher)):
     ok = archive_note_by_id(teacher_id, body.noteId)
+    return {"ok": ok}
+
+
+class TeacherAgentFeedbackSubmittedBody(BaseModel):
+    messageId: str
+
+
+@router.post("/agent/feedback-submitted")
+def post_agent_feedback_submitted(body: TeacherAgentFeedbackSubmittedBody, teacher_id: str = Depends(require_teacher)):
+    """Marks a feedback-request card answered. The actual save (lesson_feedback,
+    classes.feedback_profile, the interpret-feedback cost rule) already
+    happened client-side via the real saveLessonFeedback (lib/context.tsx) —
+    this only stops the card re-rendering as interactive."""
+    ok = mark_feedback_submitted(body.messageId)
     return {"ok": ok}
 
 
