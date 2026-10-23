@@ -232,12 +232,86 @@ def _pb_syllabus_pace(school_id: str, date_str: str, ac, class_ids: list = None)
     return findings
 
 
+# ── performance_watch ───────────────────────────────────────────────────────
+# The other academic playbook for the Headmaster Agent's own sweep: a real
+# drop in test scores for a class+subject, not a snapshot. Detection here
+# stays deterministic (compare the two most recent tests' averages) — the
+# LLM-backed part, asking that subject's own teacher's agent for a concrete
+# coaching suggestion and delivering it into their thread, happens once a
+# finding is actually reportable (see agent_scheduler.py's _run_one), not
+# during detection, for the same "a sweep works with the LLM down" reason
+# every other playbook here is plain reads and comparisons.
+PERFORMANCE_DROP_THRESHOLD = 15  # percentage points, test-average vs the test before it
+MIN_TESTS_FOR_TREND = 2
+
+
+def _pb_performance_watch(school_id: str, date_str: str, ac, class_ids: list = None) -> list:
+    classes = fetch_school_classes(school_id, ac)
+    if class_ids is not None:
+        classes = [c for c in classes if c["id"] in set(class_ids)]
+    if not classes:
+        return []
+    scoped_class_ids = [c["id"] for c in classes]
+    class_by_id = {c["id"]: c for c in classes}
+
+    tests = (
+        ac.table("tests").select("id, teacher_id, class_id, subject, total_marks, conducted_on")
+        .in_("class_id", scoped_class_ids).order("conducted_on").execute().data or []
+    )
+    tests = [t for t in tests if t.get("total_marks")]
+    if len(tests) < MIN_TESTS_FOR_TREND:
+        return []
+
+    marks = ac.table("marks").select("test_id, score").in_("test_id", [t["id"] for t in tests]).execute().data or []
+    scores_by_test: dict = {}
+    for m in marks:
+        scores_by_test.setdefault(m["test_id"], []).append(m["score"])
+
+    by_class_subject: dict = {}
+    for t in tests:
+        scores = scores_by_test.get(t["id"]) or []
+        if not scores:
+            continue
+        avg_pct = (sum(scores) / len(scores)) / t["total_marks"] * 100
+        by_class_subject.setdefault((t["class_id"], t["subject"]), []).append({
+            "teacherId": t["teacher_id"], "conductedOn": t["conducted_on"], "avgPct": avg_pct,
+        })
+
+    findings = []
+    for (class_id, subject), entries in by_class_subject.items():
+        if len(entries) < MIN_TESTS_FOR_TREND:
+            continue
+        entries.sort(key=lambda e: e["conductedOn"] or "")
+        latest, previous = entries[-1], entries[-2]
+        drop = previous["avgPct"] - latest["avgPct"]
+        if drop < PERFORMANCE_DROP_THRESHOLD:
+            continue
+        cls = class_by_id.get(class_id, {})
+        label = cls.get("name") or f'{cls.get("grade")} {cls.get("section")}'
+        finding = _finding(
+            "performance_watch", f"performance_watch:{class_id}:{subject}", "attention",
+            f"{label} {subject} average dropped {round(drop)} points ({round(previous['avgPct'])}% → {round(latest['avgPct'])}%)",
+            # No suggestedAction: there's nothing to auto-fix here, the same
+            # reasoning _pb_syllabus_pace's own finding already uses — this
+            # is flagged for the subject's own teacher, with real context,
+            # via their own agent (see agent_scheduler.py).
+            "No fix can be auto-proposed — flagged for the subject teacher with context, via their own agent.",
+        )
+        finding["_performanceContext"] = {
+            "classId": class_id, "className": label, "subject": subject, "teacherId": latest["teacherId"],
+            "previousAvgPct": round(previous["avgPct"]), "latestAvgPct": round(latest["avgPct"]), "drop": round(drop),
+        }
+        findings.append(finding)
+    return findings
+
+
 PLAYBOOKS = {
     "coverage": _pb_coverage,
     "readiness": _pb_readiness,
     "approvals": _pb_approvals,
     "operations": _pb_operations,
     "syllabus_pace": _pb_syllabus_pace,
+    "performance_watch": _pb_performance_watch,
 }
 
 SEVERITY_ORDER = {"urgent": 0, "attention": 1, "info": 2}

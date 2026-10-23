@@ -21,6 +21,7 @@ from .supabase_clients import create_admin_client
 from .argus_sweep import run_sweep
 from .teacher_sweep import run_teacher_sweep
 from .group_chat_store import save_message
+from .agent_activity_log import record_activity
 
 TABLE = "agent_sweep_log"
 
@@ -63,7 +64,7 @@ def _trigger_times_utc_hm(school_id: str, ac) -> tuple[str, str]:
 # alongside this module) is the one academic playbook, Headmaster Agent's.
 PLAYBOOKS_BY_PERSONA = {
     "admin": ["coverage", "readiness", "approvals", "operations"],
-    "headmaster": ["syllabus_pace"],
+    "headmaster": ["syllabus_pace", "performance_watch"],
 }
 
 
@@ -104,6 +105,59 @@ def _record_ran(school_id: str, persona: str, window: str, run_date: str, ac, te
             print(f"[agent_scheduler] _record_ran failed: {e}")
 
 
+async def _deliver_performance_coaching(school_id: str, finding: dict, ac) -> None:
+    """A performance_watch finding on its own only tells the Headmaster
+    something dropped — it doesn't help the teacher fix it. This is the part
+    that actually does: ask that subject's own teacher's agent (which has
+    real tools into THEIR classes — mastery, doubts, etc.) for a concrete
+    suggestion, then post it into the teacher's own My Agent thread, framed
+    as their own agent surfacing it, not the Headmaster messaging them
+    directly. Logged to the Agent-to-Agent activity feed too, same as every
+    other cross-agent exchange, so the headmaster/admin can see it happened.
+    """
+    ctx = finding.get("_performanceContext")
+    if not ctx or not ctx.get("teacherId"):
+        return
+    teacher_id = ctx["teacherId"]
+
+    try:
+        teacher_row = ac.table("teachers").select("name").eq("id", teacher_id).maybe_single().execute().data
+    except Exception as e:
+        print(f"[agent_scheduler] performance_watch: teacher lookup failed: {e}")
+        return
+    teacher_name = (teacher_row or {}).get("name") or "This teacher"
+
+    question = (
+        f"Heads up from the Headmaster Agent: the test average for {ctx['subject']} in {ctx['className']} "
+        f"dropped from {ctx['previousAvgPct']}% to {ctx['latestAvgPct']}% across the two most recent tests. "
+        "Based on what you know about this class, what's one concrete thing that could help bring it back up?"
+    )
+
+    try:
+        from .teacher_agent import run_teacher_agent
+        result = await run_teacher_agent(teacher_id, question, [], "headmaster-performance-watch")
+    except Exception as e:
+        print(f"[agent_scheduler] performance_watch: teacher agent call failed: {e}")
+        return
+
+    answer = result.get("response")
+    record_activity(
+        school_id, "headmaster_agent", f"{teacher_name}'s Agent", question,
+        answer=answer, status=result["status"], to_teacher_id=teacher_id, ac=ac,
+    )
+    if result["status"] != "answered" or not answer:
+        return
+
+    save_message(
+        school_id, sender="teacher_agent",
+        content=(
+            f"Headmaster Agent flagged a dip in {ctx['subject']} for {ctx['className']} "
+            f"(test average {ctx['previousAvgPct']}% → {ctx['latestAvgPct']}%). {answer}"
+        ),
+        thread="teacher", teacher_id=teacher_id,
+    )
+
+
 async def _run_one(school_id: str, persona: str, window: str, run_date: str, ac) -> None:
     if _already_ran(school_id, persona, window, run_date, ac):
         return
@@ -124,6 +178,13 @@ async def _run_one(school_id: str, persona: str, window: str, run_date: str, ac)
             school_id, sender=sender, content=action["label"], thread=persona,
             pending_confirmation={"tool": action["tool"], "args": action["args"], "label": action["label"]},
         )
+
+    for finding in result["reported"]:
+        if finding.get("playbook") == "performance_watch":
+            try:
+                await _deliver_performance_coaching(school_id, finding, ac)
+            except Exception as e:
+                print(f"[agent_scheduler] performance_watch delivery failed for {finding.get('findingKey')}: {e}")
 
 
 async def maybe_run_daily_sweeps(school_id: str) -> None:
