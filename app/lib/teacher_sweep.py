@@ -152,10 +152,47 @@ def _pb_attendance_concern(teacher_id: str, ctx: dict, date_str: str, ac) -> lis
 # ── syllabus_pace ─────────────────────────────────────────────────────────
 # Reuses argus_sweep._pb_syllabus_pace wholesale, scoped to this teacher's
 # own classes via its class_ids param, then re-keyed with the teacher prefix.
+def _next_incomplete_topic(class_id: str, subject: str, ac) -> dict:
+    rows = (
+        ac.table("syllabus_topics").select("topic")
+        .eq("class_id", class_id).eq("subject", subject).eq("is_completed", False)
+        .order("order_index").limit(1).execute().data or []
+    )
+    return rows[0] if rows else None
+
+
 def _pb_syllabus_pace_teacher(teacher_id: str, ctx: dict, date_str: str, ac) -> list:
     if not ctx["schoolId"] or not ctx["classIds"]:
         return []
     findings = _pb_syllabus_pace(ctx["schoolId"], date_str, ac, class_ids=ctx["classIds"])
+    if not findings:
+        return []
+
+    # Proactive half of below-grade-level prep material: a class genuinely
+    # behind pace is exactly the signal worth turning into a one-tap
+    # "generate simpler material for what's next" action, through the same
+    # generate_prep_material propose/confirm path a teacher would use by
+    # asking directly — this just resolves the proposal for them.
+    class_names = {
+        c["id"]: c["name"]
+        for c in (ac.table("classes").select("id, name").in_("id", ctx["classIds"]).execute().data or [])
+    }
+    for f in findings:
+        # findingKey format: "syllabus_pace:{class_id}:{subject}"
+        _, class_id, subject = f["findingKey"].split(":", 2)
+        next_topic = _next_incomplete_topic(class_id, subject, ac)
+        class_name = class_names.get(class_id)
+        if not next_topic or not class_name:
+            continue
+        f["suggestedAction"] = {
+            "tool": "generate_prep_material",
+            "args": {
+                "classRef": class_name, "subject": subject, "topic": next_topic["topic"],
+                "belowGradeLevel": True,
+            },
+            "label": f'Generate simpler prep material for "{next_topic["topic"]}" ({class_name}, {subject})',
+        }
+
     return _prefixed(teacher_id, findings)
 
 

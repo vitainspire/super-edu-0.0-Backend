@@ -130,6 +130,12 @@ async def _run_one_teacher(teacher_id: str, ctx: dict, window: str, run_date: st
         return
 
     save_message(ctx["schoolId"], sender="teacher_agent", content=result["briefing"], thread="teacher", teacher_id=teacher_id)
+    for finding in result["actionable"]:
+        action = finding["suggestedAction"]
+        save_message(
+            ctx["schoolId"], sender="teacher_agent", content=action["label"], thread="teacher", teacher_id=teacher_id,
+            pending_confirmation={"tool": action["tool"], "args": action["args"], "label": action["label"]},
+        )
 
 
 async def maybe_run_teacher_daily_sweep(teacher_id: str, ctx: dict) -> None:

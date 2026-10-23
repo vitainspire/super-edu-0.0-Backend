@@ -388,7 +388,7 @@ async def generate_lesson_core(
     total_students: Optional[int], class_interests: list, weak_topics: list,
     teaching_profile: Optional[dict], grounding: Optional[dict], textbook: Optional[dict],
     previous_topic: Optional[str], avoid_activities: list, feedback_context: dict,
-    context_note: Optional[str],
+    context_note: Optional[str], below_grade_level: bool = False,
 ) -> dict:
     if grounding:
         chapter_line = ""
@@ -421,6 +421,21 @@ async def generate_lesson_core(
     )
 
     context_note_line = f"Teacher's note for today: {context_note.strip()}" if context_note and context_note.strip() else ""
+
+    # Explicit override, not a quiet substitution: the static rules below
+    # include "GRADE-APPROPRIATE NUMBERS: don't drop to trivially small
+    # numbers" — correct for a class at grade level, wrong for one reading
+    # below it. Naming the conflict directly (rather than silently deleting
+    # that rule for this call) is what makes the model actually resolve it
+    # instead of averaging the two.
+    below_grade_level_line = (
+        "IMPORTANT OVERRIDE to the 'GRADE-APPROPRIATE NUMBERS' rule later in this prompt: "
+        "this class is reading BELOW their nominal grade level. Use smaller, more concrete "
+        "numbers, shorter sentences, and simpler vocabulary than the grade would normally call "
+        "for. Teach the exact SAME concept and syllabus content at the SAME grade — only HOW it "
+        "is explained gets simpler, never WHAT is taught."
+        if below_grade_level else ""
+    )
 
     feedback_context_line = " ".join(p for p in [
         f"From this class's last session on this exact topic: {feedback_context['topicInsight']}" if feedback_context.get("topicInsight") else "",
@@ -494,6 +509,7 @@ Class size: {total_students or 'unknown'}
 {preferences_context}
 {weak_topics_context}
 {context_note_line}
+{below_grade_level_line}
 {feedback_context_line}
 {avoid_line}
 
@@ -699,14 +715,22 @@ Clean, accurate, and genuinely explanatory — a child should understand the ide
 async def generate_smart_lesson(
     class_id: str, topic: str, subject: str, grade: str, teacher_id: Optional[str] = None,
     subtopic: Optional[str] = None, topic_definition_id: Optional[str] = None,
-    context_note: Optional[str] = None,
+    context_note: Optional[str] = None, textbook: Optional[dict] = None,
+    below_grade_level: bool = False,
 ) -> dict:
     """The real pipeline behind POST /smart-lesson, pulled out so
     app/lib/teacher_agent.py's generate_prep_material tool can reuse the
     whole thing (class context, both groundings, previous-topic, feedback
     context, image generation) rather than re-deriving any of it. Pure
     extraction — the route below is now a thin wrapper with identical
-    behavior."""
+    behavior.
+
+    `textbook`, when already fetched by a caller (app/lib/prep_material_agent.py
+    checks grounding BEFORE calling this, so it can refuse without spending
+    any LLM tokens on an ungrounded generation), is used as-is instead of
+    being fetched again here — same real content, no second round-trip to the
+    textbook services. The real /smart-lesson route below passes neither new
+    param, so its behavior is unchanged."""
     admin = create_admin_client()
 
     # 1-3. Class size + interests, teaching profile, silent gap-awareness
@@ -721,12 +745,13 @@ async def generate_smart_lesson(
     # fetch_grounding gives the ontology's summary (exercises, sidebars, pages).
     # fetch_textbook_grounding gives the book's own words and its illustrations.
     grounding = await fetch_grounding(admin, topic_definition_id) if topic_definition_id else None
-    class_row = (
-        admin.table("classes").select("school_id").eq("id", class_id).maybe_single().execute()
-    ).data
-    textbook = await fetch_textbook_grounding(
-        admin, (class_row or {}).get("school_id"), str(grade), subject, topic, subtopic,
-    )
+    if textbook is None:
+        class_row = (
+            admin.table("classes").select("school_id").eq("id", class_id).maybe_single().execute()
+        ).data
+        textbook = await fetch_textbook_grounding(
+            admin, (class_row or {}).get("school_id"), str(grade), subject, topic, subtopic,
+        )
 
     # 5. Previous topic (for the refresher) + recent Challenge activities (rotation)
     previous_topic = await fetch_previous_topic(admin, class_id, topic, topic_definition_id, subtopic, subject)
@@ -741,6 +766,7 @@ async def generate_smart_lesson(
         teaching_profile=teaching_profile, grounding=grounding, textbook=textbook,
         previous_topic=previous_topic, avoid_activities=avoid_activities,
         feedback_context=feedback_context, context_note=context_note,
+        below_grade_level=below_grade_level,
     )
     await generate_lesson_images(lesson, textbook, admin, [class_id, topic, subtopic])
 

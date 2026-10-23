@@ -25,6 +25,7 @@ from .admin_queries import (
 )
 from .substitute_finder import find_substitute
 from .ask_history import history_block
+from .agent_activity_log import record_activity
 from .logger import api_log
 
 # Guardrail: hard cap on tool calls per run. A confused chain stops here
@@ -748,12 +749,40 @@ async def _tool_invoke_teacher_agent(school_id: str, args: dict) -> dict:
     from .teacher_agent import run_teacher_agent
     result = await run_teacher_agent(teacher["id"], question, [], "headmaster-invoke")
 
+    record_activity(
+        school_id, "headmaster_agent", f"{teacher['name']}'s Agent", question,
+        answer=result.get("response"), status=result["status"], to_teacher_id=teacher["id"],
+    )
+
     return {
         "teacherName": teacher["name"],
         "status": result["status"],
         "answer": result.get("response"),
         "proposedAction": result.get("label") if result["status"] == "pending_confirmation" else None,
     }
+
+
+# Cross-agent messaging — Headmaster <-> Admin. Both call run_agent(nested=True)
+# so the invoked side can't itself call back into a cross-agent tool: that's
+# what caps every chain at depth 1 instead of trusting the model not to
+# ping-pong. Not "side_effect: action" — same reasoning invoke_teacher_agent
+# already uses, this is delegation/a question, not a write.
+async def _tool_message_admin_agent(school_id: str, args: dict) -> dict:
+    question = (args.get("question") or "").strip()
+    if not question:
+        return {"error": "question is required"}
+    result = await run_agent("admin", school_id, question, [], "headmaster-to-admin", nested=True)
+    record_activity(school_id, "headmaster_agent", "Admin Agent", question, answer=result.get("response"), status=result["status"])
+    return {"answer": result.get("response"), "status": result["status"]}
+
+
+async def _tool_message_headmaster_agent(school_id: str, args: dict) -> dict:
+    question = (args.get("question") or "").strip()
+    if not question:
+        return {"error": "question is required"}
+    result = await run_agent("headmaster", school_id, question, [], "admin-to-headmaster", nested=True)
+    record_activity(school_id, "admin_agent", "Headmaster Agent", question, answer=result.get("response"), status=result["status"])
+    return {"answer": result.get("response"), "status": result["status"]}
 
 
 HEADMASTER_TOOLS = {
@@ -770,7 +799,21 @@ HEADMASTER_TOOLS = {
         },
         "fn": _tool_invoke_teacher_agent,
     },
+    "message_admin_agent": {
+        "description": (
+            "Ask the Admin Agent a question and get its real answer back — use this when an academic "
+            "question actually depends on operations you don't have tools for (e.g. is a staffing gap "
+            "behind a syllabus delay). Visible to the admin in the Agent to Agent log, not sent to them directly."
+        ),
+        "params": {"question": "string, required"},
+        "fn": _tool_message_admin_agent,
+    },
 }
+
+# Cross-agent tool names — stripped from a nested run's own catalog (see
+# run_agent's `nested` param) so Headmaster -> Admin -> Headmaster -> ... is
+# structurally impossible, not just discouraged by a prompt.
+_CROSS_AGENT_TOOL_NAMES = {"invoke_teacher_agent", "message_admin_agent", "message_headmaster_agent"}
 
 PERSONAS = {
     "headmaster": {
@@ -783,17 +826,32 @@ PERSONAS = {
             "logistics (leave, substitutes, announcements) — that is the Admin Agent's job. "
             "You can check in directly with a specific teacher's own agent via "
             "invoke_teacher_agent when a question needs that teacher's own perspective, rather "
-            "than guessing from school-wide numbers alone."
+            "than guessing from school-wide numbers alone, and you can ask the Admin Agent a "
+            "question directly via message_admin_agent when something academic genuinely "
+            "depends on an operations fact you don't have a tool for."
         ),
     },
     "admin": {
         "label": "Admin Agent",
-        "tools": ADMIN_TOOLS,
+        "tools": {
+            **ADMIN_TOOLS,
+            "message_headmaster_agent": {
+                "description": (
+                    "Ask the Headmaster Agent a question and get its real answer back — use this "
+                    "when an operations question actually depends on an academic fact you don't have "
+                    "a tool for. Visible to the admin in the Agent to Agent log, not sent to them directly."
+                ),
+                "params": {"question": "string, required"},
+                "fn": _tool_message_headmaster_agent,
+            },
+        },
         "identity": (
             "You are the Admin Agent, responsible for keeping day-to-day school operations "
             "running — leave requests, substitute coverage, staffing gaps, announcements, and "
             "the calendar. You are not responsible for academic performance or curriculum "
-            "pacing — that is the Headmaster Agent's job."
+            "pacing — that is the Headmaster Agent's job. You can ask the Headmaster Agent a "
+            "question directly via message_headmaster_agent when an operations decision "
+            "genuinely depends on an academic fact you don't have a tool for."
         ),
     },
 }
@@ -893,19 +951,27 @@ Decide your next step. Return JSON only, no markdown, one of:
     return {"status": "step_limit", "response": "That took more steps than expected — try a more specific question.", "trace": trace}
 
 
-async def run_agent(persona: str, school_id: str, question: str, history: list, ip: str) -> dict:
+async def run_agent(persona: str, school_id: str, question: str, history: list, ip: str, nested: bool = False) -> dict:
     """Same reason/act/observe loop as run_argus above, parameterized by
     persona (see PERSONAS) instead of hardcoded to the one unified Argus
     identity/toolset. Built for the Group Chat feature, where the Headmaster
     Agent and Admin Agent are separate, visibly distinct participants rather
     than one assistant covering everything. run_argus itself is untouched —
     this is a sibling, not a replacement, so the existing (currently unused)
-    /argus route keeps behaving exactly as it always has."""
+    /argus route keeps behaving exactly as it always has.
+
+    nested=True is how message_admin_agent/message_headmaster_agent/
+    invoke_teacher_agent call into this when ONE persona is asking ANOTHER
+    agent a question — the invoked run's own tool catalog has every
+    cross-agent tool stripped out, so Headmaster -> Admin -> Headmaster -> ...
+    is structurally impossible rather than merely discouraged by a prompt."""
     spec = PERSONAS.get(persona)
     if spec is None:
         return {"status": "error", "response": f'Unknown persona "{persona}".', "trace": []}
 
     tools = spec["tools"]
+    if nested:
+        tools = {k: v for k, v in tools.items() if k not in _CROSS_AGENT_TOOL_NAMES}
     scratchpad: list[dict] = []
     trace: list[dict] = []
 
@@ -913,7 +979,10 @@ async def run_agent(persona: str, school_id: str, question: str, history: list, 
         prompt = f"""{spec["identity"]} Your scope is this one school only ({school_id}) —
 you have no visibility into any other school. You never state a fact
 yourself; every fact in your final answer must come from a tool result below,
-not from your own generation.
+not from your own generation. If the message is a casual greeting or too
+vague to act on ("hello", "hi", "you there?"), reply conversationally and
+ask what's needed — do not call a tool until there's an actual question or
+request to answer.
 
 The admin asked: "{question}"
 {history_block(history)}

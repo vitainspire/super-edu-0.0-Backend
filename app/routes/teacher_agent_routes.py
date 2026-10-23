@@ -14,6 +14,7 @@ from ..lib.teacher_agent import run_teacher_agent
 from ..lib.teacher_confirm_dispatch import execute_confirmed_teacher_action
 from ..lib.teacher_context import get_teacher_context
 from ..lib.agent_scheduler import maybe_run_teacher_daily_sweep
+from ..lib.teacher_period_briefing import maybe_run_period_briefings
 from ..lib.teacher_agent_memory import load_active_notes, archive_note_by_id
 from ..lib.group_chat_store import load_recent_messages, save_message, mark_confirmed
 from ..lib.logger import api_log, get_client_ip
@@ -43,6 +44,7 @@ async def get_agent_messages(limit: int = 50, teacher_id: str = Depends(require_
     # scheduler) — same "triggered by activity" pattern group_chat_routes.py
     # already uses for the admin side.
     await maybe_run_teacher_daily_sweep(teacher_id, ctx)
+    await maybe_run_period_briefings(teacher_id, ctx)
     return {"messages": load_recent_messages(ctx["schoolId"] or "", thread="teacher", teacher_id=teacher_id, limit=limit)}
 
 
@@ -133,10 +135,16 @@ async def post_agent_confirm(body: TeacherAgentConfirmBody, request: Request, te
     try:
         args = {k: v for k, v in body.args.items() if k != "tool"}
         result = await execute_confirmed_teacher_action(teacher_id, body.tool, args)
-        if body.messageId:
+        # Most actions here raise on real failure (caught below), so {"ok": True}
+        # has always been safe to assume — but generate_prep_material can
+        # legitimately refuse (no textbook match) and return {"ok": False,
+        # "error": ...} without raising. Only mark the message confirmed, and
+        # only report success, when that's not what happened.
+        succeeded = not (isinstance(result, dict) and result.get("ok") is False)
+        if body.messageId and succeeded:
             mark_confirmed(body.messageId)
         api_log("teacher-agent-confirm", ip, (time.time() - t0) * 1000, False, "ok")
-        return {"ok": True, "result": result}
+        return {"ok": succeeded, "result": result}
     except HTTPException:
         raise
     except Exception as e:

@@ -366,13 +366,15 @@ def _tool_generate_prep_material(teacher_id: str, ctx: dict, args: dict) -> dict
     if match["kind"] == "ambiguous":
         return {"error": f'More than one class matches "{class_ref}": {", ".join(match["candidates"])} — which one?'}
     cls = match["class"]
+    below_grade_level = bool(args.get("belowGradeLevel"))
+    label = f'Generate and save {"a simplified, below-grade-level " if below_grade_level else ""}prep material for "{topic}" ({subject}, {cls["name"]}) — this takes a little while and uses a real AI call'
     return {
         "proposal": {
             "tool": "generate_prep_material",
             "classId": cls["id"], "grade": cls["grade"], "subject": subject,
-            "topic": topic, "subtopic": args.get("subtopic"),
+            "topic": topic, "subtopic": args.get("subtopic"), "belowGradeLevel": below_grade_level,
         },
-        "label": f'Generate and save prep material for "{topic}" ({subject}, {cls["name"]}) — this takes a little while and uses a real AI call',
+        "label": label,
     }
 
 
@@ -568,8 +570,8 @@ TOOLS = {
         "side_effect": "action", "fn": _tool_create_test,
     },
     "generate_prep_material": {
-        "description": "Generate and save a new prep sheet for a topic using the real AI lesson pipeline. Slow (tens of seconds) and costs real money — check get_prep_material first in case one already exists.",
-        "params": {"classRef": "string, required", "subject": "string, required", "topic": "string, required", "subtopic": "string, optional"},
+        "description": "Generate and save a new prep sheet for a topic using the real AI lesson pipeline, grounded in the actual textbook. Slow (tens of seconds) and costs real money — check get_prep_material first in case one already exists. Refuses if no real textbook match is found for the topic, rather than generating ungrounded content.",
+        "params": {"classRef": "string, required", "subject": "string, required", "topic": "string, required", "subtopic": "string, optional", "belowGradeLevel": "boolean, optional — set true when the teacher asks for a simpler version for a class reading below grade level"},
         "side_effect": "action", "fn": _tool_generate_prep_material,
     },
     "record_attendance_bulk": {
@@ -636,7 +638,10 @@ async def run_teacher_agent(teacher_id: str, question: str, history: list, ip: s
         prompt = f"""You are this teacher's own assistant. Your scope is only THEIR OWN
 classes and students — you have no visibility into any other teacher's
 classes. You never state a fact yourself; every fact in your final answer
-must come from a tool result below, not from your own generation. When the
+must come from a tool result below, not from your own generation. If the
+message is a casual greeting or too vague to act on ("hello", "hi", "you
+there?"), reply conversationally and ask what's needed — do not call a tool
+until there's an actual question or request to answer. When the
 teacher tells you a preference or a recurring concern worth carrying into
 future conversations, call remember_note to save it — not every fact already
 available from a tool, just what's worth remembering about THEM.

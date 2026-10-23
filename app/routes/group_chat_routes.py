@@ -13,6 +13,7 @@ from pydantic import BaseModel
 from ..lib.argus_agent import run_agent, route_message, PERSONAS
 from ..lib.argus_confirm_dispatch import execute_confirmed_action
 from ..lib.agent_scheduler import maybe_run_daily_sweeps
+from ..lib.agent_activity_log import load_recent_activity
 from ..lib.group_chat_store import load_recent_messages, save_message, mark_confirmed
 from ..lib.logger import api_log, get_client_ip
 from ..lib.rate_limit import check_rate_limit
@@ -37,6 +38,14 @@ async def get_agent_messages(schoolId: str, persona: str, limit: int = 50, admin
         raise HTTPException(status_code=404, detail=f'Unknown agent "{persona}".')
     await maybe_run_daily_sweeps(schoolId)
     return {"messages": load_recent_messages(schoolId, thread=persona, limit=limit)}
+
+
+@router.get("/{schoolId}/agent-activity")
+def get_agent_activity(schoolId: str, limit: int = 50, admin: dict = Depends(require_admin)):
+    """Read-only — agent-to-agent communication (Headmaster<->Admin,
+    Headmaster->a specific teacher's own agent), not something an admin
+    posts into. See app/lib/agent_activity_log.py."""
+    return {"activity": load_recent_activity(schoolId, limit=limit)}
 
 
 class GroupChatPostBody(BaseModel):

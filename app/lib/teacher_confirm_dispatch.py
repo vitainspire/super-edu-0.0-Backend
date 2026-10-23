@@ -14,11 +14,11 @@ from .schemas import (
     TeacherTestUpsertSchema, TeacherPrepMaterialUpsertSchema,
 )
 from .teacher_context import get_teacher_context
+from .prep_material_agent import create_prep_material
 from ..routes.teacher import (
     upsert_mark, upsert_attendance, answer_student_doubt, upsert_own_intervention,
     upsert_own_test, upsert_own_prep_material,
 )
-from ..routes.smart_lesson_routes import generate_smart_lesson
 
 
 async def execute_confirmed_teacher_action(teacher_id: str, tool: str, args: dict) -> dict:
@@ -57,14 +57,22 @@ async def execute_confirmed_teacher_action(teacher_id: str, tool: str, args: dic
             upsert_mark(TeacherMarkUpsertSchema(**record), teacher_id=teacher_id)
         return {"ok": True, "count": len(args["records"])}
     if tool == "generate_prep_material":
-        # The real, slow, costly pipeline — reused whole from smart_lesson_routes.py,
-        # not re-derived. Saved the same way the frontend saves a generated lesson
-        # (upsert_own_prep_material), so it's immediately visible in Prep Materials.
-        import uuid
-        result = await generate_smart_lesson(
-            class_id=args["classId"], topic=args["topic"], subject=args["subject"],
-            grade=args["grade"], teacher_id=teacher_id, subtopic=args.get("subtopic"),
+        # Via the Prep Material Creation Agent (app/lib/prep_material_agent.py),
+        # not generate_smart_lesson directly — this is where "refuse rather
+        # than silently generate ungrounded content" actually takes effect,
+        # checked BEFORE any LLM call runs.
+        ctx = get_teacher_context(teacher_id)
+        if not ctx["schoolId"]:
+            raise HTTPException(status_code=400, detail="Could not resolve this teacher's school.")
+        result = await create_prep_material(
+            class_id=args["classId"], grade=args["grade"], subject=args["subject"], topic=args["topic"],
+            teacher_id=teacher_id, school_id=ctx["schoolId"], subtopic=args.get("subtopic"),
+            below_grade_level=bool(args.get("belowGradeLevel")),
         )
+        if not result["grounded"]:
+            return {"ok": False, "error": result["error"]}
+
+        import uuid
         upsert_own_prep_material(
             TeacherPrepMaterialUpsertSchema(
                 id=str(uuid.uuid4()), classId=args["classId"], subject=args["subject"],
@@ -73,5 +81,5 @@ async def execute_confirmed_teacher_action(teacher_id: str, tool: str, args: dic
             ),
             teacher_id=teacher_id,
         )
-        return {"ok": True, "topic": args["topic"]}
+        return {"ok": True, "topic": args["topic"], "chapterTitle": result.get("chapterTitle")}
     raise HTTPException(status_code=400, detail=f'"{tool}" is not a confirmable action.')
