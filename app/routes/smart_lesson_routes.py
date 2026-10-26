@@ -25,6 +25,8 @@ from ..lib.prep_context import (
     fetch_feedback_context, fetch_grounding, fetch_recent_challenge_activities,
     gather_class_context, personalization_tier_line,
 )
+from ..lib.prep_quality import run_quality_loop
+from ..lib.prep_skills import select_prep_skills, skills_prompt_block
 from ..lib.prompt_fragments import engagement_level_guidance
 from ..lib.rate_limit import check_vision_rate_limit
 from ..lib.refresher_topic import fetch_previous_topic
@@ -467,6 +469,15 @@ When you DO include it: open it as a PAIR-START STUDENT ACTION — partners DO s
     subject_module = resolve_subject_module(subject)
     engagement_guidance = engagement_level_guidance(grade)
 
+    # Deterministic, zero-cost selection (see prep_skills.py's own docstring
+    # for why this isn't a model call) — always picks exactly two angles: one
+    # for where this class stands (behind/on-pace) and one for how this topic
+    # connects to what came before (nothing yet/a real predecessor).
+    selected_skills = select_prep_skills(
+        below_grade_level=below_grade_level, weak_topics=weak_topics, previous_topic=previous_topic,
+    )
+    skills_block = skills_prompt_block(selected_skills)
+
     system_prompt = f"""You are an expert teacher-trainer designing a classroom-ready lesson for a resource-constrained school (government or NGO-run, India). A teacher opens this five minutes before class and follows it directly.
 
 {LOW_RESOURCE_PRINCIPLES}
@@ -480,6 +491,8 @@ When you DO include it: open it as a PAIR-START STUDENT ACTION — partners DO s
 IMPORTANT — the bank above is used differently in this template than its own header text says:
 - "explore" is NOT limited to the bank. Invent a vivid, highly creative real-life scenario and activity that fits this specific topic and teacher profile — it should feel like a mini-story the class steps into, not a generic exercise. Still respect the low-resource rules and the profile's comfort zones.
 - "challenge" MUST pick exactly one activity, by its exact name, from the bank above — this is the one structured, rotated part of the lesson. Never reuse Explore's activity for the Challenge.
+
+{skills_block}
 
 If instructions below conflict, resolve in this order: (1) the low-resource constraints and any teacher materials list always win, (2) the teacher's profile and comfort zones, (3) everything else.
 
@@ -596,6 +609,28 @@ This is a TEACHER'S prep sheet, not a student handout. The visible headline says
     if issues:
         print(f"[smart-lesson] Tier 2 violations, repairing: {issues}")
         lesson = _sanitize_lesson(await _repair_lesson(lesson, issues, api_key), resources)
+
+    # Tier 3 — an independent model rates the lesson against a fixed rubric
+    # and a targeted rewrite fixes what's genuinely fixable (see prep_quality.py).
+    # OFF SWITCH, ON BY DEFAULT: this is one extra (cheap, small) judge call plus
+    # at most PREP_QUALITY_MAX_FIX_ROUNDS fix calls, only for sections the judge
+    # found both weak AND revisable. Wrapped so a judge failure (bad JSON, model
+    # hiccup) falls back to the Tier-2-validated lesson rather than failing a
+    # teacher's request outright — the quality loop can only make this better,
+    # never block it.
+    if os.environ.get("PREP_QUALITY_JUDGE", "true").strip().lower() in ("1", "true", "yes", "on"):
+        try:
+            quality = await run_quality_loop(
+                lesson, topic=topic, subtopic=subtopic, grade=grade, subject=subject, textbook=textbook,
+            )
+            lesson = _sanitize_lesson(quality["finalLesson"], resources)
+            lesson["_prepMeta"] = {
+                "skillsApplied": [s["key"] for s in selected_skills],
+                "qualityScore": (quality["finalSummary"] or {}).get("targetable"),
+                "qualityRounds": len(quality["history"]),
+            }
+        except Exception as e:
+            print(f"[smart-lesson] Tier 3 quality loop failed (shipping Tier-2 lesson unchanged): {e}")
 
     return lesson
 
