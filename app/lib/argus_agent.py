@@ -797,11 +797,11 @@ async def _tool_message_headmaster_agent(school_id: str, args: dict) -> dict:
 # (see PERSONAS below) without either persona needing a school_id-shaped extra
 # argument the run_agent loop's tool["fn"](school_id, args) convention doesn't pass.
 def _make_remember_note_tool(persona: str):
-    def _tool_remember_note(school_id: str, args: dict) -> dict:
+    async def _tool_remember_note(school_id: str, args: dict) -> dict:
         note = (args.get("note") or "").strip()
         if not note:
             return {"error": "note is required — what should be remembered?"}
-        return _save_agent_note(school_id, persona, note)
+        return await _save_agent_note(school_id, persona, note)
     return _tool_remember_note
 
 

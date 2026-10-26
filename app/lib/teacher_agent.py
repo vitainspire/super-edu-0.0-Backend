@@ -455,7 +455,7 @@ def _tool_record_marks_bulk(teacher_id: str, ctx: dict, args: dict) -> dict:
     }
 
 
-def _tool_remember_note(teacher_id: str, ctx: dict, args: dict) -> dict:
+async def _tool_remember_note(teacher_id: str, ctx: dict, args: dict) -> dict:
     """No "proposal" key in the return — this never needs the propose/confirm
     gate, since it only ever touches the agent's own notes about the teacher,
     never a student/school record. The loop treats this like any other tool
@@ -463,7 +463,7 @@ def _tool_remember_note(teacher_id: str, ctx: dict, args: dict) -> dict:
     note = (args.get("note") or "").strip()
     if not note:
         return {"error": "note is required — say what to remember."}
-    return save_note(teacher_id, ctx["schoolId"], note)
+    return await save_note(teacher_id, ctx["schoolId"], note)
 
 
 def _tool_forget_note(teacher_id: str, ctx: dict, args: dict) -> dict:

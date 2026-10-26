@@ -10,6 +10,7 @@ remembered yet", never an error.
 """
 from datetime import datetime, timezone
 
+from .memory_reconcile import reconcile_note
 from .supabase_clients import create_admin_client
 
 TABLE = "teacher_agent_memory"
@@ -52,11 +53,26 @@ def load_active_notes(teacher_id: str, limit: int = MAX_ACTIVE_NOTES, ac=None) -
     return [_to_app(r) for r in rows]
 
 
-def save_note(teacher_id: str, school_id: str, content: str, ac=None) -> dict:
+async def save_note(teacher_id: str, school_id: str, content: str, ac=None) -> dict:
+    """Reconciles against existing active notes before writing (see
+    memory_reconcile.py) — a NOOP is dropped rather than stored, an UPDATE/
+    DELETE archives the note it supersedes first, so a changed preference
+    replaces the old one instead of both sitting in the prompt forever,
+    contradicting each other."""
     content = " ".join((content or "").split())[:MAX_NOTE_LENGTH]
     if not content:
         return {"error": "Nothing to remember — the note was empty."}
     ac = ac or create_admin_client()
+
+    existing = load_active_notes(teacher_id, ac=ac)
+    decision = await reconcile_note(existing, content)
+    if decision["action"] == "noop":
+        return {"saved": False, "reason": "Already remembered — nothing changed."}
+    if decision["action"] in ("update", "delete"):
+        archive_note_by_id(teacher_id, decision["targetId"], ac=ac)
+    if decision["action"] == "delete":
+        return {"saved": False, "forgotten": True, "reason": "Replaced an earlier note; nothing new to add."}
+
     payload = {"teacher_id": teacher_id, "school_id": school_id, "content": content, "created_at": _now()}
     try:
         row = (ac.table(TABLE).insert(payload).execute().data or [None])[0]
@@ -64,7 +80,10 @@ def save_note(teacher_id: str, school_id: str, content: str, ac=None) -> dict:
         if not _table_missing(e):
             print(f"[teacher_agent_memory] save_note failed: {e}")
         return {"saved": False}
-    return {"saved": True, "note": _to_app(row) if row else {"content": content}}
+    result = {"saved": True, "note": _to_app(row) if row else {"content": content}}
+    if decision["action"] == "update":
+        result["updated"] = True
+    return result
 
 
 def archive_note_by_id(teacher_id: str, note_id: str, ac=None) -> bool:
