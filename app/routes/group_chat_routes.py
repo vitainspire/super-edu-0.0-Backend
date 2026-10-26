@@ -1,7 +1,10 @@
 """Group Chat: the shared room where an admin talks with both the
 Headmaster Agent and the Admin Agent in one thread, each a visibly distinct
-participant with its own tools. Builds entirely on top of
-app/lib/argus_agent.py's run_agent/route_message and
+participant with its own tools. Every message goes to every persona — like
+people in the same room, each one decides for itself whether to answer or
+to defer to the other (see run_agent's "defer" action in argus_agent.py) —
+there's no upfront classifier picking who's "allowed" to respond. Builds
+entirely on top of app/lib/argus_agent.py's run_agent and
 app/lib/group_chat_store.py — nothing here duplicates logic that already
 exists for the (still separately working) single-persona /argus route.
 """
@@ -10,10 +13,11 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 
-from ..lib.argus_agent import run_agent, route_message, PERSONAS
+from ..lib.argus_agent import run_agent, PERSONAS
 from ..lib.argus_confirm_dispatch import execute_confirmed_action
 from ..lib.agent_scheduler import maybe_run_daily_sweeps
 from ..lib.agent_activity_log import load_recent_activity
+from ..lib.agent_action_log import record_action
 from ..lib.group_chat_store import load_recent_messages, save_message, mark_confirmed
 from ..lib.logger import api_log, get_client_ip
 from ..lib.rate_limit import check_rate_limit
@@ -28,7 +32,9 @@ async def get_group_chat_messages(schoolId: str, limit: int = 50, admin: dict = 
     # agent_scheduler.py's module docstring for why there's no real
     # scheduler) — group chat and individual DMs both check, since either one
     # being opened proves the admin is actually using the app right now.
-    await maybe_run_daily_sweeps(schoolId)
+    # The real logged-in admin is passed through so a sweep's fast-track
+    # findings can execute as them, not a synthetic identity.
+    await maybe_run_daily_sweeps(schoolId, admin)
     return {"messages": load_recent_messages(schoolId, thread="group", limit=limit)}
 
 
@@ -36,7 +42,7 @@ async def get_group_chat_messages(schoolId: str, limit: int = 50, admin: dict = 
 async def get_agent_messages(schoolId: str, persona: str, limit: int = 50, admin: dict = Depends(require_admin)):
     if persona not in PERSONAS:
         raise HTTPException(status_code=404, detail=f'Unknown agent "{persona}".')
-    await maybe_run_daily_sweeps(schoolId)
+    await maybe_run_daily_sweeps(schoolId, admin)
     return {"messages": load_recent_messages(schoolId, thread=persona, limit=limit)}
 
 
@@ -67,14 +73,15 @@ def _recent_history(messages: list, max_turns: int = 3) -> list:
     return turns[-max_turns:]
 
 
-async def _run_persona_turn(schoolId: str, persona: str, content: str, history: list, ip: str, thread: str) -> dict:
+async def _run_persona_turn(schoolId: str, persona: str, content: str, history: list, ip: str, thread: str, admin: dict) -> dict:
     """Runs one persona's agent loop for one turn and persists the result on
-    `thread`. Shared by Group Chat (where `route_message` already picked the
-    persona) and Individual Messages (where the admin picked it by opening
-    that DM — no classifier involved)."""
+    `thread`. Shared by Group Chat (every persona runs on every message) and
+    Individual Messages (where the admin picked the persona by opening that
+    DM). `admin` is the real logged-in admin a fast-track ("auto") tool
+    executes as — see run_agent's docstring in argus_agent.py."""
     t0 = time.time()
     try:
-        result = await run_agent(persona, schoolId, content, history, ip)
+        result = await run_agent(persona, schoolId, content, history, ip, admin=admin)
     except Exception as e:
         api_log(f"{thread}-{persona}", ip, (time.time() - t0) * 1000, False, "error", error=str(e))
         result = {"status": "error", "response": "Something went wrong answering that — try again.", "trace": []}
@@ -124,17 +131,12 @@ async def post_group_chat_message(schoolId: str, body: GroupChatPostBody, reques
         "trace": [], "pendingConfirmation": None, "confirmedAt": None, "createdAt": None,
     }
 
-    t0 = time.time()
-    try:
-        personas = await route_message(content, history)
-    except Exception as e:
-        api_log("group-chat-route", ip, (time.time() - t0) * 1000, False, "error", error=str(e))
-        personas = ["admin"]
-
+    # Broadcast to every persona — no classifier deciding who's "allowed" to
+    # answer. Each one's own prompt decides whether to answer, act, or defer.
     # Sequential, not concurrent — each persona's run is its own reasoning
     # loop over the same question, and there's no reason for two to be racing
     # against each other for a single admin's single message.
-    new_messages = [await _run_persona_turn(schoolId, persona, content, history, ip, "group") for persona in personas]
+    new_messages = [await _run_persona_turn(schoolId, persona, content, history, ip, "group", admin) for persona in PERSONAS]
 
     return {"adminMessage": admin_message, "messages": new_messages}
 
@@ -167,7 +169,7 @@ async def post_agent_message(schoolId: str, persona: str, body: AgentMessagePost
 
     # No route_message classifier here — the admin picked this exact agent by
     # opening its DM, so its loop runs directly on the question.
-    new_message = await _run_persona_turn(schoolId, persona, content, history, ip, persona)
+    new_message = await _run_persona_turn(schoolId, persona, content, history, ip, persona, admin)
 
     return {"adminMessage": admin_message, "messages": [new_message]}
 
@@ -199,6 +201,11 @@ def post_group_chat_confirm(schoolId: str, body: GroupChatConfirmBody, request: 
         result = execute_confirmed_action(schoolId, body.tool, args, admin)
         if body.messageId:
             mark_confirmed(body.messageId)
+        # Every one of the still-confirm-gated tools (approve_leave,
+        # reject_leave, post_announcement) lives only in ADMIN_TOOLS — the
+        # Headmaster Agent has none of them — so "admin" is always the right
+        # persona here, not a guess.
+        record_action(schoolId, "admin", body.tool, args, label=None, status="succeeded", source="chat", outcome=result)
         api_log("group-chat-confirm", ip, (time.time() - t0) * 1000, False, "ok")
         return {"ok": True, "result": result}
     except HTTPException:

@@ -22,6 +22,9 @@ from .argus_sweep import run_sweep
 from .teacher_sweep import run_teacher_sweep
 from .group_chat_store import save_message
 from .agent_activity_log import record_activity
+from .agent_action_log import record_action
+from .argus_confirm_dispatch import execute_confirmed_action
+from .argus_agent import TOOLS
 
 TABLE = "agent_sweep_log"
 
@@ -158,7 +161,7 @@ async def _deliver_performance_coaching(school_id: str, finding: dict, ac) -> No
     )
 
 
-async def _run_one(school_id: str, persona: str, window: str, run_date: str, ac) -> None:
+async def _run_one(school_id: str, persona: str, window: str, run_date: str, ac, admin: dict = None) -> None:
     if _already_ran(school_id, persona, window, run_date, ac):
         return
 
@@ -174,6 +177,22 @@ async def _run_one(school_id: str, persona: str, window: str, run_date: str, ac)
     save_message(school_id, sender=sender, content=result["briefing"], thread=persona)
     for finding in result["actionable"]:
         action = finding["suggestedAction"]
+        # Fast-track ("auto") tools fix themselves and report, same as a live
+        # chat run (see run_agent in argus_agent.py) — only fires when a real
+        # admin is available to execute as; otherwise falls back to the
+        # original propose-then-confirm card.
+        if admin is not None and TOOLS.get(action["tool"], {}).get("side_effect") == "auto":
+            try:
+                outcome = execute_confirmed_action(school_id, action["tool"], action["args"], admin)
+                record_action(school_id, persona, action["tool"], action["args"], action["label"], status="succeeded", source="sweep", outcome=outcome)
+                save_message(school_id, sender=sender, content=f"Done — {action['label']}.", thread=persona)
+                continue
+            except Exception as e:
+                record_action(school_id, persona, action["tool"], action["args"], action["label"], status="failed", source="sweep", error=str(e))
+                print(f"[agent_scheduler] auto-execute failed for {action['tool']}: {e}")
+                # Fall through to the confirm card below — a failed auto-fix
+                # still needs a human's attention, same as never having tried.
+
         save_message(
             school_id, sender=sender, content=action["label"], thread=persona,
             pending_confirmation={"tool": action["tool"], "args": action["args"], "label": action["label"]},
@@ -187,7 +206,10 @@ async def _run_one(school_id: str, persona: str, window: str, run_date: str, ac)
                 print(f"[agent_scheduler] performance_watch delivery failed for {finding.get('findingKey')}: {e}")
 
 
-async def maybe_run_daily_sweeps(school_id: str) -> None:
+async def maybe_run_daily_sweeps(school_id: str, admin: dict = None) -> None:
+    """admin, when given, is the real logged-in admin whose session triggered
+    this check — passed through to _run_one so a sweep's fast-track findings
+    execute as them instead of only ever being able to propose."""
     ac = create_admin_client()
     now = datetime.now(timezone.utc)
     run_date = now.date().isoformat()
@@ -205,7 +227,7 @@ async def maybe_run_daily_sweeps(school_id: str) -> None:
     for persona in PLAYBOOKS_BY_PERSONA:
         for window in due_windows:
             try:
-                await _run_one(school_id, persona, window, run_date, ac)
+                await _run_one(school_id, persona, window, run_date, ac, admin)
             except Exception as e:
                 print(f"[agent_scheduler] sweep failed for {persona}/{window}: {e}")
 

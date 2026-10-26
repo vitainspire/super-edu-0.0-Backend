@@ -26,6 +26,9 @@ from .admin_queries import (
 from .substitute_finder import find_substitute
 from .ask_history import history_block
 from .agent_activity_log import record_activity
+from .agent_notes import load_active_notes as _load_agent_notes, save_note as _save_agent_note, archive_note_by_ref as _archive_agent_note_by_ref
+from .agent_action_log import record_action, load_recent_actions
+from .argus_confirm_dispatch import execute_confirmed_action
 from .logger import api_log
 
 # Guardrail: hard cap on tool calls per run. A confused chain stops here
@@ -369,10 +372,12 @@ def _match_class(school_id: str, class_ref: str, ac) -> dict:
 
 
 def _tool_assign_substitute(school_id: str, args: dict) -> dict:
-    """ACTION tool. Resolves an unresolved cover gap to a specific qualified
+    """AUTO tool. Resolves an unresolved cover gap to a specific qualified
     teacher using find_substitute — the exact same matcher the absence
     automation already uses (subject match required, workload caps hard
-    enforced, ranked by fewest periods that day). Proposes only."""
+    enforced, ranked by fewest periods that day). Returns a proposal; run_agent
+    executes it immediately (side_effect "auto") rather than waiting on a
+    human confirm — this function itself still only computes the pick."""
     date_str = args.get("date") or _today()
     ac = create_admin_client()
     subs = fetch_substitutions_for_date(school_id, date_str, ac)
@@ -431,9 +436,10 @@ def _tool_assign_substitute(school_id: str, args: dict) -> dict:
 
 
 def _tool_mark_teacher_unavailable(school_id: str, args: dict) -> dict:
-    """ACTION tool. Marking an absence is what *creates* cover needs — on
-    confirm it runs apply_teacher_absence, which assigns substitutes and
-    notifies everyone affected. Proposes only."""
+    """AUTO tool. Marking an absence is what *creates* cover needs — runs
+    apply_teacher_absence, which assigns substitutes and notifies everyone
+    affected. Returns a proposal that run_agent executes immediately
+    (side_effect "auto"); this function itself still only resolves the teacher."""
     teacher_ref = (args.get("teacherRef") or "").strip()
     if not teacher_ref:
         return {"error": "teacherRef is required — which teacher?"}
@@ -484,13 +490,14 @@ def _known_subjects_for(teacher_id: str, candidate: dict, profile_subject_by_id:
 
 
 def _tool_assign_teacher_to_class(school_id: str, args: dict) -> dict:
-    """ACTION tool for the dashboard's "classes with no teacher" gap. If no
+    """AUTO tool for the dashboard's "classes with no teacher" gap. If no
     teacher is named, ranks the roster the way the substitute matcher does —
     teachers who demonstrably already teach the subject first, then lightest
     weekly load, then name — and proposes the best fit with its reasoning.
     Never picks a teacher the model invented; the pick comes from
     fetch_teacher_eligibility_data, which derives subjectsTaught from real
-    assignments and timetable labels. Proposes only."""
+    assignments and timetable labels. Returns a proposal that run_agent
+    executes immediately (side_effect "auto")."""
     class_ref = (args.get("classRef") or "").strip()
     if not class_ref:
         return {"error": "classRef is required — which class?"}
@@ -674,29 +681,29 @@ TOOLS = {
             "classRef": "string, optional — narrows to one class if several gaps exist",
             "periodNumber": "number, optional — narrows to one period if several gaps exist",
         },
-        "side_effect": "action",
+        "side_effect": "auto",
         "fn": _tool_assign_substitute,
     },
     "mark_teacher_unavailable": {
-        "description": "Record a teacher as absent for a date; on confirm this assigns substitutes and notifies those affected.",
+        "description": "Record a teacher as absent for a date; executes immediately — assigns substitutes and notifies those affected.",
         "params": {
             "teacherRef": "string, required — the teacher's name as mentioned",
             "date": "string, optional, ISO date, defaults to today",
             "reason": "one of on_leave/late_arrival/official_duty/other, optional",
         },
-        "side_effect": "action",
+        "side_effect": "auto",
         "fn": _tool_mark_teacher_unavailable,
     },
     "assign_teacher_to_class": {
-        "description": "Assign a teacher to a class that has none. If no teacher is named, proposes the best fit "
-                       "(already teaches the subject, then lightest weekly load).",
+        "description": "Assign a teacher to a class that has none. If no teacher is named, picks the best fit "
+                       "(already teaches the subject, then lightest weekly load) and executes immediately.",
         "params": {
             "classRef": "string, required — e.g. \"5B\" or \"Grade 5 B\"",
             "subject": "string, optional — improves the match",
             "teacherRef": "string, optional — name a specific teacher instead of auto-matching",
             "excludeTeacherIds": "list of teacher ids, optional — skip these when auto-matching",
         },
-        "side_effect": "action",
+        "side_effect": "auto",
         "fn": _tool_assign_teacher_to_class,
     },
 }
@@ -785,6 +792,33 @@ async def _tool_message_headmaster_agent(school_id: str, args: dict) -> dict:
     return {"answer": result.get("response"), "status": result["status"]}
 
 
+# Persistent memory tools — one closure per persona over app/lib/agent_notes.py
+# so "remember_note"/"forget_note" read/write that persona's own note pool
+# (see PERSONAS below) without either persona needing a school_id-shaped extra
+# argument the run_agent loop's tool["fn"](school_id, args) convention doesn't pass.
+def _make_remember_note_tool(persona: str):
+    def _tool_remember_note(school_id: str, args: dict) -> dict:
+        note = (args.get("note") or "").strip()
+        if not note:
+            return {"error": "note is required — what should be remembered?"}
+        return _save_agent_note(school_id, persona, note)
+    return _tool_remember_note
+
+
+def _make_forget_note_tool(persona: str):
+    def _tool_forget_note(school_id: str, args: dict) -> dict:
+        note_ref = (args.get("noteRef") or "").strip()
+        if not note_ref:
+            return {"error": "noteRef is required — which remembered note?"}
+        match = _archive_agent_note_by_ref(school_id, persona, note_ref)
+        if match["kind"] == "none":
+            return {"error": f'Nothing remembered matching "{note_ref}".'}
+        if match["kind"] == "ambiguous":
+            return {"error": f'More than one remembered note matches "{note_ref}": {"; ".join(match["candidates"])} — which one?'}
+        return {"forgotten": True, "content": match["note"]["content"]}
+    return _tool_forget_note
+
+
 HEADMASTER_TOOLS = {
     **HEADMASTER_TOOLS,
     "invoke_teacher_agent": {
@@ -807,6 +841,16 @@ HEADMASTER_TOOLS = {
         ),
         "params": {"question": "string, required"},
         "fn": _tool_message_admin_agent,
+    },
+    "remember_note": {
+        "description": "Save a short note about this school's academic situation or a recurring concern, to be remembered in future conversations too. Saves immediately, no confirmation needed.",
+        "params": {"note": "string, required"},
+        "fn": _make_remember_note_tool("headmaster"),
+    },
+    "forget_note": {
+        "description": "Delete a previously remembered note that's wrong or no longer relevant.",
+        "params": {"noteRef": "string, required — words from the note to find it"},
+        "fn": _make_forget_note_tool("headmaster"),
     },
 }
 
@@ -844,6 +888,16 @@ PERSONAS = {
                 "params": {"question": "string, required"},
                 "fn": _tool_message_headmaster_agent,
             },
+            "remember_note": {
+                "description": "Save a short note about this school's operations or a recurring concern, to be remembered in future conversations too. Saves immediately, no confirmation needed.",
+                "params": {"note": "string, required"},
+                "fn": _make_remember_note_tool("admin"),
+            },
+            "forget_note": {
+                "description": "Delete a previously remembered note that's wrong or no longer relevant.",
+                "params": {"noteRef": "string, required — words from the note to find it"},
+                "fn": _make_forget_note_tool("admin"),
+            },
         },
         "identity": (
             "You are the Admin Agent, responsible for keeping day-to-day school operations "
@@ -861,7 +915,13 @@ def _tool_catalog_text_for(tools: dict) -> str:
     lines = []
     for name, spec in tools.items():
         params = ", ".join(f"{k} ({v})" for k, v in spec["params"].items()) or "none"
-        tag = " [ACTION — calling this only proposes it; nothing happens until a human confirms]" if spec.get("side_effect") == "action" else ""
+        side_effect = spec.get("side_effect")
+        if side_effect == "action":
+            tag = " [ACTION — calling this only proposes it; nothing happens until a human confirms]"
+        elif side_effect == "auto":
+            tag = " [AUTO — calling this executes it for real immediately; describe what you did in your final answer, don't ask permission]"
+        else:
+            tag = ""
         lines.append(f'- "{name}"{tag}: {spec["description"]} Params: {params}.')
     return "\n".join(lines)
 
@@ -874,6 +934,38 @@ def _scratchpad_text(scratchpad: list) -> str:
     if not scratchpad:
         return "(none yet)"
     return "\n".join(f"- {r['tool']}({json.dumps(r['args'])}) -> {json.dumps(r['result'])}" for r in scratchpad)
+
+
+def _agent_memory_block(notes: list) -> str:
+    """Same role teacher_agent.py's _memory_block plays for My Agent — persistent
+    notes from earlier conversations, injected every run so this persona
+    doesn't start from zero each time (see app/lib/agent_notes.py)."""
+    if not notes:
+        return ""
+    lines = "\n".join(f"- {n['content']}" for n in notes)
+    return f"""
+
+What you remember from earlier conversations in this school (use it, but a
+tool result always wins if the two conflict):
+{lines}"""
+
+
+def _recent_actions_block(actions: list) -> str:
+    """What this persona has already DONE on its own (the "auto" tools —
+    see PERSONAS) — real state carried across turns, not just this run's
+    scratchpad. Stops the agent re-describing or re-proposing something it
+    already handled, and lets it answer "what have you done today" truthfully."""
+    if not actions:
+        return ""
+    lines = "\n".join(
+        f"- {a['label'] or a['tool']} ({'done' if a['status'] == 'succeeded' else 'attempted, failed'}, {a['createdAt']})"
+        for a in actions
+    )
+    return f"""
+
+Actions you've already taken on your own, most recent first (don't repeat or
+re-propose these):
+{lines}"""
 
 
 async def run_argus(school_id: str, question: str, history: list, ip: str) -> dict:
@@ -951,7 +1043,7 @@ Decide your next step. Return JSON only, no markdown, one of:
     return {"status": "step_limit", "response": "That took more steps than expected — try a more specific question.", "trace": trace}
 
 
-async def run_agent(persona: str, school_id: str, question: str, history: list, ip: str, nested: bool = False) -> dict:
+async def run_agent(persona: str, school_id: str, question: str, history: list, ip: str, admin: dict = None, nested: bool = False) -> dict:
     """Same reason/act/observe loop as run_argus above, parameterized by
     persona (see PERSONAS) instead of hardcoded to the one unified Argus
     identity/toolset. Built for the Group Chat feature, where the Headmaster
@@ -959,6 +1051,13 @@ async def run_agent(persona: str, school_id: str, question: str, history: list, 
     than one assistant covering everything. run_argus itself is untouched —
     this is a sibling, not a replacement, so the existing (currently unused)
     /argus route keeps behaving exactly as it always has.
+
+    admin, when given, is who an "auto" tool's resulting proposal is executed
+    as (see execute_confirmed_action) — the real logged-in admin whose request
+    triggered this run, not a synthetic identity. Without it (e.g. a nested
+    cross-agent call that hasn't threaded one through), "auto" tools fall back
+    to the same propose-then-confirm behavior as "action" tools, since there is
+    no one to execute as.
 
     nested=True is how message_admin_agent/message_headmaster_agent/
     invoke_teacher_agent call into this when ONE persona is asking ANOTHER
@@ -972,10 +1071,14 @@ async def run_agent(persona: str, school_id: str, question: str, history: list, 
     tools = spec["tools"]
     if nested:
         tools = {k: v for k, v in tools.items() if k not in _CROSS_AGENT_TOOL_NAMES}
+    notes = _load_agent_notes(school_id, persona)
+    recent_actions = load_recent_actions(school_id, persona)
     scratchpad: list[dict] = []
     trace: list[dict] = []
+    plan: Optional[list] = None
 
     for step in range(MAX_STEPS):
+        plan_block = f"\n\nYour plan for this question so far: {plan}" if plan else ""
         prompt = f"""{spec["identity"]} Your scope is this one school only ({school_id}) —
 you have no visibility into any other school. You never state a fact
 yourself; every fact in your final answer must come from a tool result below,
@@ -984,8 +1087,32 @@ vague to act on ("hello", "hi", "you there?"), reply conversationally and
 ask what's needed — do not call a tool until there's an actual question or
 request to answer.
 
+This is a shared group chat — both the Headmaster Agent and the Admin Agent
+see every message and both are expected to respond, the way two people in
+the same room would. If the question is squarely the OTHER agent's domain
+and you have nothing of your own to add, don't guess at their answer or
+repeat it — give a brief one-line handoff instead (the "defer" action below).
+
+If a tool result below shows an action already executed (an "auto" tool —
+see the catalog), describe it in your final answer as something you've
+already done, in plain past tense ("I've assigned Mr. Rao to cover..."), not
+as something you're about to do or asking permission for.
+
+When the admin tells you a preference or a recurring concern worth carrying
+into future conversations — not every fact already available from a tool,
+just what's worth remembering about how THEY want things run — call
+remember_note to save it, even if they phrased it as a passing remark rather
+than a direct command to remember.
+
+If answering this will clearly take more than one tool call, state a short
+ordered "plan" (a list of a few short steps) the first time you call a tool —
+you can revise it later if what you find changes what's needed. Skip it for
+anything answerable in one step or a plain conversational reply.
+
 The admin asked: "{question}"
 {history_block(history)}
+{_agent_memory_block(notes)}
+{_recent_actions_block(recent_actions)}{plan_block}
 
 Tools available — call as many as you need, in any order, and call the same
 one again with different args if that's what answering needs:
@@ -995,8 +1122,9 @@ Results gathered so far this run:
 {_scratchpad_text(scratchpad)}
 
 Decide your next step. Return JSON only, no markdown, one of:
-{{"action": "call_tool", "tool": "<name>", "args": {{...}}}}
+{{"action": "call_tool", "tool": "<name>", "args": {{...}}, "plan": ["<optional, only on your first multi-step call>"]}}
 {{"action": "finish", "response": "<plain, simple-English answer to the admin>"}}
+{{"action": "defer", "response": "<short handoff line — this is the other agent's question, not yours>"}}
 """
         t0 = time.time()
         try:
@@ -1006,11 +1134,22 @@ Decide your next step. Return JSON only, no markdown, one of:
             api_log(f"group-chat-{persona}", ip, (time.time() - t0) * 1000, False, "error", error=str(e))
             return {"status": "error", "response": "Something went wrong reasoning about that — try again.", "trace": trace}
 
+        if isinstance(decision.get("plan"), list) and decision["plan"]:
+            plan = decision["plan"]
+
         action = decision.get("action")
 
         if action == "finish":
             api_log(f"group-chat-{persona}", ip, (time.time() - t0) * 1000, False, "ok")
-            return {"status": "answered", "response": decision.get("response") or "I didn't find anything that answers that.", "trace": trace}
+            return {"status": "answered", "response": decision.get("response") or "I didn't find anything that answers that.", "trace": trace, "plan": plan}
+
+        if action == "defer":
+            api_log(f"group-chat-{persona}", ip, (time.time() - t0) * 1000, False, "ok")
+            return {
+                "status": "deferred",
+                "response": decision.get("response") or "That's not really my area — the other agent should take this one.",
+                "trace": trace,
+            }
 
         if action == "call_tool":
             tool_name = decision.get("tool")
@@ -1034,6 +1173,31 @@ Decide your next step. Return JSON only, no markdown, one of:
                     result = {"error": str(e)}
 
             if isinstance(result, dict) and "proposal" in result:
+                if tool.get("side_effect") == "auto" and admin is not None:
+                    # Execute right now through the exact same dispatch a
+                    # human's confirm click would use — see
+                    # argus_confirm_dispatch.py — then feed the real outcome
+                    # back into the scratchpad so the model reports what
+                    # actually happened instead of asking permission for it.
+                    proposal = result["proposal"]
+                    exec_args = {k: v for k, v in proposal.items() if k != "tool"}
+                    try:
+                        outcome = execute_confirmed_action(school_id, proposal["tool"], exec_args, admin)
+                        record_action(
+                            school_id, persona, tool_name, exec_args, result.get("label"),
+                            status="succeeded", source="chat", outcome=outcome,
+                        )
+                        scratchpad.append({"tool": tool_name, "args": args, "result": {"executed": True, "label": result.get("label"), "outcome": outcome}})
+                        trace.append({"tool": tool_name, "args": args, "ok": True})
+                    except Exception as e:
+                        record_action(
+                            school_id, persona, tool_name, exec_args, result.get("label"),
+                            status="failed", source="chat", error=str(e),
+                        )
+                        scratchpad.append({"tool": tool_name, "args": args, "result": {"executed": False, "label": result.get("label"), "error": str(e)}})
+                        trace.append({"tool": tool_name, "args": args, "ok": False})
+                    continue
+
                 api_log(f"group-chat-{persona}", ip, (time.time() - t0) * 1000, False, "ok")
                 trace.append({"tool": tool_name, "args": args, "ok": True})
                 return {"status": "pending_confirmation", "proposal": result["proposal"], "label": result.get("label"), "trace": trace}
@@ -1045,33 +1209,3 @@ Decide your next step. Return JSON only, no markdown, one of:
         return {"status": "error", "response": "I didn't quite understand what to do with that — try rephrasing.", "trace": trace}
 
     return {"status": "step_limit", "response": "That took more steps than expected — try a more specific question.", "trace": trace}
-
-
-async def route_message(question: str, history: list) -> list:
-    """Cheap one-shot classifier deciding which persona(s) should answer a
-    Group Chat message — same spirit as the existing /ask-intent classifier
-    (ai_routes2.py/admin_misc.py), just routing to an agent persona instead of
-    a hardcoded frontend intent. Defaults to ["admin"] on any failure, since
-    the Admin Agent's toolset is the closer match to today's single-Argus
-    behavior (operations-flavored, covers more of the "what needs attention"
-    surface) — a safe fallback rather than silence."""
-    prompt = f"""A school admin posted this message in a group chat with two AI
-assistants: the Headmaster Agent (academic outcomes — student performance,
-syllabus pace, textbooks, exams) and the Admin Agent (day-to-day operations —
-leave, substitutes, announcements, calendar).
-
-Message: "{question}"
-{history_block(history)}
-
-Which assistant(s) should respond? Return JSON only, no markdown:
-{{"personas": ["headmaster"]}} or {{"personas": ["admin"]}} or
-{{"personas": ["headmaster", "admin"]}} if it genuinely needs both.
-Prefer a single persona unless the question clearly spans both domains.
-"""
-    try:
-        raw = await call_ai([{"role": "user", "content": prompt}])
-        decision = json.loads(raw)
-        personas = [p for p in (decision.get("personas") or []) if p in PERSONAS]
-        return personas or ["admin"]
-    except Exception:
-        return ["admin"]
